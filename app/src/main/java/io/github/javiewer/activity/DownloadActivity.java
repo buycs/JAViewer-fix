@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.ViewPagerAdapter;
+import io.github.javiewer.fragment.BtSearchFragment;
 import io.github.javiewer.fragment.DownloadFragment;
 
 public class DownloadActivity extends SecureActivity {
@@ -56,6 +57,12 @@ public class DownloadActivity extends SecureActivity {
         bundle.putString("provider", "torrentkitty");
         fragment.setArguments(bundle);
         adapter.addFragment(fragment, "Torrent Kitty");
+
+        fragment = new BtSearchFragment();
+        bundle = (Bundle) bundle.clone();
+        bundle.putString("keyword", this.keyword);
+        fragment.setArguments(bundle);
+        adapter.addFragment(fragment, "BtSearch");
 
         mViewPager.setAdapter(adapter);
 
