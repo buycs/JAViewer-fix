@@ -22,10 +22,18 @@ public interface TorrentKitty {
             .create(TorrentKitty.class);
 
     @GET("/search/{keyword}/{page}")
-    @Headers("Accept-Language: zh-CN,zh;q=0.8,en;q=0.6")
+    @Headers({
+            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language: zh-CN,zh;q=0.9",
+            "Referer: https://torrentkitty.one/search/"
+    })
     Call<ResponseBody> search(@Path(value = "keyword") String keyword, @Path("page") int page);
 
     @GET
-    @Headers("Accept-Language: zh-CN,zh;q=0.8,en;q=0.6")
+    @Headers({
+            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language: zh-CN,zh;q=0.9",
+            "Referer: https://torrentkitty.one/search/"
+    })
     Call<ResponseBody> get(@Url String url);
 }

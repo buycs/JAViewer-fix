@@ -78,11 +78,18 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                android.util.Log.d("JAViewer", "onResponse code: " + response.code() + " url: " + call.request().url());
                 if (token == BasicOnScrollListener.this.token && page == currentPage) {
                     try {
-                        onResult(response.body());
-                        currentPage++;
+                        if (response.isSuccessful() && response.body() != null) {
+                            onResult(response.body());
+                            currentPage++;
+                        } else {
+                            android.util.Log.w("JAViewer", "Response not successful: " + response.code());
+                            setEnd(true);
+                        }
                     } catch (Throwable e) {
+                        android.util.Log.e("JAViewer", "onResult error: " + e.getMessage(), e);
                         onFailure(call, e);
                     }
                 }
@@ -93,6 +100,7 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+                android.util.Log.e("JAViewer", "onFailure: " + t.getMessage() + " url: " + call.request().url());
                 setLoading(false);
                 getRefreshLayout().setRefreshing(false);
                 onExceptionCaught(t);
