@@ -1,6 +1,7 @@
 package io.github.javiewer.network.provider;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
@@ -34,15 +35,19 @@ public class TorrentKittyLinkProvider extends DownloadLinkProvider {
                 Element nameTd = tr.getElementsByClass("name").first();
                 Element sizeTd = tr.getElementsByClass("size").first();
                 Element dateTd = tr.getElementsByClass("date").first();
-                Element magnetLink = tr.getElementsByAttributeValue("rel", "magnet").first();
+                Element infoLink = tr.getElementsByAttributeValue("rel", "information").first();
 
-                if (nameTd != null && sizeTd != null && dateTd != null && magnetLink != null) {
+                if (nameTd != null && sizeTd != null && dateTd != null && infoLink != null) {
+                    String infoUrl = infoLink.attr("href");
+                    if (infoUrl.startsWith("/")) {
+                        infoUrl = TorrentKitty.BASE_URL + infoUrl;
+                    }
                     links.add(DownloadLink.create(
                             nameTd.text(),
                             sizeTd.text(),
                             dateTd.text(),
-                            null,
-                            magnetLink.attr("href")
+                            infoUrl,
+                            null
                     ));
                 }
             } catch (Exception ignored) {
@@ -60,6 +65,11 @@ public class TorrentKittyLinkProvider extends DownloadLinkProvider {
 
     @Override
     public MagnetLink parseMagnetLink(String htmlContent) {
+        Document doc = Jsoup.parse(htmlContent);
+        Element magnetLink = doc.getElementsByAttributeValue("rel", "magnet").first();
+        if (magnetLink != null) {
+            return MagnetLink.create(magnetLink.attr("href"));
+        }
         return null;
     }
 }
