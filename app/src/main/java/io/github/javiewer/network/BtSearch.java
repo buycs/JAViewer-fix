@@ -51,7 +51,11 @@ public interface BtSearch {
                         .header("User-Agent", JAViewer.USER_AGENT)
                         .header("Referer", BASE_URL + "/search");
 
-                return chain.proceed(builder.build());
+                Request finalRequest = builder.build();
+                android.util.Log.d("JAViewer", "BtSearch request: " + finalRequest.url());
+                android.util.Log.d("JAViewer", "BtSearch headers: TS=" + timestamp + " NONCE=" + nonce + " SIGN=" + sign);
+
+                return chain.proceed(finalRequest);
             })
             .build();
 
@@ -77,7 +81,6 @@ public interface BtSearch {
         for (Map.Entry<String, String> entry : params.entrySet()) {
             sorted.add(entry.getKey() + "=" + entry.getValue());
         }
-        sorted.add("key=" + SECRET_KEY);
         Collections.sort(sorted);
 
         StringBuilder sb = new StringBuilder();
@@ -85,6 +88,7 @@ public interface BtSearch {
             if (i > 0) sb.append("&");
             sb.append(sorted.get(i));
         }
+        sb.append("&key=").append(SECRET_KEY);
 
         return md5(sb.toString()).toUpperCase();
     }
