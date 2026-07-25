@@ -43,6 +43,8 @@ public interface BtSearch {
 
                 String sign = generateSign(params);
 
+                android.util.Log.d("JAViewer", "BtSearch TS: " + timestamp + " NONCE: " + nonce + " SIGN: " + sign);
+
                 Request.Builder builder = original.newBuilder()
                         .header("x-timestamp", timestamp)
                         .header("x-nonce", nonce)
