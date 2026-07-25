@@ -28,9 +28,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -38,8 +37,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.Movie;
@@ -50,7 +48,6 @@ public class GalleryActivity extends SecureActivity {
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-    @BindView(R.id.gallery_pager)
     public ViewPager mPager;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -64,7 +61,6 @@ public class GalleryActivity extends SecureActivity {
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
-    @BindView(R.id.toolbar_gallery)
     public Toolbar mToolbar;
     Animation fadeIn = new AlphaAnimation(0, 1);
     private final Runnable mShowPart2Runnable = new Runnable() {
@@ -108,7 +104,8 @@ public class GalleryActivity extends SecureActivity {
 
         setContentView(R.layout.activity_gallery);
 
-        ButterKnife.bind(this);
+        mPager = findViewById(R.id.gallery_pager);
+        mToolbar = findViewById(R.id.toolbar_gallery);
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -160,7 +157,7 @@ public class GalleryActivity extends SecureActivity {
         });
         updateIndicator();
 
-        movie = (Movie) bundle.getSerializable("movie");
+        movie = bundle.getSerializable("movie", Movie.class);
     }
 
     private void updateIndicator() {
@@ -224,33 +221,36 @@ public class GalleryActivity extends SecureActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_save:
-                final File dir = new File(
-                        JAViewer.getStorageDir(),
-                        String.format("/movies/[%s] %s", movie.code, movie.title).replaceAll("^(?!(COM[0-9]|LPT[0-9]|CON|PRN|AUX|CLOCK\\$|NUL)$)[^./\\\\:*?\u200C\u200B\"<>|]+$", "-")
-                );
-                dir.mkdirs();
-                final int index = mPager.getCurrentItem();
-                Glide
-                        .with(this)
-                        .load(imageUrls[index])
-                        .asBitmap()
-                        .into(new SimpleTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                try {
-                                    OutputStream os = new BufferedOutputStream(new FileOutputStream(new File(dir, (index + 1) + ".jpeg")));
-                                    resource.compress(Bitmap.CompressFormat.JPEG, 100, os);
-                                    os.flush();
-                                    os.close();
-                                    Toast.makeText(GalleryActivity.this, "成功保存到 " + dir, Toast.LENGTH_SHORT).show();
-                                } catch (IOException e) {
-                                    onLoadFailed(e, null);
-                                }
+        if (item.getItemId() == R.id.action_save) {
+            final File dir = new File(
+                    JAViewer.getStorageDir(),
+                    String.format("/movies/[%s] %s", movie.code, movie.title).replaceAll("^(?!(COM[0-9]|LPT[0-9]|CON|PRN|AUX|CLOCK\\$|NUL)$)[^./\\\\:*?\u200C\u200B\"<>|]+$", "-")
+            );
+            dir.mkdirs();
+            final int index = mPager.getCurrentItem();
+            Glide
+                    .with(this)
+                    .asBitmap()
+                    .load(imageUrls[index])
+                    .into(new CustomTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                            try {
+                                OutputStream os = new BufferedOutputStream(new FileOutputStream(new File(dir, (index + 1) + ".jpeg")));
+                                resource.compress(Bitmap.CompressFormat.JPEG, 100, os);
+                                os.flush();
+                                os.close();
+                                Toast.makeText(GalleryActivity.this, "成功保存到 " + dir, Toast.LENGTH_SHORT).show();
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
-                        });
-                return true;
+                        }
+
+                        @Override
+                        public void onLoadCleared(Drawable placeholder) {
+                        }
+                    });
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -301,17 +301,20 @@ public class GalleryActivity extends SecureActivity {
 
             Glide.with(imageView.getContext().getApplicationContext())
                     .load(imageUrls[position])
-                    .into(new SimpleTarget<GlideDrawable>() {
+                    .into(new CustomTarget<Drawable>() {
                         @Override
-                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                        public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
                             progressBar.setVisibility(View.GONE);
                             imageView.setImageDrawable(resource);
                         }
 
                         @Override
-                        public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                            super.onLoadFailed(e, errorDrawable);
-                            textView.setText("图片加载失败 :(\n" + e.getMessage());
+                        public void onLoadCleared(Drawable placeholder) {
+                        }
+
+                        @Override
+                        public void onLoadFailed(Drawable errorDrawable) {
+                            textView.setText("图片加载失败 :(\n");
                         }
                     });
 

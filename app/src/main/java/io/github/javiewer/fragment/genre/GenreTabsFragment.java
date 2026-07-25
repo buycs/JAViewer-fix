@@ -10,11 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.ViewPagerAdapter;
@@ -28,36 +27,32 @@ import retrofit2.Response;
 
 public class GenreTabsFragment extends ExtendedAppBarFragment {
 
-    @BindView(R.id.genre_tabs)
     public TabLayout mTabLayout;
-
-    @BindView(R.id.genre_view_pager)
     public ViewPager mViewPager;
-
-    @BindView(R.id.genre_progress_bar)
     public ProgressBar mProgressBar;
-
     public ViewPagerAdapter mAdapter;
 
     public GenreTabsFragment() {
-        // Required empty public constructor
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        android.util.Log.d("GenreTabs", "onActivityCreated");
 
         mAdapter = new ViewPagerAdapter(getActivity().getSupportFragmentManager());
         mViewPager.setAdapter(mAdapter);
         mTabLayout.setupWithViewPager(mViewPager);
 
-        Call<ResponseBody> call = JAViewer.SERVICE.getGenre();
+        Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("cn"));
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 mProgressBar.setVisibility(View.GONE);
                 try {
-                    LinkedHashMap<String, List<Genre>> genres = AVMOProvider.parseGenres(response.body().string());
+                    String body = response.body().string();
+                    android.util.Log.d("GenreTabs", "Response body: " + body.substring(0, Math.min(500, body.length())));
+                    LinkedHashMap<String, List<Genre>> genres = AVMOProvider.parseGenres(body);
 
                     GenreFragment fragment;
                     for (String title : genres.keySet()) {
@@ -84,7 +79,9 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_genre, container, false);
-        ButterKnife.bind(this, view);
+        mTabLayout = view.findViewById(R.id.genre_tabs);
+        mViewPager = view.findViewById(R.id.genre_view_pager);
+        mProgressBar = view.findViewById(R.id.genre_progress_bar);
         return view;
     }
 }

@@ -1,17 +1,31 @@
 apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
+
+configurations.all {
+    exclude group: 'com.intellij', module: 'annotations'
+}
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdk 35
+
+    packaging {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt']
+        }
+    }
+    // buildToolsVersion is managed by AGP
+
+    namespace 'io.github.javiewer'
 
     defaultConfig {
         applicationId "io.github.javiewer"
-        minSdkVersion 16
-        targetSdkVersion 28
-        versionCode 12
-        versionName "2.0.0-alpha 1"
+        minSdkVersion 21
+        targetSdkVersion 35
+        versionCode 14
+        versionName "2.0.1"
 
+        ndk {
+            abiFilters "arm64-v8a"
+        }
     }
     buildTypes {
         release {
@@ -20,58 +34,39 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = '1.8'
-        targetCompatibility = '1.8'
-    }
-}
-
-allprojects {
-    repositories {
-        maven { url "https://jitpack.io" }
-        maven { url 'https://maven.fabric.io/public' }
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
-    //compile fileTree(include: ['*.jar'], dir: 'libs')
-
     //Support
-    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.palette:palette:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.percentlayout:percentlayout:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
     //View
-    implementation "com.mikepenz:materialdrawer:6.1.1"
+    implementation "com.mikepenz:materialdrawer:6.1.2"
     implementation 'com.aurelhubert:ahbottomnavigation:2.2.0'
     implementation 'com.wefika:flowlayout:0.4.1'
-    implementation 'com.robertlevonyan.view:MaterialChipView:1.0.1'
-    implementation 'com.miguelcatalan:materialsearchview:1.4.0'
-    implementation 'de.hdodenhof:circleimageview:2.2.0'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
     implementation 'com.flaviofaria:kenburnsview:1.0.7'
     //Utility
     implementation 'cat.ereza:customactivityoncrash:2.2.0'
-    implementation 'com.github.bumptech.glide:glide:3.7.0'
-    implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'org.jsoup:jsoup:1.11.3'
-    implementation 'com.karumi:dexter:5.0.0'
-    implementation 'jp.wasabeef:recyclerview-animators:2.2.6'
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
+    implementation 'org.jsoup:jsoup:1.18.3'
+    implementation 'com.karumi:dexter:6.2.2'
+    implementation 'jp.wasabeef:recyclerview-animators:4.0.2'
 
     //Player
     implementation 'cn.jzvd:jiaozivideoplayer:6.2.12'
-    implementation 'com.google.android.exoplayer:exoplayer:2.8.2'
-    //Firebase
-    implementation 'com.google.firebase:firebase-auth:18.1.0'
+    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
 
-    testImplementation 'junit:junit:4.12'
-    implementation 'com.jakewharton:butterknife:10.1.0'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
-
-    implementation('com.crashlytics.sdk.android:crashlytics:2.9.4@aar') {
-        transitive = true;
-    }
+    testImplementation 'junit:junit:4.13.2'
 }

@@ -7,6 +7,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.Arrays;
 import java.util.List;
 
 import io.github.javiewer.JAViewer;
@@ -93,6 +94,6 @@ public class ActressesFragment extends RecyclerFragment<Actress, LinearLayoutMan
     }
 
     public Call<ResponseBody> newCall(int page) {
-        return JAViewer.SERVICE.getActresses(page);
+        return JAViewer.SERVICE.getStars(Arrays.asList("stars", 60, page));
     }
 }

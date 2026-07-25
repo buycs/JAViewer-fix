@@ -1,34 +1,33 @@
 package io.github.javiewer.network;
 
+import java.util.List;
+
 import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.http.GET;
-import retrofit2.http.Path;
-import retrofit2.http.Url;
+import retrofit2.http.Body;
+import retrofit2.http.POST;
 
-/**
- * Project: JAViewer
- */
 public interface BasicService {
 
-    String LANGUAGE_NODE = "/cn";
+    @POST("getMovies")
+    Call<ResponseBody> getMovies(@Body List<Object> params);
 
-    @GET(BasicService.LANGUAGE_NODE + "/page/{page}")
-    Call<ResponseBody> getHomePage(@Path("page") int page);
+    @POST("getMovie")
+    Call<ResponseBody> getMovie(@Body List<Object> params);
 
-    @GET(BasicService.LANGUAGE_NODE + "/released/page/{page}")
-    Call<ResponseBody> getReleased(@Path("page") int page);
+    @POST("getStars")
+    Call<ResponseBody> getStars(@Body List<Object> params);
 
-    @GET(BasicService.LANGUAGE_NODE + "/popular/page/{page}")
-    Call<ResponseBody> getPopular(@Path("page") int page);
+    @POST("getGenres")
+    Call<ResponseBody> getGenres(@Body List<Object> params);
 
-    @GET(BasicService.LANGUAGE_NODE + "/actresses/page/{page}")
-    Call<ResponseBody> getActresses(@Path("page") int page);
+    @POST("getFilterMovies")
+    Call<ResponseBody> getFilterMovies(@Body List<Object> params);
 
-    @GET(BasicService.LANGUAGE_NODE + "/genre")
-    Call<ResponseBody> getGenre();
+    @POST("search")
+    Call<ResponseBody> search(@Body List<Object> params);
 
-    @GET
-    Call<ResponseBody> get(@Url String url);
+    @POST("getRelatedMovies")
+    Call<ResponseBody> getRelatedMovies(@Body List<Object> params);
 
 }

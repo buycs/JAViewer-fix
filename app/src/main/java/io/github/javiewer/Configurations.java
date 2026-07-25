@@ -61,7 +61,15 @@ public class Configurations {
     }
 
     public DataSource getDataSource() {
-        if (data_source == null) {
+        if (data_source == null || data_source.domain == null) {
+            if (data_source != null && data_source.domain == null && data_source.link != null) {
+                for (DataSource ds : JAViewer.DATA_SOURCES) {
+                    if (data_source.link.equals(ds.getLink())) {
+                        data_source = ds;
+                        return data_source;
+                    }
+                }
+            }
             data_source = JAViewer.DATA_SOURCES.get(0);
         }
         return data_source;

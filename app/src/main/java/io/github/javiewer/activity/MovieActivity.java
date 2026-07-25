@@ -3,6 +3,9 @@ package io.github.javiewer.activity;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.ProgressDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -18,6 +21,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
@@ -29,26 +33,31 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.robertlevonyan.views.chip.Chip;
+import com.google.android.material.chip.Chip;
 import com.wefika.flowlayout.FlowLayout;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+
 import cn.jzvd.JZVideoPlayer;
 import cn.jzvd.JZVideoPlayerStandard;
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.ActressPaletteAdapter;
 import io.github.javiewer.adapter.MovieHeaderAdapter;
+import io.github.javiewer.adapter.RelatedMovieAdapter;
 import io.github.javiewer.adapter.ScreenshotAdapter;
 import io.github.javiewer.adapter.item.Genre;
+import io.github.javiewer.view.decoration.GridSpacingItemDecoration;
 import io.github.javiewer.adapter.item.Movie;
 import io.github.javiewer.adapter.item.MovieDetail;
 import io.github.javiewer.network.PSVS;
@@ -56,6 +65,9 @@ import io.github.javiewer.network.item.AvgleSearchResult;
 import io.github.javiewer.network.provider.AVMOProvider;
 import io.github.javiewer.util.SimpleVideoPlayer;
 import io.github.javiewer.view.ViewUtil;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -66,25 +78,18 @@ public class MovieActivity extends SecureActivity {
     public Movie movie;
     public AvgleSearchResult.Response.Video video = null;
 
-    @BindView(R.id.toolbar_layout)
     CollapsingToolbarLayout mToolbarLayout;
 
-    @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
-    @BindView(R.id.toolbar_layout_background)
     ImageView mToolbarLayoutBackground;
 
-    @BindView(R.id.movie_content)
     NestedScrollView mContent;
 
-    @BindView(R.id.movie_progress_bar)
     ProgressBar mProgressBar;
 
-    @BindView(R.id.fab)
     FloatingActionButton mFab;
 
-    @BindView(R.id.genre_flow_layout)
     FlowLayout mFlowLayout;
 
     MenuItem mStarButton;
@@ -95,10 +100,16 @@ public class MovieActivity extends SecureActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie);
 
-        ButterKnife.bind(this);
+        mToolbarLayout = findViewById(R.id.toolbar_layout);
+        mToolbar = findViewById(R.id.toolbar);
+        mToolbarLayoutBackground = findViewById(R.id.toolbar_layout_background);
+        mContent = findViewById(R.id.movie_content);
+        mProgressBar = findViewById(R.id.movie_progress_bar);
+        mFab = findViewById(R.id.fab);
+        mFlowLayout = findViewById(R.id.genre_flow_layout);
 
         Bundle bundle = this.getIntent().getExtras();
-        movie = (Movie) bundle.getSerializable("movie");
+        movie = bundle.getSerializable("movie", Movie.class);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -117,7 +128,8 @@ public class MovieActivity extends SecureActivity {
         });
         mFab.bringToFront();
 
-        Call<ResponseBody> call = JAViewer.SERVICE.get(this.movie.getLink());
+        String movieId = this.movie.getLink();
+        Call<ResponseBody> call = JAViewer.SERVICE.getMovie(Arrays.asList(movieId, "cn"));
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -135,7 +147,7 @@ public class MovieActivity extends SecureActivity {
                     Glide.with(mToolbarLayoutBackground.getContext().getApplicationContext())
                             .load(detail.coverUrl)
                             .into(mToolbarLayoutBackground);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     onFailure(call, e);
                 }
             }
@@ -148,6 +160,33 @@ public class MovieActivity extends SecureActivity {
     }
 
     private void displayInfo(MovieDetail detail) {
+        //Code
+        {
+            TextView mCode = (TextView) findViewById(R.id.movie_code);
+            if (detail.code != null && !detail.code.isEmpty()) {
+                mCode.setText(detail.code);
+                mCode.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(MovieActivity.this, MagnetSearchActivity.class);
+                        intent.putExtra("code", detail.code);
+                        startActivity(intent);
+                    }
+                });
+                mCode.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        ClipboardManager clip = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        clip.setPrimaryClip(ClipData.newPlainText("番号", detail.code));
+                        Toast.makeText(MovieActivity.this, "已复制番号", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+            } else {
+                mCode.setVisibility(View.GONE);
+            }
+        }
+
         //Info
         {
             RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.headers_recycler_view);
@@ -217,11 +256,11 @@ public class MovieActivity extends SecureActivity {
                         @Override
                         public void onClick(View v) {
                             if (genre.getLink() != null) {
-                                startActivity(MovieListActivity.newIntent(MovieActivity.this, genre.getName(), genre.getLink()));
+                                startActivity(MovieListActivity.newIntent(MovieActivity.this, genre.getName(), genre.getLink(), "genre"));
                             }
                         }
                     });
-                    chip.setChipText(genre.getName());
+                    chip.setText(genre.getName());
                     mFlowLayout.addView(view);
 
                     if (i == 0) {
@@ -229,6 +268,40 @@ public class MovieActivity extends SecureActivity {
                     }
                 }
             }
+        }
+
+        //Related Movies
+        {
+            RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.related_recycler_view);
+            ImageView mIcon = (ImageView) findViewById(R.id.movie_icon_related);
+
+            Call<ResponseBody> relatedCall = JAViewer.SERVICE.getRelatedMovies(Arrays.asList(movie.getLink(), "cn", 12));
+            relatedCall.enqueue(new Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    try {
+                        List<Movie> related = AVMOProvider.parseMovies(response.body().string());
+                        if (related.isEmpty()) {
+                            TextView mText = (TextView) findViewById(R.id.related_empty_text);
+                            mRecyclerView.setVisibility(View.GONE);
+                            mText.setVisibility(View.VISIBLE);
+                            ViewUtil.alignIconToView(mIcon, mText);
+                        } else {
+                            mRecyclerView.setAdapter(new RelatedMovieAdapter(related, MovieActivity.this));
+                            mRecyclerView.setLayoutManager(new GridLayoutManager(MovieActivity.this, 3));
+                            mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(3, ViewUtil.dpToPx(6), false));
+                            mRecyclerView.setNestedScrollingEnabled(false);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    t.printStackTrace();
+                }
+            });
         }
 
         //Changing visibility
@@ -357,7 +430,6 @@ public class MovieActivity extends SecureActivity {
         return result;
     }
 
-    @OnClick(R.id.view_preview)
     public void onClickPreview() {
         //TODO: Deprecated
         if (video != null) {
@@ -395,7 +467,6 @@ public class MovieActivity extends SecureActivity {
         });
     }
 
-    @OnClick(R.id.view_play)
     public void onPlay() {
         //TODO: Deprecated
         final String ts = String.valueOf(System.currentTimeMillis() / 1000);

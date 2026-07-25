@@ -21,9 +21,7 @@ import com.google.gson.JsonObject;
 
 import java.io.IOException;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+
 import io.github.javiewer.R;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -50,7 +48,6 @@ public class WebViewActivity extends SecureActivity {
             return chain.proceed(request);
         }
     }).build();
-    @BindView(R.id.web_view)
     WebView mWebView;
     String embeddedUrl;
     boolean locked = true;
@@ -68,7 +65,7 @@ public class WebViewActivity extends SecureActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web_view);
 
-        ButterKnife.bind(this);
+        mWebView = findViewById(R.id.web_view);
 
         Bundle bundle = this.getIntent().getExtras();
         embeddedUrl = bundle.getString("embedded_url");
@@ -169,7 +166,6 @@ public class WebViewActivity extends SecureActivity {
         });
     }
 
-    @OnClick(R.id.button_unlock)
     public void onUnlock(Button button) {
         locked = false;
         button.setEnabled(false);

@@ -18,8 +18,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.activity.MovieListActivity;
 import io.github.javiewer.adapter.item.MovieDetail;
@@ -71,17 +70,23 @@ public class MovieHeaderAdapter extends RecyclerView.Adapter<MovieHeaderAdapter.
             if (header.getLink() != null) {
                 holder.mHeaderValue.setPaintFlags(holder.mHeaderValue.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
                 holder.mHeaderValue.setTextColor(ResourcesCompat.getColor(this.mParentActivity.getResources(), R.color.colorAccent, null));
-                holder.mHeaderValue.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(mParentActivity, MovieListActivity.class);
-                        Bundle bundle = new Bundle();
-                        bundle.putString("title", header.getName() + " " + header.getValue());
-                        bundle.putString("link", header.getLink());
-                        intent.putExtras(bundle);
-                        mParentActivity.startActivity(intent);
-                    }
-                });
+                    holder.mHeaderValue.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String action = "search";
+                            if ("导演".equals(header.getName())) action = "director";
+                            else if ("制作商".equals(header.getName())) action = "studio";
+                            else if ("发行商".equals(header.getName())) action = "label";
+                            else if ("系列".equals(header.getName())) action = "series";
+                            Intent intent = new Intent(mParentActivity, MovieListActivity.class);
+                            Bundle bundle = new Bundle();
+                            bundle.putString("title", header.getName() + " " + header.getValue());
+                            bundle.putString("link", header.getLink());
+                            bundle.putString("action", action);
+                            intent.putExtras(bundle);
+                            mParentActivity.startActivity(intent);
+                        }
+                    });
             }
 
             if (first) {
@@ -98,15 +103,14 @@ public class MovieHeaderAdapter extends RecyclerView.Adapter<MovieHeaderAdapter.
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.header_name)
         public TextView mHeaderName;
 
-        @BindView(R.id.header_value)
         public TextView mHeaderValue;
 
         public ViewHolder(View view) {
             super(view);
-            ButterKnife.bind(this, view);
+            mHeaderName = view.findViewById(R.id.header_name);
+            mHeaderValue = view.findViewById(R.id.header_value);
         }
     }
 }

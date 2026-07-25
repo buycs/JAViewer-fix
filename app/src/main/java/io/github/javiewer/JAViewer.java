@@ -2,12 +2,12 @@ package io.github.javiewer;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+
 import androidx.fragment.app.Fragment;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -15,6 +15,7 @@ import com.google.gson.stream.JsonReader;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import cn.jzvd.JZVideoPlayer;
-import io.fabric.sdk.android.Fabric;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.fragment.ActressesFragment;
 import io.github.javiewer.fragment.HomeFragment;
@@ -41,14 +41,17 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import retrofit2.Retrofit;
-
-/**
- * Project: JAViewer
- */
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class JAViewer extends Application {
 
-    public static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 5.1.1; Nexus 5 Build/LMY48B; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/43.0.2357.65 Mobile Safari/537.36";
+    private static Context appContext;
+
+    public static Context getAppContext() {
+        return appContext;
+    }
+
+    public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
     public static final List<DataSource> DATA_SOURCES = new ArrayList<>();
     public static final Map<Integer, Class<? extends Fragment>> FRAGMENTS = new HashMap<Integer, Class<? extends Fragment>>() {{
         put(R.id.nav_home, HomeFragment.class);
@@ -61,33 +64,45 @@ public class JAViewer extends Application {
     public static Configurations CONFIGURATIONS;
     public static BasicService SERVICE;
     public static Map<String, String> hostReplacements = new HashMap<>();
+    public static String csrfToken = null;
+
+    public static final CookieJar COOKIE_JAR = new CookieJar() {
+        private final HashMap<HttpUrl, List<Cookie>> cookieStore = new HashMap<>();
+
+        @Override
+        public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+            cookieStore.put(url, cookies);
+        }
+
+        @Override
+        public List<Cookie> loadForRequest(HttpUrl url) {
+            List<Cookie> cookies = cookieStore.get(url);
+            return cookies != null ? cookies : new ArrayList<Cookie>();
+        }
+    };
+
     public static final OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
         @Override
         public Response intercept(Interceptor.Chain chain) throws IOException {
             Request original = chain.request();
 
-            Request request = original.newBuilder()
+            Request.Builder builder = original.newBuilder()
                     .url(replaceUrl(original.url()))
                     .header("User-Agent", USER_AGENT)
-                    .build();
+                    .header("X-Requested-With", "XMLHttpRequest");
 
+            if (csrfToken != null) {
+                builder.header("X-CSRF-Token", csrfToken);
+            }
+
+            Request request = builder.build();
+
+            android.util.Log.d("JAViewer", "Request URL: " + original.url());
+            android.util.Log.d("JAViewer", "Final URL: " + request.url());
             return chain.proceed(request);
         }
     })
-            .cookieJar(new CookieJar() {
-                private final HashMap<HttpUrl, List<Cookie>> cookieStore = new HashMap<>();
-
-                @Override
-                public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-                    cookieStore.put(url, cookies);
-                }
-
-                @Override
-                public List<Cookie> loadForRequest(HttpUrl url) {
-                    List<Cookie> cookies = cookieStore.get(url);
-                    return cookies != null ? cookies : new ArrayList<Cookie>();
-                }
-            })
+            .cookieJar(COOKIE_JAR)
             .build();
 
     static {
@@ -99,15 +114,57 @@ public class JAViewer extends Application {
     }
 
     public static void recreateService() {
-        SERVICE = new Retrofit.Builder()
-                .baseUrl(JAViewer.getDataSource().getLink())
-                .client(JAViewer.HTTP_CLIENT)
-                .build()
-                .create(BasicService.class);
+        try {
+            android.util.Log.d("JAViewer", "recreateService: " + JAViewer.getDataSource().getLink());
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(JAViewer.getDataSource().getLink())
+                    .client(JAViewer.HTTP_CLIENT)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            SERVICE = retrofit.create(BasicService.class);
+            android.util.Log.d("JAViewer", "recreateService: SUCCESS");
+        } catch (Exception e) {
+            android.util.Log.e("JAViewer", "recreateService: FAILED", e);
+        }
+    }
+
+    public static void fetchCsrfToken() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String url = JAViewer.getDataSource().getLink();
+                    okhttp3.Request request = new okhttp3.Request.Builder()
+                            .url(url)
+                            .header("User-Agent", USER_AGENT)
+                            .build();
+                    okhttp3.Response response = HTTP_CLIENT.newCall(request).execute();
+                    response.close();
+
+                    List<Cookie> cookies = COOKIE_JAR.loadForRequest(HttpUrl.parse(url));
+                    for (Cookie cookie : cookies) {
+                        if ("_csrf".equals(cookie.name())) {
+                            String raw = cookie.value();
+                            if (raw.startsWith("a:")) {
+                                int start = raw.indexOf("\"") + 1;
+                                int end = raw.indexOf("\"", start);
+                                if (start > 0 && end > start) {
+                                    csrfToken = URLDecoder.decode(raw.substring(start, end), "UTF-8");
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    android.util.Log.d("JAViewer", "CSRF token: " + csrfToken);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     public static File getStorageDir() {
-        File dir = new File(Environment.getExternalStorageDirectory(), "JAViewer/");
+        File dir = new File(appContext.getExternalFilesDir(null), "JAViewer/");
         dir.mkdirs();
         return dir;
     }
@@ -119,7 +176,6 @@ public class JAViewer extends Application {
             builder.host(hostReplacements.get(host));
             return builder.build();
         }
-
         return url;
     }
 
@@ -133,6 +189,16 @@ public class JAViewer extends Application {
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
         return gson.fromJson(json, beanClass);
+    }
+
+    public static String b(String s1, String s2) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] bytes = md.digest(String.format("%s%sBrynhildr", s1, s2).getBytes());
+            return bytesToHex(bytes);
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
     }
 
     public static String bytesToHex(byte[] bytes) {
@@ -151,26 +217,9 @@ public class JAViewer extends Application {
         return (a == b) || (a != null && a.equals(b));
     }
 
-    public static void a(Context context) {
-        String url = "https://qr.alipay.com/a6x05027ymf6n8kl0qkoa54";
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        context.startActivity(intent);
-    }
-
-    public static String b(String s1, String s2) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] bytes = md.digest(String.format("%s%sBrynhildr", s1, s2).getBytes());
-            return bytesToHex(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        }
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
-        Fabric.with(this, new Crashlytics());
+        appContext = this;
     }
 }

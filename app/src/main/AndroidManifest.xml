@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.javiewer">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -28,43 +27,56 @@
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar.TransparentStatusBar" />
         <activity
             android:name=".activity.FavouriteActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
             android:label="收藏夹"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activity.MovieListActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activity.MovieActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar.TransparentStatusBar" />
         <activity
             android:name=".activity.GalleryActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
             android:label="Gallery"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar.TransparentStatusBar" />
         <activity
             android:name=".activity.DownloadActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activity.WebViewActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.MagnetSearchActivity"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name="cat.ereza.customactivityoncrash.activity.DefaultErrorActivity"
+            android:exported="false"
             android:process=":error_activity"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".activity.StartActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.Start">
             <intent-filter>
@@ -72,10 +84,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <meta-data
-            android:name="io.fabric.ApiKey"
-            android:value="257f3310de234d2ad14656c90871598a46c5b599" />
     </application>
 
 </manifest>

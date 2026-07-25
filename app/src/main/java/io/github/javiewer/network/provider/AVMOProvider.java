@@ -1,11 +1,11 @@
 package io.github.javiewer.network.provider;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -15,32 +15,23 @@ import io.github.javiewer.adapter.item.Movie;
 import io.github.javiewer.adapter.item.MovieDetail;
 import io.github.javiewer.adapter.item.Screenshot;
 
-/**
- * Project: JAViewer
- */
 public class AVMOProvider {
 
-    public static List<Movie> parseMovies(String html) {
-        Document document = Jsoup.parse(html);
+    public static List<Movie> parseMovies(String json) throws Exception {
+        JSONObject obj = new JSONObject(json);
+        JSONArray data = obj.getJSONArray("data");
 
         List<Movie> movies = new ArrayList<>();
-
-        for (Element box : document.select("a[class*=movie-box]")) {
-            Element img = box.select("div.photo-frame > img").first();
-            Element span = box.select("div.photo-info > span").first();
-
-            boolean hot = span.getElementsByTag("i").size() > 0;
-
-            Elements date = span.select("date");
-
+        for (int i = 0; i < data.length(); i++) {
+            JSONObject item = data.getJSONObject(i);
             movies.add(
                     Movie.create(
-                            img.attr("title"),  //标题
-                            date.get(0).text(), //番号
-                            date.get(1).text(), //日期
-                            img.attr("src"),    //图片地址
-                            box.attr("href"),   //链接
-                            hot                 //是否热门
+                            item.optString("title", ""),
+                            item.optString("movieFanHao", ""),
+                            item.optString("releaseDate", ""),
+                            item.optString("posterSmall", ""),
+                            item.optString("movieId", ""),
+                            false
                     )
             );
         }
@@ -48,130 +39,217 @@ public class AVMOProvider {
         return movies;
     }
 
-    public static List<Actress> parseActresses(String html) {
-        Document document = Jsoup.parse(html);
+    public static List<Actress> parseActresses(String json) throws Exception {
+        JSONObject obj = new JSONObject(json);
+        JSONArray data = obj.getJSONArray("data");
 
         List<Actress> actresses = new ArrayList<>();
-
-        for (Element box : document.select("a[class*=avatar-box]")) {
-            Element img = box.select("div.photo-frame > img").first();
-            Element span = box.select("div.photo-info > span").first();
-
+        for (int i = 0; i < data.length(); i++) {
+            JSONObject item = data.getJSONObject(i);
             actresses.add(
                     Actress.create(
-                            span.text(),     //名字
-                            img.attr("src"), //图片地址
-                            box.attr("href") //链接
-                    ));
+                            item.optString("starName", ""),
+                            item.optString("avatarUrl", ""),
+                            item.optString("starId", "")
+                    )
+            );
         }
 
         return actresses;
     }
 
-    public static MovieDetail parseMoviesDetail(String html) {
-        Document document = Jsoup.parse(html);
+    public static MovieDetail parseMoviesDetail(String json) throws Exception {
+        JSONObject obj = new JSONObject(json);
+        JSONObject data = obj.getJSONObject("data");
+
         MovieDetail movie = new MovieDetail();
 
-        //General Parsing
-        {
-            movie.title = document.select("div.container > h3").first().text();
-            movie.coverUrl = document.select("[class=bigImage]").first().attr("href");
-        }
+        movie.title = data.optString("title", "");
+        movie.code = data.optString("movieFanHao", "");
+        movie.btsSearchUrl = data.optString("btsSearchUrl", "");
+        movie.coverUrl = data.optString("posterLarge", "");
 
-        //Parsing Screenshots
-        {
-            for (Element box : document.select("[class*=sample-box]")) {
+        JSONArray sampleSmall = data.optJSONArray("sampleSmall");
+        if (sampleSmall != null) {
+            for (int i = 0; i < sampleSmall.length(); i++) {
+                String url = sampleSmall.getString(i);
+                String largeUrl = data.optJSONArray("sampleLarge") != null && i < data.optJSONArray("sampleLarge").length()
+                        ? data.optJSONArray("sampleLarge").getString(i) : url;
                 movie.screenshots.add(
                         Screenshot.create(
-                                box.getElementsByTag("img").first().attr("src"),
-                                box.attr("href")
+                                url,
+                                largeUrl
                         )
                 );
             }
         }
 
-        //Parsing Actresses
-        {
-            for (Element box : document.select("[class*=avatar-box]")) {
+        JSONArray actresses = data.optJSONArray("star");
+        if (actresses != null) {
+            for (int i = 0; i < actresses.length(); i++) {
+                JSONObject a = actresses.getJSONObject(i);
                 movie.actresses.add(
                         Actress.create(
-                                box.text(),
-                                box.getElementsByTag("img").first().attr("src"),
-                                box.attr("href")
+                                a.optString("starName", ""),
+                                a.optString("avatarUrl", ""),
+                                a.optString("starId", "")
                         )
                 );
             }
         }
 
-        //Parsing Headers
         {
-            Element info = document.select("div.info").first();
-            if (info != null) {
-                for (Element p : info.select("p:not([class*=header]):has(span:not([class=genre]))")) {
-                    String[] strings = p.text().split(":");
-                    movie.headers.add(MovieDetail.Header.create(
-                            strings[0].trim(),
-                            strings.length > 1 ? strings[1].trim() : "",
-                            null
-                    ));
-                }
-
-                {
-                    List<String> headerNames = new ArrayList<>();
-                    List<String[]> headerAttr = new ArrayList<>();
-
-                    for (Element p : info.select("p[class*=header]")) {
-                        headerNames.add(p.text().replace(":", ""));
-                    }
-
-                    for (Element a : info.select("p > a")) {
-                        headerAttr.add(new String[]{a.text(), a.attr("href")});
-                    }
-
-                    for (int i = 0; i < Math.min(headerNames.size(), headerAttr.size()); i++) {
-                        movie.headers.add(
-                                MovieDetail.Header.create(
-                                        headerNames.get(i),
-                                        headerAttr.get(i)[0].trim(),
-                                        headerAttr.get(i)[1].trim()
-                                )
-                        );
-                    }
-                }
-
-                for (Element a : info.select("* > [class=genre] > a")) {
-                    movie.genres.add(
-                            Genre.create(
-                                    a.text(),
-                                    a.attr("href")
-                            )
-                    );
+            String date = data.optString("releaseDate", "");
+            if (!date.isEmpty()) {
+                movie.headers.add(MovieDetail.Header.create("发行日期", date, null));
+            }
+            int length = data.optInt("length", 0);
+            if (length > 0) {
+                movie.headers.add(MovieDetail.Header.create("时长", length + " 分钟", null));
+            }
+            JSONObject director = data.optJSONObject("director");
+            if (director != null) {
+                String name = director.optString("directorName", "");
+                if (!name.isEmpty()) {
+                    movie.headers.add(MovieDetail.Header.create("导演", name, director.optString("directorId", "")));
                 }
             }
-            return movie;
+            JSONObject studio = data.optJSONObject("studio");
+            if (studio != null) {
+                String name = studio.optString("studioName", "");
+                if (!name.isEmpty()) {
+                    movie.headers.add(MovieDetail.Header.create("制作商", name, studio.optString("studioId", "")));
+                }
+            }
+            JSONObject label = data.optJSONObject("label");
+            if (label != null) {
+                String name = label.optString("labelName", "");
+                if (!name.isEmpty()) {
+                    movie.headers.add(MovieDetail.Header.create("发行商", name, label.optString("labelId", "")));
+                }
+            }
+            JSONObject series = data.optJSONObject("series");
+            if (series != null) {
+                String seriesName = series.optString("seriesName", "");
+                String seriesId = series.optString("seriesId", "");
+                if (!seriesId.isEmpty()) {
+                    movie.headers.add(MovieDetail.Header.create("系列", seriesName.isEmpty() ? "-" : seriesName, seriesId));
+                }
+            } else {
+                String seriesId = data.optString("seriesId", "");
+                if (!seriesId.isEmpty()) {
+                    movie.headers.add(MovieDetail.Header.create("系列", "-", seriesId));
+                }
+            }
         }
+
+        JSONArray genres = data.optJSONArray("genre");
+        if (genres != null) {
+            for (int i = 0; i < genres.length(); i++) {
+                JSONObject g = genres.getJSONObject(i);
+                movie.genres.add(
+                        Genre.create(
+                                g.optString("genreName", ""),
+                                g.optString("genreId", "")
+                        )
+                );
+            }
+        }
+
+        return movie;
     }
 
-    public static LinkedHashMap<String, List<Genre>> parseGenres(String html) {
+    public static LinkedHashMap<String, List<Genre>> parseGenres(String json) throws Exception {
+        JSONObject obj = new JSONObject(json);
         LinkedHashMap<String, List<Genre>> map = new LinkedHashMap<>();
+        List<Genre> others = null;
 
-        Element container = Jsoup.parse(html).getElementsByClass("pt-10").first();
-        List<String> keys = new ArrayList<>();
-        for (Element e : container.getElementsByTag("h4")) {
-            keys.add(e.text());
-        }
-
-        List<List<Genre>> genres = new ArrayList<>();
-        for (Element element : container.getElementsByClass("genre-box")) {
-            List<Genre> list = new ArrayList<>();
-            for (Element e : element.getElementsByTag("a")) {
-                list.add(Genre.create(e.text(), e.attr("href")));
+        try {
+            JSONObject data = obj.getJSONObject("data");
+            String[] order = {"0","1","2","3","4","5","6","7"};
+            for (String key : order) {
+                if (data.has(key)) {
+                    JSONArray arr = data.getJSONArray(key);
+                    List<Genre> genres = new ArrayList<>();
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject g = arr.getJSONObject(i);
+                        genres.add(Genre.create(
+                                g.optString("genreName", ""),
+                                g.optString("genreId", "")
+                        ));
+                    }
+                    if (!genres.isEmpty()) {
+                        String label;
+                        switch (key) {
+                            case "0": label = "熱門類型"; break;
+                            case "1": label = "職業扮演"; break;
+                            case "2": label = "衣着造型"; break;
+                            case "3": label = "身材特征"; break;
+                            case "4": label = "性愛玩法"; break;
+                            case "5": label = "道具調教"; break;
+                            case "6": label = "製作系列"; break;
+                            case "7": label = "AV OPEN"; break;
+                            default: label = key; break;
+                        }
+                        map.put(label, genres);
+                    }
+                }
             }
-            genres.add(list);
+            if (data.has("-1")) {
+                JSONArray arr = data.getJSONArray("-1");
+                others = new ArrayList<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject g = arr.getJSONObject(i);
+                    others.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
+                }
+            }
+        } catch (JSONException e) {
+            JSONArray data = obj.getJSONArray("data");
+            for (int i = 0; i < data.length(); i++) {
+                JSONArray group = data.getJSONArray(i);
+                if (group.length() == 0) continue;
+                JSONObject first = group.getJSONObject(0);
+                int type = first.optInt("type", -1);
+                if (type == -1) {
+                    others = new ArrayList<>();
+                    for (int j = 0; j < group.length(); j++) {
+                        JSONObject g = group.getJSONObject(j);
+                        others.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
+                    }
+                    continue;
+                }
+                if (type == 7) {
+                    // merge into 其他 for javu/wav
+                    if (others == null) others = new ArrayList<>();
+                    for (int j = 0; j < group.length(); j++) {
+                        JSONObject g = group.getJSONObject(j);
+                        others.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
+                    }
+                    continue;
+                }
+                String label;
+                switch (String.valueOf(type)) {
+                    case "0": label = "熱門類型"; break;
+                    case "1": label = "職業扮演"; break;
+                    case "2": label = "衣着造型"; break;
+                    case "3": label = "身材特征"; break;
+                    case "4": label = "性愛玩法"; break;
+                    case "5": label = "道具調教"; break;
+                    case "6": label = "製作系列"; break;
+                    case "7": label = "AV OPEN"; break;
+                    default: label = String.valueOf(type); break;
+                }
+                List<Genre> list = new ArrayList<>();
+                for (int j = 0; j < group.length(); j++) {
+                    JSONObject g = group.getJSONObject(j);
+                    list.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
+                }
+                map.put(label, list);
+            }
         }
 
-        for (int i = 0; i < keys.size(); i++) {
-            map.put(keys.get(i), genres.get(i));
+        if (others != null && !others.isEmpty()) {
+            map.put("其他", others);
         }
 
         return map;

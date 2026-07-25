@@ -8,21 +8,38 @@ import java.util.List;
 
 public class DataSource extends Linkable {
 
-    public static DataSource AVMO = new DataSource("AVMOO 日本", "https://avos.pw");
-    public static DataSource AVSO = new DataSource("AVSOX 日本无码", "https://avso.club");
-    public static DataSource AVXO = new DataSource("AVMEMO 欧美", "https://avxo.pw");
-
-
     public String name;
+    public String domain;
+    public String apiPath;
     public List<String> legacies;
 
-    public DataSource(String name, String baseUrl) {
+    public DataSource() {
+    }
+
+    public DataSource(String name, String domain, String apiPath) {
         this.name = name;
-        this.link = baseUrl;
+        this.domain = domain;
+        this.apiPath = apiPath;
+        this.link = domain + apiPath;
+    }
+
+    public String getLink() {
+        if (domain != null && apiPath != null) {
+            return domain + apiPath;
+        }
+        return link;
     }
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof DataSource) {
+            return getLink() != null && getLink().equals(((DataSource) o).getLink());
+        }
+        return super.equals(o);
     }
 
     @Override

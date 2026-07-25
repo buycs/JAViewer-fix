@@ -9,9 +9,7 @@ import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationAdapter;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationViewPager;
 
-import butterknife.BindColor;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.ViewPagerAdapter;
 import io.github.javiewer.fragment.favourite.FavouriteActressFragment;
@@ -21,15 +19,10 @@ import io.github.javiewer.fragment.favourite.FavouriteMovieFragment;
 public class FavouriteActivity extends SecureActivity {
 
     public static ViewPagerAdapter mAdapter;
-    @BindView(R.id.favourite_view_pager)
     AHBottomNavigationViewPager mViewPager;
-    @BindView(R.id.app_bar_fav)
     AppBarLayout mAppBarLayout;
-    @BindView(R.id.bottom_navigation)
     AHBottomNavigation mBottomNav;
-    @BindView(R.id.toolbar_fav)
     Toolbar mToolbar;
-    @BindColor(R.color.colorPrimary)
     int mColorPrimary;
     private ViewPager.OnPageChangeListener mOnPageChangeListener = new ViewPager.SimpleOnPageChangeListener() {
         @Override
@@ -52,7 +45,11 @@ public class FavouriteActivity extends SecureActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favourite);
 
-        ButterKnife.bind(this);
+        mViewPager = findViewById(R.id.favourite_view_pager);
+        mAppBarLayout = findViewById(R.id.app_bar_fav);
+        mBottomNav = findViewById(R.id.bottom_navigation);
+        mToolbar = findViewById(R.id.toolbar_fav);
+        mColorPrimary = getResources().getColor(R.color.colorPrimary);
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

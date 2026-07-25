@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="36dp"
         android:paddingBottom="8dp">
 
         <LinearLayout
@@ -108,6 +107,10 @@
         <include
             android:id="@+id/movie_genre"
             layout="@layout/content_movie_genre" />
+
+        <include
+            android:id="@+id/movie_related"
+            layout="@layout/content_movie_related" />
     </LinearLayout>
 
 

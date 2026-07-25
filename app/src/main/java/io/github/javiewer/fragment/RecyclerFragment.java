@@ -12,8 +12,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.view.ViewUtil;
 import io.github.javiewer.view.listener.BasicOnScrollListener;
@@ -22,10 +21,8 @@ import io.github.javiewer.view.listener.BasicOnScrollListener;
  * Project: JAViewer
  */
 public abstract class RecyclerFragment<I, LM extends RecyclerView.LayoutManager> extends Fragment {
-    @BindView(R.id.recycler_view)
     protected RecyclerView mRecyclerView;
 
-    @BindView(R.id.refresh_layout)
     protected SwipeRefreshLayout mRefreshLayout;
 
     /*@BindView(R.id.adView)
@@ -89,7 +86,8 @@ public abstract class RecyclerFragment<I, LM extends RecyclerView.LayoutManager>
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_recycler, container, false);
-        ButterKnife.bind(this, view);
+        mRecyclerView = view.findViewById(R.id.recycler_view);
+        mRefreshLayout = view.findViewById(R.id.refresh_layout);
         return view;
     }
 
@@ -107,7 +105,7 @@ public abstract class RecyclerFragment<I, LM extends RecyclerView.LayoutManager>
 
         if (savedInstanceState != null) {
             this.getLayoutManager().onRestoreInstanceState(savedInstanceState.getParcelable("LayoutManagerState"));
-            this.setItems((ArrayList<I>) savedInstanceState.getSerializable("Items"));
+            this.setItems((ArrayList<I>) savedInstanceState.getSerializable("Items", ArrayList.class));
             if (this.getOnScrollListener() != null) {
                 this.getOnScrollListener().restoreState(savedInstanceState.getBundle("ScrollListenerState"));
             }

@@ -18,8 +18,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DownloadLink;
 import io.github.javiewer.adapter.item.MagnetLink;
@@ -107,14 +106,18 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                             Toast.makeText(mParentActivity, "磁力链接：" + magnetLink + " 已复制到剪贴板", Toast.LENGTH_SHORT).show();
                         }
                     })
-                    .setPositiveButton("打开", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(magnetLink));
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            mParentActivity.startActivity(intent);
-                        }
-                    })
+                        .setPositiveButton("打开", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(magnetLink));
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                if (intent.resolveActivity(mParentActivity.getPackageManager()) != null) {
+                                    mParentActivity.startActivity(intent);
+                                } else {
+                                    Toast.makeText(mParentActivity, "没有找到可处理磁力链接的应用", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        })
                     .setNegativeButton("取消", null)
                     .show();
 
@@ -125,21 +128,20 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.download_title)
         public TextView mTextTitle;
 
-        @BindView(R.id.download_size)
         public TextView mTextSize;
 
-        @BindView(R.id.download_date)
         public TextView mTextDate;
 
-        @BindView(R.id.layout_download)
         public View mView;
 
         public ViewHolder(View view) {
             super(view);
-            ButterKnife.bind(this, view);
+            mTextTitle = view.findViewById(R.id.download_title);
+            mTextSize = view.findViewById(R.id.download_size);
+            mTextDate = view.findViewById(R.id.download_date);
+            mView = view.findViewById(R.id.layout_download);
         }
 
         public void parse(DownloadLink link) {

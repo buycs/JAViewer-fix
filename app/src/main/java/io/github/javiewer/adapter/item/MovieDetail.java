@@ -10,6 +10,8 @@ public class MovieDetail {
 
     public final List<Screenshot> screenshots = new ArrayList<>();
     public String title;
+    public String code;
+    public String btsSearchUrl;
     public String coverUrl;
     public List<Header> headers = new ArrayList<>();
 

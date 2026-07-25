@@ -15,36 +15,35 @@ import com.bumptech.glide.Glide;
 
 import java.util.List;
 
-
 import io.github.javiewer.R;
 import io.github.javiewer.activity.MovieActivity;
 import io.github.javiewer.adapter.item.Movie;
 
-/**
- * Project: JAViewer
- */
-public class MovieAdapter extends ItemAdapter<Movie, MovieAdapter.ViewHolder> {
+public class RelatedMovieAdapter extends RecyclerView.Adapter<RelatedMovieAdapter.ViewHolder> {
 
-    protected boolean showIfHot = true;
+    private List<Movie> movies;
     private Activity mParentActivity;
 
-    public MovieAdapter(List<Movie> movies, Activity mParentActivity) {
-        super(movies);
+    public RelatedMovieAdapter(List<Movie> movies, Activity mParentActivity) {
+        this.movies = movies;
         this.mParentActivity = mParentActivity;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_movie, parent, false);
-
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_movie_simple, parent, false);
         return new ViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        final Movie movie = getItems().get(position);
+        final Movie movie = movies.get(position);
 
-        holder.parse(movie);
+        holder.mTitle.setText(movie.getTitle());
+        holder.mCode.setText(movie.getCode());
+        Glide.with(holder.mImage.getContext().getApplicationContext())
+                .load(movie.getCoverUrl())
+                .into(holder.mImage);
 
         holder.mCard.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,48 +52,29 @@ public class MovieAdapter extends ItemAdapter<Movie, MovieAdapter.ViewHolder> {
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("movie", movie);
                 intent.putExtras(bundle);
-
                 mParentActivity.startActivity(intent);
             }
         });
+    }
 
-        holder.mImageCover.setImageDrawable(null);
-        Glide.with(holder.mImageCover.getContext().getApplicationContext())
-                .load(movie.getCoverUrl())
-                .into(holder.mImageCover);
-
-        holder.mImageHot.setVisibility(movie.isHot() && showIfHot ? View.VISIBLE : View.GONE);
+    @Override
+    public int getItemCount() {
+        return movies == null ? 0 : movies.size();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        public TextView mTextTitle;
-
-        public TextView mTextCode;
-
-        public TextView mTextDate;
-
-        public ImageView mImageCover;
-
-        public ImageView mImageHot;
-
+        public ImageView mImage;
+        public TextView mTitle;
+        public TextView mCode;
         public CardView mCard;
 
         public ViewHolder(View view) {
             super(view);
-
-            mTextTitle = view.findViewById(R.id.movie_title);
-            mTextCode = view.findViewById(R.id.movie_size);
-            mTextDate = view.findViewById(R.id.movie_date);
-            mImageCover = view.findViewById(R.id.movie_cover);
-            mImageHot = view.findViewById(R.id.movie_hot);
+            mImage = view.findViewById(R.id.movie_cover);
+            mTitle = view.findViewById(R.id.movie_title);
+            mCode = view.findViewById(R.id.movie_code);
             mCard = view.findViewById(R.id.card_movie);
-        }
-
-        public void parse(Movie movie) {
-            mTextCode.setText(movie.getCode());
-            mTextTitle.setText(movie.getTitle());
-            mTextDate.setText(movie.getDate());
         }
     }
 }

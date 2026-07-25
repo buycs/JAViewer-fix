@@ -29,6 +29,7 @@ public class ActressClickListener implements View.OnClickListener {
             Bundle bundle = new Bundle();
             bundle.putString("title", actress.getName() + " 的作品");
             bundle.putString("link", actress.getLink());
+            bundle.putString("action", "star");
 
             intent.putExtras(bundle);
 

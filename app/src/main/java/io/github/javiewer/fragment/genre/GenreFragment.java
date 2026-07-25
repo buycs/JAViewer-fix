@@ -13,8 +13,9 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
+import java.util.Arrays;
+
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.GenreAdapter;
@@ -27,7 +28,6 @@ import retrofit2.Call;
 
 public class GenreFragment extends Fragment {
 
-    @BindView(R.id.genre_recycler_view)
     public RecyclerView mRecyclerView;
     protected List<Genre> genres = new ArrayList<>();
     private RecyclerView.Adapter mAdapter;
@@ -41,7 +41,7 @@ public class GenreFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_genre_list, container, false);
-        ButterKnife.bind(this, view);
+        mRecyclerView = view.findViewById(R.id.genre_recycler_view);
         return view;
     }
 
@@ -61,7 +61,7 @@ public class GenreFragment extends Fragment {
     }
 
     public Call<ResponseBody> getCall(int page) {
-        return JAViewer.SERVICE.getActresses(page);
+        return JAViewer.SERVICE.getStars(Arrays.asList("stars", 60));
     }
 
     public List<Genre> getGenres() {

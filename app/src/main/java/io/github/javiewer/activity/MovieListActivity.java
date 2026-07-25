@@ -13,10 +13,15 @@ import io.github.javiewer.view.ViewUtil;
 public class MovieListActivity extends SecureActivity {
 
     public static Intent newIntent(Context context, String title, String link) {
+        return newIntent(context, title, link, "search");
+    }
+
+    public static Intent newIntent(Context context, String title, String link, String action) {
         Intent intent = new Intent(context, MovieListActivity.class);
         Bundle bundle = new Bundle();
         bundle.putString("title", title);
         bundle.putString("link", link);
+        bundle.putString("action", action);
         intent.putExtras(bundle);
         return intent;
     }

@@ -13,8 +13,7 @@ import com.bumptech.glide.Glide;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.activity.GalleryActivity;
 import io.github.javiewer.adapter.item.Movie;
@@ -89,12 +88,11 @@ public class ScreenshotAdapter extends RecyclerView.Adapter<ScreenshotAdapter.Vi
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.screenshot_image_view)
         public ImageView mImage;
 
         public ViewHolder(View view) {
             super(view);
-            ButterKnife.bind(this, view);
+            mImage = view.findViewById(R.id.screenshot_image_view);
         }
     }
 }

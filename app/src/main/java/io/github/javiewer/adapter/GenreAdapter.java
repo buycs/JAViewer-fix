@@ -12,8 +12,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.activity.MovieListActivity;
 import io.github.javiewer.adapter.item.Genre;
@@ -53,6 +52,7 @@ public class GenreAdapter extends RecyclerView.Adapter<GenreAdapter.ViewHolder> 
                     Bundle bundle = new Bundle();
                     bundle.putString("title", genre.getName());
                     bundle.putString("link", genre.getLink());
+                    bundle.putString("action", "genre");
 
                     intent.putExtras(bundle);
 
@@ -71,16 +71,15 @@ public class GenreAdapter extends RecyclerView.Adapter<GenreAdapter.ViewHolder> 
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.genre_name)
         public TextView mTextName;
 
-        @BindView(R.id.card_genre)
         public CardView mCard;
 
         public ViewHolder(View view) {
             super(view);
 
-            ButterKnife.bind(this, view);
+            mTextName = view.findViewById(R.id.genre_name);
+            mCard = view.findViewById(R.id.card_genre);
         }
 
         public void parse(Genre genre) {

@@ -38,8 +38,8 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.miguelcatalan.materialsearchview.SearchAdapter;
-import com.miguelcatalan.materialsearchview.utils.AnimationUtil;
+import io.github.javiewer.view.AnimationUtil;
+import io.github.javiewer.view.SearchAdapter;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -221,7 +221,7 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         initSearchView();
 
         mSuggestionsListView.setVisibility(GONE);
-        setAnimationDuration(AnimationUtil.ANIMATION_DURATION_MEDIUM);
+        setAnimationDuration(io.github.javiewer.view.AnimationUtil.ANIMATION_DURATION_MEDIUM);
     }
 
     private void initSearchView() {

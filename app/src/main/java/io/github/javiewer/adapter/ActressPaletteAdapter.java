@@ -2,6 +2,7 @@ package io.github.javiewer.adapter;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import androidx.palette.graphics.Palette;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,21 +13,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.Actress;
 import io.github.javiewer.view.SquareTopCrop;
 import io.github.javiewer.view.ViewUtil;
 import io.github.javiewer.view.listener.ActressClickListener;
 import io.github.javiewer.view.listener.ActressLongClickListener;
-
-import static com.bumptech.glide.load.engine.DiskCacheStrategy.SOURCE;
 
 /**
  * Project: JAViewer
@@ -73,17 +72,15 @@ public class ActressPaletteAdapter extends RecyclerView.Adapter<ActressPaletteAd
         }
 
         Glide.with(holder.mImage.getContext().getApplicationContext())
-                .load(actress.getImageUrl())
                 .asBitmap()
+                .load(actress.getImageUrl())
                 .placeholder(R.drawable.ic_movie_actresses)
-                .diskCacheStrategy(SOURCE) // override default RESULT cache and apply transform always
-                .skipMemoryCache(true) // do not reuse the transformed result while running
-                .transform(new SquareTopCrop(holder.mImage.getContext()))
-                //.transform(new PositionedCropTransformation(holder.mImage.getContext(), 0, 0))
-                .into(new SimpleTarget<Bitmap>() {
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .skipMemoryCache(true)
+                .transform(new SquareTopCrop())
+                .into(new CustomTarget<Bitmap>() {
                     @Override
-                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                        //resource = Bitmap.createBitmap(resource, 0, 0, resource.getWidth(), resource.getWidth());
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         holder.mImage.setImageBitmap(resource);
 
                         try {
@@ -101,6 +98,10 @@ public class ActressPaletteAdapter extends RecyclerView.Adapter<ActressPaletteAd
                         } catch (Exception ignored) {
                         }
                     }
+
+                    @Override
+                    public void onLoadCleared(Drawable placeholder) {
+                    }
                 });
 
     }
@@ -112,18 +113,17 @@ public class ActressPaletteAdapter extends RecyclerView.Adapter<ActressPaletteAd
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.actress_palette_img)
         public ImageView mImage;
 
-        @BindView(R.id.actress_palette_name)
         public TextView mName;
 
-        @BindView(R.id.card_actress_palette)
         public CardView mCard;
 
         public ViewHolder(View view) {
             super(view);
-            ButterKnife.bind(this, view);
+            mImage = view.findViewById(R.id.actress_palette_img);
+            mName = view.findViewById(R.id.actress_palette_name);
+            mCard = view.findViewById(R.id.card_actress_palette);
         }
     }
 }

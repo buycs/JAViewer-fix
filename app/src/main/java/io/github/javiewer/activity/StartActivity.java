@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,37 +47,14 @@ public class StartActivity extends AppCompatActivity {
     }
 
     public void readProperties() {
-        Request request = new Request.Builder()
-                // todo: 正式版改成官方仓库的地址
-                .url("https://raw.githubusercontent.com/ipcjs/JAViewer/master/app/src/main/assets/properties.json?t=" + System.currentTimeMillis() / 1000)
-                .build();
-        JAViewer.HTTP_CLIENT.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.w("StartActivity", "onFailure: " + e);
-                try (InputStream is = getAssets().open("properties.json")) {
-                    Properties properties = JAViewer.parseJson(Properties.class, IOUtils.readText(is, IOUtils.UTF_8));
-                    if (properties != null) {
-                        runOnUiThread(() -> handleProperties(properties));
-                    }
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+        try (InputStream is = getAssets().open("properties.json")) {
+            Properties properties = JAViewer.parseJson(Properties.class, IOUtils.readText(is, IOUtils.UTF_8));
+            if (properties != null) {
+                handleProperties(properties);
             }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                final Properties properties = JAViewer.parseJson(Properties.class, response.body().string());
-                if (properties != null) {
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            handleProperties(properties);
-                        }
-                    });
-                }
-            }
-        });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void handleProperties(Properties properties) {
@@ -97,41 +73,7 @@ public class StartActivity extends AppCompatActivity {
             }
         }
 
-        int currentVersion;
-        try {
-            currentVersion = this.getPackageManager().getPackageInfo(this.getPackageName(), 0).versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new RuntimeException("Hacked???");
-        }
-
-        if (properties.getLatestVersionCode() > 0 && currentVersion < properties.getLatestVersionCode()) {
-
-            String message = "新版本：" + properties.getLatestVersion();
-            if (properties.getChangelog() != null) {
-                message += "\n\n更新日志：\n\n" + properties.getChangelog() + "\n";
-            }
-
-            final AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle("发现更新")
-                    .setMessage(message)
-                    .setNegativeButton("忽略更新", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            start();
-                        }
-                    })
-                    .setPositiveButton("更新", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            start();
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/SplashCodes/JAViewer/releases")));
-                        }
-                    })
-                    .create();
-            dialog.show();
-        } else {
-            start();
-        }
+        start();
 
     }
 
@@ -141,7 +83,7 @@ public class StartActivity extends AppCompatActivity {
     }
 
     private void checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q && this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Dexter.withActivity(this)
                     .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     .withListener(new PermissionListener() {
