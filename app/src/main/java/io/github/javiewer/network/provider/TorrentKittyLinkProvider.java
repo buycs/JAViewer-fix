@@ -66,9 +66,9 @@ public class TorrentKittyLinkProvider extends DownloadLinkProvider {
     @Override
     public MagnetLink parseMagnetLink(String htmlContent) {
         Document doc = Jsoup.parse(htmlContent);
-        Element magnetLink = doc.getElementsByAttributeValue("rel", "magnet").first();
+        Element magnetLink = doc.getElementsByClass("magnet-link").first();
         if (magnetLink != null) {
-            return MagnetLink.create(magnetLink.attr("href"));
+            return MagnetLink.create(magnetLink.text());
         }
         return null;
     }
