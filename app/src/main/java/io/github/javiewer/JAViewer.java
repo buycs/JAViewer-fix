@@ -109,11 +109,11 @@ public class JAViewer extends Application {
                     .header("User-Agent", USER_AGENT);
 
             String host = original.url().host();
-            if (!host.contains("torrentkitty")) {
+            if (!host.contains("torrentkitty") && !host.contains("btsearch")) {
                 builder.header("X-Requested-With", "XMLHttpRequest");
             }
 
-            if (csrfToken != null) {
+            if (csrfToken != null && !host.contains("btsearch")) {
                 builder.header("X-CSRF-Token", csrfToken);
             }
 

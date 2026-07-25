@@ -26,7 +26,7 @@ public interface BtSearch {
     String BASE_URL = "https://www.btsearch.love";
     String SECRET_KEY = "long2ice";
 
-    OkHttpClient BTSEARCH_CLIENT = JAViewer.HTTP_CLIENT.newBuilder()
+    OkHttpClient BTSEARCH_CLIENT = new OkHttpClient.Builder()
             .addInterceptor(chain -> {
                 Request original = chain.request();
                 HttpUrl url = original.url();
@@ -43,13 +43,12 @@ public interface BtSearch {
 
                 String sign = generateSign(params);
 
-                android.util.Log.d("JAViewer", "BtSearch TS: " + timestamp + " NONCE: " + nonce + " SIGN: " + sign);
-
                 Request.Builder builder = original.newBuilder()
                         .header("x-timestamp", timestamp)
                         .header("x-nonce", nonce)
                         .header("x-sign", sign)
                         .header("Accept", "application/json")
+                        .header("User-Agent", JAViewer.USER_AGENT)
                         .header("Referer", BASE_URL + "/search");
 
                 return chain.proceed(builder.build());
