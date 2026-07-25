@@ -2,6 +2,7 @@ package io.github.javiewer.activity;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
 import com.google.android.material.tabs.TabLayout;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
@@ -14,7 +15,6 @@ import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.ViewPagerAdapter;
 import io.github.javiewer.fragment.BtSearchFragment;
-import io.github.javiewer.fragment.DownloadFragment;
 
 public class DownloadActivity extends SecureActivity {
 
@@ -46,27 +46,16 @@ public class DownloadActivity extends SecureActivity {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
         Fragment fragment;
 
-        fragment = new DownloadFragment();
-        bundle = (Bundle) bundle.clone();
-        bundle.putString("provider", "btso");
-        fragment.setArguments(bundle);
-        adapter.addFragment(fragment, "BTSO");
-
-        fragment = new DownloadFragment();
-        bundle = (Bundle) bundle.clone();
-        bundle.putString("provider", "torrentkitty");
-        fragment.setArguments(bundle);
-        adapter.addFragment(fragment, "Torrent Kitty");
-
         fragment = new BtSearchFragment();
         bundle = (Bundle) bundle.clone();
         bundle.putString("keyword", this.keyword);
         fragment.setArguments(bundle);
-        adapter.addFragment(fragment, "BtSearch");
+        adapter.addFragment(fragment, "磁力搜索");
 
         mViewPager.setAdapter(adapter);
 
         mTabLayout.setupWithViewPager(mViewPager);
+        mTabLayout.setVisibility(mTabLayout.getTabCount() <= 1 ? View.GONE : View.VISIBLE);
 
         long downloadCounter = JAViewer.CONFIGURATIONS.getDownloadCounter();
         if (downloadCounter == -1) {
