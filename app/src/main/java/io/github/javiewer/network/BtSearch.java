@@ -2,34 +2,66 @@ package io.github.javiewer.network;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import io.github.javiewer.JAViewer;
-import okhttp3.ResponseBody;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
-import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface BtSearch {
 
     String BASE_URL = "https://www.btsearch.love";
+    String SECRET_KEY = "long2ice";
+
+    OkHttpClient BTSEARCH_CLIENT = JAViewer.HTTP_CLIENT.newBuilder()
+            .addInterceptor(chain -> {
+                Request original = chain.request();
+                HttpUrl url = original.url();
+
+                String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
+                String nonce = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+
+                Map<String, String> params = new HashMap<>();
+                for (int i = 0; i < url.querySize(); i++) {
+                    params.put(url.queryParameterName(i), url.queryParameterValue(i));
+                }
+                params.put("timestamp", timestamp);
+                params.put("nonce", nonce);
+
+                String sign = generateSign(params);
+
+                Request.Builder builder = original.newBuilder()
+                        .header("x-timestamp", timestamp)
+                        .header("x-nonce", nonce)
+                        .header("x-sign", sign)
+                        .header("Accept", "application/json")
+                        .header("Referer", BASE_URL + "/search");
+
+                return chain.proceed(builder.build());
+            })
+            .build();
+
     BtSearch INSTANCE = new Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(JAViewer.HTTP_CLIENT)
+            .client(BTSEARCH_CLIENT)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(BtSearch.class);
 
     @GET("/api/search")
-    @Headers({
-            "Accept: application/json",
-            "Accept-Language: zh-CN,zh;q=0.9",
-            "Referer: https://www.btsearch.love/search"
-    })
     Call<SearchResult> search(
             @Query("keyword") String keyword,
             @Query("limit") int limit,
@@ -37,11 +69,38 @@ public interface BtSearch {
     );
 
     @GET("/torrent/{id}")
-    @Headers({
-            "Accept: application/json",
-            "Accept-Language: zh-CN,zh;q=0.9"
-    })
     Call<TorrentDetail> getDetail(@Path("id") long id, @Query("keyword") String keyword);
+
+    static String generateSign(Map<String, String> params) {
+        List<String> sorted = new ArrayList<>();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            sorted.add(entry.getKey() + "=" + entry.getValue());
+        }
+        sorted.add("key=" + SECRET_KEY);
+        Collections.sort(sorted);
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < sorted.size(); i++) {
+            if (i > 0) sb.append("&");
+            sb.append(sorted.get(i));
+        }
+
+        return md5(sb.toString()).toUpperCase();
+    }
+
+    static String md5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
 
     class SearchResult {
         public int total;
