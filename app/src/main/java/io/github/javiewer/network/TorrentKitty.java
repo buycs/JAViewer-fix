@@ -14,7 +14,7 @@ import retrofit2.http.Url;
  */
 public interface TorrentKitty {
 
-    String BASE_URL = "https://www.torrentkitty.tv";
+    String BASE_URL = "https://torrentkitty.one";
     TorrentKitty INSTANCE = new Retrofit.Builder()
             .baseUrl(TorrentKitty.BASE_URL)
             .client(JAViewer.HTTP_CLIENT)
