@@ -70,7 +70,12 @@ public interface BtSearch {
     Call<SearchResult> search(
             @Query("keyword") String keyword,
             @Query("limit") int limit,
-            @Query("offset") int offset
+            @Query("offset") int offset,
+            @Query("mode") String mode,
+            @Query("time") String time,
+            @Query("sort") String sort,
+            @Query("sort_type") String sortType,
+            @Query("size") String size
     );
 
     @GET("/torrent/{id}")

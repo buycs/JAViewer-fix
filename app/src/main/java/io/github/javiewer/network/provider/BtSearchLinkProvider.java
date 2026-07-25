@@ -27,7 +27,7 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
     public Call<BtSearch.SearchResult> searchApi(String keyword, int page) {
         int limit = 10;
         int offset = (page - 1) * limit;
-        return BtSearch.INSTANCE.search(keyword, limit, offset);
+        return BtSearch.INSTANCE.search(keyword, limit, offset, "", "", "", "asc", "");
     }
 
     public List<DownloadLink> parseSearchResult(BtSearch.SearchResult result) {
