@@ -16,14 +16,14 @@ public interface TorrentKitty {
 
     String BASE_URL = "https://torrentkitty.one";
     TorrentKitty INSTANCE = new Retrofit.Builder()
-            .baseUrl(TorrentKitty.BASE_URL)
+            .baseUrl(BASE_URL)
             .client(JAViewer.HTTP_CLIENT)
             .build()
             .create(TorrentKitty.class);
 
-    @GET("/search/{keyword}")
+    @GET("/search/{keyword}/{page}")
     @Headers("Accept-Language: zh-CN,zh;q=0.8,en;q=0.6")
-    Call<ResponseBody> search(@Path(value = "keyword") String keyword);
+    Call<ResponseBody> search(@Path(value = "keyword") String keyword, @Path("page") int page);
 
     @GET
     @Headers("Accept-Language: zh-CN,zh;q=0.8,en;q=0.6")

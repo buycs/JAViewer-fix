@@ -17,29 +17,34 @@ import retrofit2.Call;
  */
 public class TorrentKittyLinkProvider extends DownloadLinkProvider {
 
-
     @Override
     public Call<ResponseBody> search(String keyword, int page) {
-        if (page == 1) {
-            return TorrentKitty.INSTANCE.search(keyword);
-        } else {
-            return null;
-        }
+        return TorrentKitty.INSTANCE.search(keyword, page);
     }
 
     @Override
     public List<DownloadLink> parseDownloadLinks(String htmlContent) {
         ArrayList<DownloadLink> links = new ArrayList<>();
         Element table = Jsoup.parse(htmlContent).getElementById("archiveResult");
+        if (table == null) {
+            return links;
+        }
         for (Element tr : table.getElementsByTag("tr")) {
             try {
-                links.add(DownloadLink.create(
-                        tr.getElementsByClass("name").first().text(),
-                        "",
-                        tr.getElementsByClass("date").first().text(),
-                        null,
-                        tr.getElementsByAttributeValue("rel", "magnet").first().attr("href")
-                ));
+                Element nameTd = tr.getElementsByClass("name").first();
+                Element sizeTd = tr.getElementsByClass("size").first();
+                Element dateTd = tr.getElementsByClass("date").first();
+                Element magnetLink = tr.getElementsByAttributeValue("rel", "magnet").first();
+
+                if (nameTd != null && sizeTd != null && dateTd != null && magnetLink != null) {
+                    links.add(DownloadLink.create(
+                            nameTd.text(),
+                            sizeTd.text(),
+                            dateTd.text(),
+                            null,
+                            magnetLink.attr("href")
+                    ));
+                }
             } catch (Exception ignored) {
 
             }
@@ -50,13 +55,11 @@ public class TorrentKittyLinkProvider extends DownloadLinkProvider {
 
     @Override
     public Call<ResponseBody> get(String url) {
-        return null;
-        //ABANDONED
+        return TorrentKitty.INSTANCE.get(url);
     }
 
     @Override
     public MagnetLink parseMagnetLink(String htmlContent) {
         return null;
-        //ABANDONED
     }
 }
