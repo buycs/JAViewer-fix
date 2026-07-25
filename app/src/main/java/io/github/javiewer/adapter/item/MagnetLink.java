@@ -11,8 +11,8 @@ public class MagnetLink implements Serializable {
 
     public static MagnetLink create(String magnetLink) {
         MagnetLink magnet = new MagnetLink();
-        if (magnetLink != null) {
-            magnet.magnetLink = magnetLink.substring(0, magnetLink.indexOf("&"));
+        if (magnetLink != null && !magnetLink.isEmpty()) {
+            magnet.magnetLink = magnetLink;
         }
         return magnet;
     }
