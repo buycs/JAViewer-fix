@@ -67,16 +67,34 @@ public class JAViewer extends Application {
     public static String csrfToken = null;
 
     public static final CookieJar COOKIE_JAR = new CookieJar() {
-        private final HashMap<HttpUrl, List<Cookie>> cookieStore = new HashMap<>();
+        private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
 
         @Override
         public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-            cookieStore.put(url, cookies);
+            String host = url.host();
+            List<Cookie> existing = cookieStore.get(host);
+            if (existing == null) {
+                existing = new ArrayList<>();
+                cookieStore.put(host, existing);
+            }
+            for (Cookie newCookie : cookies) {
+                boolean replaced = false;
+                for (int i = 0; i < existing.size(); i++) {
+                    if (existing.get(i).name().equals(newCookie.name())) {
+                        existing.set(i, newCookie);
+                        replaced = true;
+                        break;
+                    }
+                }
+                if (!replaced) {
+                    existing.add(newCookie);
+                }
+            }
         }
 
         @Override
         public List<Cookie> loadForRequest(HttpUrl url) {
-            List<Cookie> cookies = cookieStore.get(url);
+            List<Cookie> cookies = cookieStore.get(url.host());
             return cookies != null ? cookies : new ArrayList<Cookie>();
         }
     };
