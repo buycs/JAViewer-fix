@@ -32,11 +32,13 @@ import io.github.javiewer.fragment.HomeFragment;
 import io.github.javiewer.fragment.PopularFragment;
 import io.github.javiewer.fragment.ReleasedFragment;
 import io.github.javiewer.fragment.genre.GenreTabsFragment;
+import io.github.javiewer.view.SimpleSearchView;
 import io.github.javiewer.view.ViewUtil;
 
 public class MainActivity extends SecureActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     public Fragment currentFragment;
+    private SimpleSearchView mSearchView;
 
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
@@ -68,6 +70,23 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         mDrawerLayout = findViewById(R.id.drawer_layout);
         mNavigationView = findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+
+        mSearchView = findViewById(R.id.search_view);
+        mSearchView.setOnQueryTextListener(new SimpleSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (query != null && !query.trim().isEmpty()) {
+                    startActivity(MovieListActivity.newIntent(MainActivity.this, query, query));
+                }
+                mSearchView.closeSearch();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
 
         initFragments();
         buildDrawerHeader();
@@ -233,6 +252,7 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+        mSearchView.setMenuItem(menu.findItem(R.id.action_search));
         return true;
     }
 
