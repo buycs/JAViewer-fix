@@ -109,12 +109,13 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                         .setPositiveButton("打开", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(magnetLink));
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                if (intent.resolveActivity(mParentActivity.getPackageManager()) != null) {
+                                try {
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(magnetLink));
                                     mParentActivity.startActivity(intent);
-                                } else {
-                                    Toast.makeText(mParentActivity, "没有找到可处理磁力链接的应用", Toast.LENGTH_SHORT).show();
+                                } catch (Exception e) {
+                                    ClipboardManager clip = (ClipboardManager) mParentActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+                                    clip.setPrimaryClip(ClipData.newPlainText("magnet-link", magnetLink));
+                                    Toast.makeText(mParentActivity, "未找到磁力播放器，已复制链接", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         })
