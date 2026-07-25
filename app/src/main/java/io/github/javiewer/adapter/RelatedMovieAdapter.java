@@ -18,6 +18,7 @@ import java.util.List;
 import io.github.javiewer.R;
 import io.github.javiewer.activity.MovieActivity;
 import io.github.javiewer.adapter.item.Movie;
+import io.github.javiewer.view.listener.MovieLongClickListener;
 
 public class RelatedMovieAdapter extends RecyclerView.Adapter<RelatedMovieAdapter.ViewHolder> {
 
@@ -55,6 +56,8 @@ public class RelatedMovieAdapter extends RecyclerView.Adapter<RelatedMovieAdapte
                 mParentActivity.startActivity(intent);
             }
         });
+
+        holder.mCard.setOnLongClickListener(new MovieLongClickListener(movie, mParentActivity));
     }
 
     @Override
