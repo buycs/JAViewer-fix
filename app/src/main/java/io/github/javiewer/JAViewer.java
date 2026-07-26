@@ -15,7 +15,6 @@ import com.google.gson.stream.JsonReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -64,7 +63,6 @@ public class JAViewer extends Application {
     public static Configurations CONFIGURATIONS;
     public static BasicService SERVICE;
     public static Map<String, String> hostReplacements = new HashMap<>();
-    public static String csrfToken = null;
 
     public static final CookieJar COOKIE_JAR = new CookieJar() {
         private final HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
@@ -113,10 +111,6 @@ public class JAViewer extends Application {
                 builder.header("X-Requested-With", "XMLHttpRequest");
             }
 
-            if (csrfToken != null && !host.contains("btsearch")) {
-                builder.header("X-CSRF-Token", csrfToken);
-            }
-
             Request request = builder.build();
 
             android.util.Log.d("JAViewer", "Request URL: " + original.url());
@@ -148,41 +142,6 @@ public class JAViewer extends Application {
         } catch (Exception e) {
             android.util.Log.e("JAViewer", "recreateService: FAILED", e);
         }
-    }
-
-    public static void fetchCsrfToken() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String url = JAViewer.getDataSource().getLink();
-                    okhttp3.Request request = new okhttp3.Request.Builder()
-                            .url(url)
-                            .header("User-Agent", USER_AGENT)
-                            .build();
-                    okhttp3.Response response = HTTP_CLIENT.newCall(request).execute();
-                    response.close();
-
-                    List<Cookie> cookies = COOKIE_JAR.loadForRequest(HttpUrl.parse(url));
-                    for (Cookie cookie : cookies) {
-                        if ("_csrf".equals(cookie.name())) {
-                            String raw = cookie.value();
-                            if (raw.startsWith("a:")) {
-                                int start = raw.indexOf("\"") + 1;
-                                int end = raw.indexOf("\"", start);
-                                if (start > 0 && end > start) {
-                                    csrfToken = URLDecoder.decode(raw.substring(start, end), "UTF-8");
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    android.util.Log.d("JAViewer", "CSRF token: " + csrfToken);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     public static File getStorageDir() {

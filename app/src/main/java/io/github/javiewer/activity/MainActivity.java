@@ -58,7 +58,6 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         }
 
         JAViewer.recreateService();
-        JAViewer.fetchCsrfToken();
 
         this.savedInstanceState = savedInstanceState;
 
