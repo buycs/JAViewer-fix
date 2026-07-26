@@ -47,6 +47,7 @@
                 android:maxLines="1"
                 android:text="这里是标题"
                 android:textColor="?android:textColorPrimary"
+                android:textStyle="bold"
                 android:textSize="16sp" />
 
             <LinearLayout
