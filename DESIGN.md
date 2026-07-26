@@ -1,5 +1,7 @@
 # JAViewer Android 项目完整设计文档
 
+> 版本: v2.1.0 (versionCode 17)
+
 ## 1. 项目概况
 
 | 配置项 | 值 |
@@ -8,6 +10,7 @@
 | compileSdk / targetSdk / minSdk | 35 / 35 / 21 |
 | Java 版本 | 17 |
 | 应用 ID | `io.github.javiewer` |
+| 版本名 / 版本号 | 2.1.0 / 17 |
 | ProGuard | 关闭 |
 
 ### 核心依赖
@@ -15,7 +18,7 @@
 | 分类 | 依赖 |
 |------|------|
 | UI | Material 1.12, materialdrawer 6.1.2, ahbottomnavigation 2.2.0, constraintlayout 2.2.0 |
-| 网络 | Retrofit 2.11, Gson 2.11, Jsoup 1.18.3 |
+| 网络 | Retrofit 2.11, Gson 2.11, Jsoup 1.18.3, OkHttp |
 | 播放 | ExoPlayer 2.19.1, jiaozivideoplayer 6.2.12 |
 | 工具 | Glide 4.16, dexter 6.2.2, recyclerview-animators 4.0.2 |
 
@@ -49,10 +52,10 @@ AppCompatActivity
     ├── MovieActivity → 电影详情 + 收藏 + 分享
     ├── MovieListActivity → 电影列表容器
     ├── GalleryActivity → 全屏图片画廊
-    ├── DownloadActivity → 下载链接 (BTSO/TorrentKitty)
+    ├── DownloadActivity → 磁力搜索 (BtSearch + 无极磁链 双Tab)
     ├── FavouriteActivity → 收藏夹 (底部导航)
     ├── WebViewActivity → 内嵌 WebView
-    └── MagnetSearchActivity → 磁力搜索
+    └── MagnetSearchActivity → 磁力搜索 (btsow.pics)
 ```
 
 ### 2.4 Fragment 继承关系
@@ -92,21 +95,108 @@ ExtendedAppBarFragment
 | `search` | [keyword, limit, page] | 搜索 |
 | `getRelatedMovies` | [movieId, lang, limit] | 相关电影 |
 
-### 3.2 第三方 API
+### 3.2 磁力搜索 API
 
-| API | 用途 |
-|-----|------|
-| Avgle | 视频搜索 |
-| PSVS (rekonquer.com) | 预览视频 |
-| BTSO (btsow.pics) | 下载链接 + 磁力搜索 |
-| TorrentKitty | 下载链接 |
+#### BtSearch (btsearch.love) — JSON API + 签名验证
 
-### 3.3 OkHttp 拦截器
+| 端点 | 方法 | 参数 | 说明 |
+|------|------|------|------|
+| `/api/search` | GET | keyword, limit, offset, mode, time, sort, sort_type, size | 搜索结果 |
+| `/api/torrent/{id}` | GET | id(path), keyword(query) | 详情+文件列表 |
 
+**签名机制:**
+- 独立 OkHttpClient (`BTSEARCH_CLIENT`) + 拦截器
+- 请求头: `x-timestamp`, `x-nonce`, `x-sign`
+- 签名算法: `MD5(排序后的参数 + &key=long2ice).toUpperCase()`
+
+**搜索响应:**
+```json
+{
+  "total": 10,
+  "data": [
+    {
+      "id": 2419147587,
+      "name": "MADB-004",
+      "size": "6083314266",
+      "hash": "969af3a5efd45076cb3aadd1a83fb54fd7d3b195",
+      "created_at": "2026-07-25T21:05:20.240Z",
+      "count": 2,
+      "hot": 0
+    }
+  ]
+}
+```
+
+**详情响应:**
+```json
+{
+  "id": 2419147587,
+  "name": "MADB-004",
+  "size": "6083314266",
+  "hash": "969af3a5efd45076cb3aadd1a83fb54fd7d3b195",
+  "torrentfile": [
+    {"id": 1012198768, "name": "file1.mp4", "size": "2001226"},
+    {"id": 1012198770, "name": "file2.mp4", "size": "6081313040"}
+  ]
+}
+```
+
+#### CiliInfo (cili.info) — HTML 解析
+
+| 端点 | 方法 | 参数 | 说明 |
+|------|------|------|------|
+| `/search?q=X` | GET | q | 搜索结果 HTML |
+| `/{path}` (如 `/!lBfm`) | GET | path | 详情页 HTML |
+
+- 无分页支持
+- 搜索结果解析: `table.table-hover.file-list tbody tr`
+- 详情页解析: `#input-magnet` (磁力链接) + `table.table-hover.file-list` (文件列表) + `dt:contains("发布日期")` (时间)
+
+#### BTSO (btsow.pics) — POST JSON API
+
+| 端点 | 方法 | Body | 说明 |
+|------|------|------|------|
+| `/bts/data/api/search` | POST | `[{"search":"code"}, 30, 1]` | 搜索 |
+| `/bts/data/api/magnet` | POST | `["hash"]` | 文件列表 |
+
+**搜索响应:**
+```json
+{
+  "data": [
+    {
+      "hash": "6D8CD7F3...",
+      "name": "MADB-004-C ...",
+      "size": 8484889014,
+      "lastUpdateTime": 1783840027
+    }
+  ]
+}
+```
+
+### 3.3 第三方 API
+
+| API | 用途 | 状态 |
+|-----|------|------|
+| Avgle | 视频搜索 | 使用中 |
+| PSVS (rekonquer.com) | 预览视频 | 使用中 |
+| BtSearch (btsearch.love) | 磁力搜索 (JSON API) | 使用中 |
+| CiliInfo (cili.info) | 磁力搜索 (HTML) | 使用中 |
+| BTSO (btsow.pics) | 磁力搜索 (MagnetSearchActivity) | 使用中 |
+| TorrentKitty | 下载链接 | 已移除 |
+
+### 3.4 OkHttp 拦截器
+
+**JAViewer.HTTP_CLIENT (主客户端):**
 1. 域名替换 (`hostReplacements`)
 2. User-Agent 伪装 (Chrome 91.0)
 3. `X-Requested-With: XMLHttpRequest`
 4. CSRF Token 注入 (`X-CSRF-Token`)
+
+**BtSearch.BTSEARCH_CLIENT (BtSearch 专用):**
+1. 时间戳 + 随机 Nonce
+2. MD5 签名生成
+3. `Accept: application/json`
+4. `Referer` 设置
 
 ---
 
@@ -135,14 +225,33 @@ UI 触发 → newCall(page) → OkHttp 拦截器(域名替换/UA/CSRF)
 → Retrofit POST → AVMOProvider.parseXxx(json) → adapter.notifyItemRangeInserted()
 ```
 
-### 4.3 数据源切换
+### 4.3 磁力搜索数据流
+
+```
+DownloadActivity
+├── BtSearch Tab
+│   ├── 搜索: BtSearch.searchApi() → parseSearchResult() → DownloadLink 列表
+│   ├── 点击三角: BtSearch.getDetail() → parseFilesFromJson() → 展开文件列表
+│   └── 点击整行: 弹出磁力链接对话框
+│
+└── 无极磁链 Tab
+    ├── 搜索: CiliInfo.search() → parseDownloadLinks() → DownloadLink 列表
+    ├── 点击三角: CiliInfo.get() → parseMagnetLink() + parseFileList() + parseDate()
+    └── 点击整行: 弹出磁力链接对话框
+
+MagnetSearchActivity
+├── 搜索: btsow.pics/api/search → TorrentGroup 列表
+└── 文件列表: btsow.pics/api/magnet → 展开文件
+```
+
+### 4.4 数据源切换
 
 ```
 RadioGroup 选择 → CONFIGURATIONS.setDataSource() → save()
 → recreateService() (重建 Retrofit) → restart() (重建 Activity)
 ```
 
-### 4.4 收藏数据流
+### 4.5 收藏数据流
 
 ```
 用户操作 → starred_movies.add/remove → CONFIGURATIONS.save()
@@ -186,12 +295,30 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MovieHeaderAdapter` | Header | 元数据行 |
 | `ScreenshotAdapter` | Screenshot | 截图网格 |
 | `RelatedMovieAdapter` | Movie | 相关电影 |
-| `DownloadLinkAdapter` | DownloadLink | 下载链接 |
-| `MagnetFileAdapter` | TorrentGroup | 磁力文件 |
+| `DownloadLinkAdapter` | DownloadLink | 下载链接 + 文件列表展开/收起 |
+| `MagnetFileAdapter` | TorrentGroup | 磁力文件 + 时间显示 |
+
+### 5.4 DownloadActivity 布局
+
+```
+┌─────────────────────────────────────┐
+│ 影片编号(加粗)              ▶/▼    │
+│ 时间  大小                          │
+├─────────────────────────────────────┤
+│ 文件1                    1.91 MB   │
+│ 文件2                    5.66 GB   │
+└─────────────────────────────────────┘
+```
+
+- 标题加粗显示
+- 第一行: 标题
+- 第二行: 时间 + 大小
+- 三角符号垂直居中右侧
+- 文件列表在主内容下方展开
 
 ---
 
-## 6. 完整文件清单 (75 个 Java 源文件)
+## 6. 完整文件清单
 
 ### 根包
 
@@ -211,10 +338,10 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MovieActivity.java` | 电影详情、收藏、分享 |
 | `MovieListActivity.java` | 电影列表容器 |
 | `GalleryActivity.java` | 全屏图片画廊 |
-| `DownloadActivity.java` | 下载链接 |
+| `DownloadActivity.java` | 磁力搜索 (BtSearch + 无极磁链 双Tab) |
 | `FavouriteActivity.java` | 收藏夹 |
 | `WebViewActivity.java` | 内嵌 WebView |
-| `MagnetSearchActivity.java` | 磁力搜索 |
+| `MagnetSearchActivity.java` | 磁力搜索 (btsow.pics API) |
 
 ### fragment/
 
@@ -228,7 +355,8 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ActressesFragment.java` | 女优列表 |
 | `MovieListFragment.java` | 搜索/筛选列表 |
 | `ExtendedAppBarFragment.java` | 扩展 AppBar 基类 |
-| `DownloadFragment.java` | 下载链接列表 |
+| `DownloadFragment.java` | 无极磁链下载列表 |
+| `BtSearchFragment.java` | BtSearch 下载列表 |
 | `genre/GenreTabsFragment.java` | 类型标签页 |
 | `genre/GenreFragment.java` | 类型网格 |
 | `favourite/FavouriteFragment.java` | 收藏基类 |
@@ -248,8 +376,8 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MovieHeaderAdapter.java` | 元数据行 |
 | `ScreenshotAdapter.java` | 截图网格 |
 | `RelatedMovieAdapter.java` | 相关电影 |
-| `DownloadLinkAdapter.java` | 下载链接 |
-| `MagnetFileAdapter.java` | 磁力文件 |
+| `DownloadLinkAdapter.java` | 下载链接 + 文件列表展开/收起 (provider 感知) |
+| `MagnetFileAdapter.java` | 磁力文件 + 时间显示 |
 | `ViewPagerAdapter.java` | ViewPager 适配 |
 | `NavigationSpinnerAdapter.java` | 下拉选择 |
 
@@ -264,10 +392,10 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `Actress.java` | 女优模型 |
 | `Genre.java` | 类型模型 |
 | `Screenshot.java` | 截图模型 |
-| `DownloadLink.java` | 下载链接模型 |
+| `DownloadLink.java` | 下载链接模型 (files, date, filesExpanded) |
 | `MagnetLink.java` | 磁力链接模型 |
 | `MagnetFile.java` | 磁力文件模型 |
-| `TorrentGroup.java` | Torrent 分组模型 |
+| `TorrentGroup.java` | Torrent 分组模型 (date) |
 
 ### network/
 
@@ -276,17 +404,21 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `BasicService.java` | Retrofit API 接口 |
 | `Avgle.java` | Avgle API |
 | `PSVS.java` | PSVS API |
-| `BTSO.java` | BTSO API |
-| `TorrentKitty.java` | TorrentKitty API |
+| `BtSearch.java` | BtSearch API + 签名 (独立 OkHttpClient) |
+| `CiliInfo.java` | cili.info API (Retrofit + ResponseBody) |
+| `BTSO.java` | BTSO API (旧，保留) |
+| `TorrentKitty.java` | TorrentKitty API (旧，保留) |
 
 ### network/provider/
 
 | 文件 | 职责 |
 |------|------|
 | `AVMOProvider.java` | AVMO JSON 解析 |
-| `DownloadLinkProvider.java` | 下载链接抽象基类 |
-| `BTSOLinkProvider.java` | BTSO HTML 解析 |
-| `TorrentKittyLinkProvider.java` | TorrentKitty HTML 解析 |
+| `DownloadLinkProvider.java` | 下载链接抽象基类 (parseFileList, parseDate) |
+| `BtSearchLinkProvider.java` | BtSearch JSON 解析 + 文件列表 |
+| `CiliInfoLinkProvider.java` | cili.info HTML 解析 + 文件列表 + 日期 |
+| `BTSOLinkProvider.java` | BTSO HTML 解析 (旧) |
+| `TorrentKittyLinkProvider.java` | TorrentKitty HTML 解析 (旧) |
 
 ### view/
 
@@ -304,7 +436,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 
 | 文件 | 职责 |
 |------|------|
-| `BasicOnScrollListener.java` | 分页加载基类 |
+| `BasicOnScrollListener.java` | 分页加载基类 (canLoadMore 检查 isEnd) |
 | `EndlessOnScrollListener.java` | 无限滚动 |
 | `ActressClickListener.java` | 女优点击 |
 | `ActressLongClickListener.java` | 女优长按 |
@@ -351,9 +483,17 @@ MaterialDrawerTheme.Light.DarkToolbar
 
 ### 逻辑问题
 - `MagnetLink.create()` 用 `indexOf("&")` 截断磁力链接可能抛异常
-- `TorrentKittyLinkProvider` 分页返回 null
 - `MovieActivity.getScreenBitmap()` 可能 OOM
 
 ### 仓库依赖
 - `jcenter.bintray.com` 已关闭
 - `maven.fabric.io` 已关闭
+
+---
+
+## 8. 版本历史
+
+| 版本 | 变更 |
+|------|------|
+| v2.1.0 | 新增 cili.info 磁力搜索源、文件列表展开/收起、BtSearch 详情 API 修复、MagnetSearch 时间显示、UI 优化 |
+| v2.0.3 | BtSearch 磁力搜索、UI 优化 |
