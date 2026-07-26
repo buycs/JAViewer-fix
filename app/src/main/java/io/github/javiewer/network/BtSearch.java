@@ -14,6 +14,7 @@ import io.github.javiewer.JAViewer;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -78,8 +79,8 @@ public interface BtSearch {
             @Query("size") String size
     );
 
-    @GET("/torrent/{id}")
-    Call<TorrentDetail> getDetail(@Path("id") long id, @Query("keyword") String keyword);
+    @GET("/api/torrent/{id}")
+    Call<ResponseBody> getDetail(@Path("id") long id, @Query("keyword") String keyword);
 
     static String generateSign(Map<String, String> params) {
         List<String> sorted = new ArrayList<>();

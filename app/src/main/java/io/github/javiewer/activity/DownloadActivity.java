@@ -73,6 +73,8 @@ public class DownloadActivity extends SecureActivity {
         JAViewer.CONFIGURATIONS.setDownloadCounter(downloadCounter);
         if (downloadCounter % 20 == 0) {
             new AlertDialog.Builder(this)
+                    .setTitle("提示")
+                    .setMessage("感谢使用！如有问题欢迎反馈。")
                     .setNeutralButton("不再显示", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {

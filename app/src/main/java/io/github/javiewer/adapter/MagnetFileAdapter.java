@@ -42,13 +42,8 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
         final TorrentGroup group = groups.get(position);
 
         holder.torrentName.setText(group.torrentName);
-        String sizeStr;
-        if (group.totalSize > 1073741824) {
-            sizeStr = String.format(Locale.US, "%.1f GB", group.totalSize / 1073741824.0);
-        } else {
-            sizeStr = String.format(Locale.US, "%.1f MB", group.totalSize / 1048576.0);
-        }
-        holder.torrentSize.setText("大小: " + sizeStr);
+        holder.torrentDate.setText(group.date != null ? group.date : "");
+        holder.torrentSize.setText(formatSize(group.totalSize));
         holder.expandIndicator.setText(group.expanded ? "▼" : "▶");
 
         holder.filesContainer.setVisibility(group.expanded ? View.VISIBLE : View.GONE);
@@ -56,13 +51,7 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
         for (final MagnetFile file : group.files) {
             View fileView = LayoutInflater.from(context).inflate(R.layout.item_magnet_file, holder.filesContainer, false);
             ((TextView) fileView.findViewById(R.id.file_name)).setText(file.filename);
-            String fs;
-            if (file.size > 1073741824) {
-                fs = String.format(Locale.US, "%.1f GB", file.size / 1073741824.0);
-            } else {
-                fs = String.format(Locale.US, "%.1f MB", file.size / 1048576.0);
-            }
-            ((TextView) fileView.findViewById(R.id.file_size)).setText(fs);
+            ((TextView) fileView.findViewById(R.id.file_size)).setText(formatSize(file.size));
             holder.filesContainer.addView(fileView);
         }
 
@@ -97,6 +86,17 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
         });
     }
 
+    private String formatSize(long bytes) {
+        if (bytes >= 1073741824) {
+            return String.format(Locale.US, "%.1f GB", bytes / 1073741824.0);
+        } else if (bytes >= 1048576) {
+            return String.format(Locale.US, "%.1f MB", bytes / 1048576.0);
+        } else if (bytes >= 1024) {
+            return String.format(Locale.US, "%.1f KB", bytes / 1024.0);
+        }
+        return bytes + " B";
+    }
+
     @Override
     public int getItemCount() {
         return groups == null ? 0 : groups.size();
@@ -104,6 +104,7 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView torrentName;
+        public TextView torrentDate;
         public TextView torrentSize;
         public TextView expandIndicator;
         public LinearLayout filesContainer;
@@ -111,6 +112,7 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
         public ViewHolder(View view) {
             super(view);
             torrentName = view.findViewById(R.id.torrent_name);
+            torrentDate = view.findViewById(R.id.torrent_date);
             torrentSize = view.findViewById(R.id.torrent_size);
             expandIndicator = view.findViewById(R.id.expand_indicator);
             filesContainer = view.findViewById(R.id.files_container);

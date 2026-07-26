@@ -18,59 +18,70 @@
             android:orientation="vertical"
             android:padding="8dp">
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/expand_indicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="▶"
+                    android:textSize="18sp"
+                    android:padding="8dp"
+                    android:textColor="?android:textColorSecondary" />
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_toStartOf="@id/expand_indicator"
+                    android:layout_toLeftOf="@id/expand_indicator"
+                    android:layout_centerVertical="true"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/torrent_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         android:textStyle="bold"
                         android:maxLines="2"
                         android:ellipsize="end"
                         android:textColor="?android:textColorPrimary" />
 
-                    <TextView
-                        android:id="@+id/torrent_size"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="12sp"
-                        android:textColor="@color/colorAccent" />
+                        android:orientation="horizontal">
 
+                        <TextView
+                            android:id="@+id/torrent_date"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="?android:textColorSecondary" />
+
+                        <TextView
+                            android:id="@+id/torrent_size"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginLeft="12dp"
+                            android:textSize="14sp" />
+                    </LinearLayout>
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/expand_indicator"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:textSize="18sp"
-                    android:padding="8dp"
-                    android:textColor="?android:textColorSecondary" />
-
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="4dp"
-                android:background="@color/colorDivider" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:id="@+id/files_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:paddingTop="4dp"
+                android:visibility="gone" />
 
         </LinearLayout>
 

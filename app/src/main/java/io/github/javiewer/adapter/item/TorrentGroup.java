@@ -7,6 +7,7 @@ public class TorrentGroup {
     public String hash;
     public String torrentName;
     public long totalSize;
+    public String date;
     public boolean expanded;
     public List<MagnetFile> files = new ArrayList<>();
 

@@ -110,6 +110,14 @@ public class MagnetSearchActivity extends SecureActivity {
                         group.hash = hash;
                         group.torrentName = torrentName;
                         group.totalSize = item.getLong("size");
+                        // Extract date from lastUpdateTime (Unix timestamp)
+                        if (item.has("lastUpdateTime")) {
+                            long timestamp = item.getLong("lastUpdateTime");
+                            if (timestamp > 0) {
+                                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+                                group.date = sdf.format(new java.util.Date(timestamp * 1000));
+                            }
+                        }
 
                         try {
                             String json2 = "[\"" + hash + "\"]";

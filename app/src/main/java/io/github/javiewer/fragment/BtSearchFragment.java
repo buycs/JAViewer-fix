@@ -49,7 +49,7 @@ public class BtSearchFragment extends Fragment {
         refreshLayout = view.findViewById(R.id.refresh_layout);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new DownloadLinkAdapter(items, getActivity(), provider);
+        adapter = new DownloadLinkAdapter(items, getActivity(), provider, keyword);
         recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(new DownloadItemDecoration());
 

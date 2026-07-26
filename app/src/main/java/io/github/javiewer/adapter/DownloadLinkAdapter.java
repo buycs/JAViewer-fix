@@ -43,10 +43,19 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
     private DownloadLinkProvider provider;
 
+    private String keyword;
+
     public DownloadLinkAdapter(List<DownloadLink> links, Activity mParentActivity, DownloadLinkProvider provider) {
         super(links);
         this.mParentActivity = mParentActivity;
         this.provider = provider;
+    }
+
+    public DownloadLinkAdapter(List<DownloadLink> links, Activity mParentActivity, DownloadLinkProvider provider, String keyword) {
+        super(links);
+        this.mParentActivity = mParentActivity;
+        this.provider = provider;
+        this.keyword = keyword;
     }
 
     @Override
@@ -94,15 +103,28 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                                 (io.github.javiewer.network.provider.BtSearchLinkProvider) provider;
                         // Extract torrent ID from link URL
                         long torrentId = extractTorrentId(link.getLink());
-                        Call<BtSearch.TorrentDetail> call = btProvider.getDetail(torrentId, "");
-                        call.enqueue(new Callback<BtSearch.TorrentDetail>() {
+                        Call<ResponseBody> call = btProvider.getDetail(torrentId, keyword != null ? keyword : "");
+                        call.enqueue(new Callback<ResponseBody>() {
                             @Override
-                            public void onResponse(Call<BtSearch.TorrentDetail> call, Response<BtSearch.TorrentDetail> response) {
-                                if (response.isSuccessful() && response.body() != null) {
-                                    List<MagnetFile> files = btProvider.parseFilesFromDetail(response.body());
+                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                try {
+                                    String body = response.body().string();
+                                    android.util.Log.d("JAViewer", "BtSearch detail response length: " + body.length());
+                                    if (body.length() > 0) {
+                                        android.util.Log.d("JAViewer", "BtSearch detail first 200 chars: " + body.substring(0, Math.min(200, body.length())));
+                                    }
+                                    // Try parsing as JSON first
+                                    List<MagnetFile> files = btProvider.parseFilesFromJson(body);
+                                    if (files.isEmpty()) {
+                                        // Fallback to HTML parsing
+                                        files = btProvider.parseFilesFromHtml(body);
+                                    }
+                                    android.util.Log.d("JAViewer", "BtSearch files count: " + files.size());
                                     if (!files.isEmpty()) {
                                         link.setFiles(files);
                                     }
+                                } catch (Exception e) {
+                                    android.util.Log.e("JAViewer", "BtSearch parse error: " + e.getMessage());
                                 }
                                 mDialog.dismiss();
 
@@ -115,7 +137,8 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                             }
 
                             @Override
-                            public void onFailure(Call<BtSearch.TorrentDetail> call, Throwable t) {
+                            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                android.util.Log.e("JAViewer", "BtSearch detail failure: " + t.getMessage());
                                 mDialog.dismiss();
                             }
                         });
@@ -236,14 +259,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
     public void onMagnetGet(final String magnetLink, final ViewHolder holder) {
         if (magnetLink != null && !magnetLink.isEmpty()) {
-            // Show files if available
             final DownloadLink link = getItems().get(holder.getAdapterPosition());
-            if (link.getFiles() != null && !link.getFiles().isEmpty()) {
-                link.filesExpanded = true;
-                holder.expandIndicator.setText("▼");
-                bindFileList(holder, link);
-                holder.filesContainer.setVisibility(View.VISIBLE);
-            }
 
             AlertDialog mDialog = new AlertDialog.Builder(mParentActivity)
                     .setTitle("磁力链接")
