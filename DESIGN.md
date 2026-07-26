@@ -1,6 +1,7 @@
 # JAViewer Android 项目完整设计文档
 
-> 版本: v2.1.0 (versionCode 17)
+> 版本: v2.1.0 (versionCode 17)  
+> 最后更新: 2026-07-26
 
 ## 1. 项目概况
 
@@ -11,16 +12,41 @@
 | Java 版本 | 17 |
 | 应用 ID | `io.github.javiewer` |
 | 版本名 / 版本号 | 2.1.0 / 17 |
-| ProGuard | 关闭 |
+| ProGuard | 关闭 (minifyEnabled false) |
+| NDK | arm64-v8a only |
 
 ### 核心依赖
 
-| 分类 | 依赖 |
+| 分类 | 依赖 | 版本 |
+|------|------|------|
+| UI | Material | 1.12.0 |
+| UI | materialdrawer | 6.1.2 |
+| UI | ahbottomnavigation | 2.2.0 |
+| UI | constraintlayout | 2.2.0 |
+| UI | cardview | 1.0.0 |
+| UI | palette | 1.0.0 |
+| UI | circleimageview | 3.1.0 |
+| UI | kenburnsview | 1.0.7 |
+| UI | flowlayout | 0.4.1 |
+| UI | recyclerview-animators | 4.0.2 |
+| 网络 | Retrofit | 2.11.0 |
+| 网络 | Gson | 2.11.0 |
+| 网络 | Jsoup | 1.18.3 |
+| 播放 | ExoPlayer | 2.19.1 |
+| 播放 | jiaozivideoplayer | 6.2.12 |
+| 工具 | Glide | 4.16.0 |
+| 工具 | dexter | 6.2.2 |
+| 工具 | customactivityoncrash | 2.2.0 |
+
+### 仓库配置
+
+| 仓库 | 状态 |
 |------|------|
-| UI | Material 1.12, materialdrawer 6.1.2, ahbottomnavigation 2.2.0, constraintlayout 2.2.0 |
-| 网络 | Retrofit 2.11, Gson 2.11, Jsoup 1.18.3, OkHttp |
-| 播放 | ExoPlayer 2.19.1, jiaozivideoplayer 6.2.12 |
-| 工具 | Glide 4.16, dexter 6.2.2, recyclerview-animators 4.0.2 |
+| `google()` | ✅ 使用中 |
+| `mavenCentral()` | ✅ 使用中 |
+| `jitpack.io` | ✅ 使用中 |
+| ~~`jcenter.bintray.com`~~ | ✅ 已移除 |
+| ~~`maven.fabric.io`~~ | ✅ 已移除 |
 
 ---
 
@@ -42,32 +68,33 @@
 | `csrfToken` | String | 异步获取，无同步机制 |
 | `COOKIE_JAR` | CookieJar | 内存 Cookie 存储 |
 
-### 2.3 Activity 继承关系
+### 2.3 Activity 继承关系 (10 个)
 
 ```
 AppCompatActivity
-├── StartActivity (启动入口)
-└── SecureActivity (防截图)
+├── StartActivity (启动入口, LAUNCHER)
+└── SecureActivity (防截图基类)
     ├── MainActivity → 侧边抽屉 + 6 个 Fragment
-    ├── MovieActivity → 电影详情 + 收藏 + 分享
+    ├── MovieActivity → 电影详情 + 收藏 + 分享 + 预览视频
     ├── MovieListActivity → 电影列表容器
-    ├── GalleryActivity → 全屏图片画廊
+    ├── GalleryActivity → 全屏图片画廊 (ViewPager + 缩放)
     ├── DownloadActivity → 磁力搜索 (BtSearch + 无极磁链 双Tab)
-    ├── FavouriteActivity → 收藏夹 (底部导航)
-    ├── WebViewActivity → 内嵌 WebView
-    └── MagnetSearchActivity → 磁力搜索 (btsow.pics)
+    ├── FavouriteActivity → 收藏夹 (底部导航, 双Tab)
+    ├── WebViewActivity → 内嵌 WebView (验证码)
+    └── MagnetSearchActivity → 磁力搜索 (btsow.pics API)
 ```
 
-### 2.4 Fragment 继承关系
+### 2.4 Fragment 继承关系 (14 个)
 
 ```
-RecyclerFragment<I, LM> (抽象基类: 分页 + 下拉刷新)
-├── MovieFragment (无限滚动 + 动画)
+RecyclerFragment<I, LM> (抽象基类: 分页 + 下拉刷新 + 状态保存)
+├── MovieFragment (无限滚动 + 动画 + Genre Chips + 搜索栏)
 │   ├── HomeFragment → 首页
 │   ├── PopularFragment → 热门
 │   ├── ReleasedFragment → 最新
-│   └── MovieListFragment → 搜索/筛选
+│   └── MovieListFragment → 搜索/筛选列表
 ├── ActressesFragment → 女优列表
+├── DownloadFragment → 无极磁链下载列表
 └── FavouriteFragment (收藏基类)
     ├── FavouriteMovieFragment → 收藏电影
     └── FavouriteActressFragment → 收藏女优
@@ -75,6 +102,9 @@ RecyclerFragment<I, LM> (抽象基类: 分页 + 下拉刷新)
 ExtendedAppBarFragment
 ├── GenreTabsFragment → 类型标签页
 └── FavouriteTabsFragment → 收藏标签页
+
+BtSearchFragment (独立 Fragment, 非继承 RecyclerFragment)
+└── BtSearch 下载列表
 ```
 
 ---
@@ -173,16 +203,16 @@ ExtendedAppBarFragment
 }
 ```
 
-### 3.3 第三方 API
+### 3.3 其他第三方 API
 
-| API | 用途 | 状态 |
-|-----|------|------|
-| Avgle | 视频搜索 | 使用中 |
-| PSVS (rekonquer.com) | 预览视频 | 使用中 |
-| BtSearch (btsearch.love) | 磁力搜索 (JSON API) | 使用中 |
-| CiliInfo (cili.info) | 磁力搜索 (HTML) | 使用中 |
-| BTSO (btsow.pics) | 磁力搜索 (MagnetSearchActivity) | 使用中 |
-| TorrentKitty | 下载链接 | 已移除 |
+| API | 接口文件 | 用途 | 状态 |
+|-----|----------|------|------|
+| Avgle | `Avgle.java` | 视频搜索 | 使用中 |
+| PSVS | `PSVS.java` | 预览视频 | 使用中 |
+| BtSearch | `BtSearch.java` | 磁力搜索 (JSON API) | 使用中 |
+| CiliInfo | `CiliInfo.java` | 磁力搜索 (HTML) | 使用中 |
+| BTSO | `BTSO.java` | 下载链接 | 保留 (旧) |
+| TorrentKitty | `TorrentKitty.java` | 下载链接 | 保留 (旧) |
 
 ### 3.4 OkHttp 拦截器
 
@@ -284,19 +314,22 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `SquareTopCrop` | Glide 顶部裁剪 |
 | `ExoPlayerImpl` | ExoPlayer 媒体接口 |
 
-### 5.3 Adapter 清单
+### 5.3 Adapter 清单 (12 个)
 
 | Adapter | 数据类型 | 用途 |
 |---------|----------|------|
+| `ItemAdapter` | Generic\<T, VH\> | 泛型基类 |
 | `MovieAdapter` | Movie | 电影卡片 |
 | `ActressAdapter` | Actress | 女优卡片 |
 | `ActressPaletteAdapter` | Actress | 女优卡片 (Palette) |
 | `GenreAdapter` | Genre | 类型标签 |
-| `MovieHeaderAdapter` | Header | 元数据行 |
+| `MovieHeaderAdapter` | MovieDetail.Header | 元数据行 |
 | `ScreenshotAdapter` | Screenshot | 截图网格 |
 | `RelatedMovieAdapter` | Movie | 相关电影 |
 | `DownloadLinkAdapter` | DownloadLink | 下载链接 + 文件列表展开/收起 |
 | `MagnetFileAdapter` | TorrentGroup | 磁力文件 + 时间显示 |
+| `ViewPagerAdapter` | Fragments | ViewPager 适配 (FragmentStatePagerAdapter) |
+| `NavigationSpinnerAdapter` | Generic\<T\> | 下拉选择 |
 
 ### 5.4 DownloadActivity 布局
 
@@ -316,9 +349,20 @@ MaterialDrawerTheme.Light.DarkToolbar
 - 三角符号垂直居中右侧
 - 文件列表在主内容下方展开
 
+### 5.5 布局文件 (49 个)
+
+| 类别 | 文件数 | 说明 |
+|------|--------|------|
+| Activity | 10 | 各 Activity 布局 |
+| Fragment | 5 | RecyclerView、Genre、Favourite 等 |
+| Card | 8 | 电影、女优、类型、下载、磁力文件等 |
+| Content | 8 | 电影详情各区块 |
+| Layout | 8 | 通用布局组件 |
+| 其他 | 10 | 导航、搜索、播放器、对话框等 |
+
 ---
 
-## 6. 完整文件清单
+## 6. 完整文件清单 (84 个 Java 源文件)
 
 ### 根包
 
@@ -328,26 +372,26 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `Configurations.java` | 用户配置持久化 |
 | `Properties.java` | properties.json 数据模型 |
 
-### activity/
+### activity/ (10 个)
 
 | 文件 | 职责 |
 |------|------|
 | `StartActivity.java` | 启动入口，权限检查、配置初始化 |
 | `SecureActivity.java` | 防截图基类 |
 | `MainActivity.java` | 主界面，侧边抽屉导航 |
-| `MovieActivity.java` | 电影详情、收藏、分享 |
+| `MovieActivity.java` | 电影详情、收藏、分享、预览视频 |
 | `MovieListActivity.java` | 电影列表容器 |
 | `GalleryActivity.java` | 全屏图片画廊 |
 | `DownloadActivity.java` | 磁力搜索 (BtSearch + 无极磁链 双Tab) |
-| `FavouriteActivity.java` | 收藏夹 |
+| `FavouriteActivity.java` | 收藏夹 (底部导航) |
 | `WebViewActivity.java` | 内嵌 WebView |
 | `MagnetSearchActivity.java` | 磁力搜索 (btsow.pics API) |
 
-### fragment/
+### fragment/ (14 个)
 
 | 文件 | 职责 |
 |------|------|
-| `RecyclerFragment.java` | RecyclerView 抽象基类 |
+| `RecyclerFragment.java` | RecyclerView 抽象基类 (分页+状态保存) |
 | `MovieFragment.java` | 电影列表抽象基类 |
 | `HomeFragment.java` | 首页 |
 | `PopularFragment.java` | 热门 |
@@ -364,7 +408,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `favourite/FavouriteMovieFragment.java` | 收藏电影 |
 | `favourite/FavouriteActressFragment.java` | 收藏女优 |
 
-### adapter/
+### adapter/ (12 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -376,12 +420,12 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MovieHeaderAdapter.java` | 元数据行 |
 | `ScreenshotAdapter.java` | 截图网格 |
 | `RelatedMovieAdapter.java` | 相关电影 |
-| `DownloadLinkAdapter.java` | 下载链接 + 文件列表展开/收起 (provider 感知) |
+| `DownloadLinkAdapter.java` | 下载链接 + 文件列表展开/收起 |
 | `MagnetFileAdapter.java` | 磁力文件 + 时间显示 |
 | `ViewPagerAdapter.java` | ViewPager 适配 |
 | `NavigationSpinnerAdapter.java` | 下拉选择 |
 
-### adapter/item/
+### adapter/item/ (11 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -397,30 +441,30 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MagnetFile.java` | 磁力文件模型 |
 | `TorrentGroup.java` | Torrent 分组模型 (date) |
 
-### network/
+### network/ (7 个)
 
 | 文件 | 职责 |
 |------|------|
-| `BasicService.java` | Retrofit API 接口 |
+| `BasicService.java` | Retrofit API 接口 (主数据源) |
 | `Avgle.java` | Avgle API |
 | `PSVS.java` | PSVS API |
 | `BtSearch.java` | BtSearch API + 签名 (独立 OkHttpClient) |
 | `CiliInfo.java` | cili.info API (Retrofit + ResponseBody) |
-| `BTSO.java` | BTSO API (旧，保留) |
-| `TorrentKitty.java` | TorrentKitty API (旧，保留) |
+| `BTSO.java` | BTSO API (旧) |
+| `TorrentKitty.java` | TorrentKitty API (旧) |
 
-### network/provider/
+### network/provider/ (6 个)
 
 | 文件 | 职责 |
 |------|------|
-| `AVMOProvider.java` | AVMO JSON 解析 |
+| `AVMOProvider.java` | AVMO JSON 解析 (电影/女优/类型/详情) |
 | `DownloadLinkProvider.java` | 下载链接抽象基类 (parseFileList, parseDate) |
 | `BtSearchLinkProvider.java` | BtSearch JSON 解析 + 文件列表 |
 | `CiliInfoLinkProvider.java` | cili.info HTML 解析 + 文件列表 + 日期 |
 | `BTSOLinkProvider.java` | BTSO HTML 解析 (旧) |
 | `TorrentKittyLinkProvider.java` | TorrentKitty HTML 解析 (旧) |
 
-### view/
+### view/ (7 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -432,7 +476,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `AnimationUtil.java` | 动画工具 |
 | `ViewUtil.java` | 视图工具 |
 
-### view/listener/
+### view/listener/ (4 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -441,7 +485,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ActressClickListener.java` | 女优点击 |
 | `ActressLongClickListener.java` | 女优长按 |
 
-### view/decoration/
+### view/decoration/ (4 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -450,7 +494,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ActressItemDecoration.java` | 女优列表间距 |
 | `DownloadItemDecoration.java` | 下载列表间距 |
 
-### util/
+### util/ (3 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -460,7 +504,22 @@ MaterialDrawerTheme.Light.DarkToolbar
 
 ---
 
-## 7. 技术债务
+## 7. 已弃用 API 检查
+
+| API | 状态 | 说明 |
+|-----|------|------|
+| `ProgressDialog` | ✅ 已修复 | → AlertDialog + ProgressBar |
+| `getColor(int)` | ✅ 已修复 | → ContextCompat.getColor() |
+| `getParcelable(String)` | ✅ 已修复 | → API 33+ 版本判断 |
+| `FragmentPagerAdapter` | ✅ 已修复 | → FragmentStatePagerAdapter |
+
+**剩余不可修复项:**
+- `ProgressDialog` 在 `MovieActivity.java:536` — 注释块内，不影响运行
+- `mProgressDialog` 在 `SimpleVideoPlayer.java` — 第三方库 `jiaozivideoplayer` 内部字段
+
+---
+
+## 8. 技术债务
 
 ### 线程安全
 - `csrfToken` 后台线程写入、主线程读取，无同步
@@ -473,10 +532,10 @@ MaterialDrawerTheme.Light.DarkToolbar
 - `WebViewActivity.httpClient` 静态 OkHttpClient
 
 ### 已弃用 API
-- `ProgressDialog`、`getColor(int)`、`getParcelable(String)`、`FragmentPagerAdapter`
+- `ProgressDialog`、`getColor(int)`、`getParcelable(String)`、`FragmentPagerAdapter` — ✅ 已全部修复
 
 ### 硬编码
-- **所有 UI 字符串硬编码中文**，未使用 `strings.xml`
+- **所有 UI 字符串硬编码中文**，未使用 `strings.xml` (项目设计如此)
 
 ### 静默异常处理
 - `Configurations.load()`、`StartActivity` 多处、`AVMOProvider` 等空 catch 块
@@ -485,16 +544,14 @@ MaterialDrawerTheme.Light.DarkToolbar
 - `MagnetLink.create()` 用 `indexOf("&")` 截断磁力链接可能抛异常
 - `MovieActivity.getScreenBitmap()` 可能 OOM
 
-### 仓库依赖
-- ~~`jcenter.bintray.com` 已关闭~~ ✅ 已移除
-- ~~`maven.fabric.io` 已关闭~~ ✅ 已移除
-- 当前仓库: `google()`, `mavenCentral()`, `jitpack.io`
+### TODO 标记
+- `MovieActivity.java:450,487,535` — 视频播放相关，标记为 Deprecated
 
 ---
 
-## 8. 版本历史
+## 9. 版本历史
 
 | 版本 | 变更 |
 |------|------|
-| v2.1.0 | 新增 cili.info 磁力搜索源、文件列表展开/收起、BtSearch 详情 API 修复、MagnetSearch 时间显示、UI 优化 |
+| v2.1.0 | 新增 cili.info 磁力搜索源、文件列表展开/收起、BtSearch 详情 API 修复、MagnetSearch 时间显示、UI 优化、修复已弃用 API、移除 jcenter/fabric 仓库、类型标签简体中文 |
 | v2.0.3 | BtSearch 磁力搜索、UI 优化 |
