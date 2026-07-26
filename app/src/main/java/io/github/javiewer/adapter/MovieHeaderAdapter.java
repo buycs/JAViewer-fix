@@ -20,6 +20,7 @@ import java.util.List;
 
 
 import io.github.javiewer.R;
+import io.github.javiewer.activity.DownloadActivity;
 import io.github.javiewer.activity.MovieListActivity;
 import io.github.javiewer.adapter.item.MovieDetail;
 import io.github.javiewer.view.ViewUtil;
@@ -73,6 +74,14 @@ public class MovieHeaderAdapter extends RecyclerView.Adapter<MovieHeaderAdapter.
                     holder.mHeaderValue.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            if ("影片番号".equals(header.getName())) {
+                                Intent intent = new Intent(mParentActivity, DownloadActivity.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putString("keyword", header.getValue());
+                                intent.putExtras(bundle);
+                                mParentActivity.startActivity(intent);
+                                return;
+                            }
                             String action = "search";
                             if ("导演".equals(header.getName())) action = "director";
                             else if ("制作商".equals(header.getName())) action = "studio";

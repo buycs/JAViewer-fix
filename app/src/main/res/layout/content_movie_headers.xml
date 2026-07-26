@@ -27,7 +27,8 @@
             android:paddingBottom="4dp"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@color/colorAccent" />
+            android:textColor="@color/colorAccent"
+            android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/headers_recycler_view"

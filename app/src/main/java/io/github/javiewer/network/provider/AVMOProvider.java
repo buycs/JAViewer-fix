@@ -105,7 +105,7 @@ public class AVMOProvider {
             }
             int length = data.optInt("length", 0);
             if (length > 0) {
-                movie.headers.add(MovieDetail.Header.create("时长", length + " 分钟", null));
+                movie.headers.add(MovieDetail.Header.create("影片时长", length + " 分钟", null));
             }
             JSONObject director = data.optJSONObject("director");
             if (director != null) {
@@ -132,13 +132,8 @@ public class AVMOProvider {
             if (series != null) {
                 String seriesName = series.optString("seriesName", "");
                 String seriesId = series.optString("seriesId", "");
-                if (!seriesId.isEmpty()) {
-                    movie.headers.add(MovieDetail.Header.create("系列", seriesName.isEmpty() ? "-" : seriesName, seriesId));
-                }
-            } else {
-                String seriesId = data.optString("seriesId", "");
-                if (!seriesId.isEmpty()) {
-                    movie.headers.add(MovieDetail.Header.create("系列", "-", seriesId));
+                if (!seriesId.isEmpty() && !seriesName.isEmpty()) {
+                    movie.headers.add(MovieDetail.Header.create("系列", seriesName, seriesId));
                 }
             }
         }

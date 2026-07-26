@@ -141,7 +141,8 @@ public class MovieActivity extends SecureActivity {
                 MovieDetail detail;
                 try {
                     detail = AVMOProvider.parseMoviesDetail(response.body().string());
-                    detail.headers.add(0, MovieDetail.Header.create("影片名", movie.getTitle(), null));
+                    detail.headers.add(0, MovieDetail.Header.create("影片番号", detail.code, "magnet"));
+                    detail.headers.add(1, MovieDetail.Header.create("影片名称", movie.getTitle(), null));
                     displayInfo(detail);
 
                     Glide.with(mToolbarLayoutBackground.getContext().getApplicationContext())
@@ -176,33 +177,6 @@ public class MovieActivity extends SecureActivity {
     }
 
     private void displayInfo(MovieDetail detail) {
-        //Code
-        {
-            TextView mCode = (TextView) findViewById(R.id.movie_code);
-            if (detail.code != null && !detail.code.isEmpty()) {
-                mCode.setText(detail.code);
-                mCode.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(MovieActivity.this, MagnetSearchActivity.class);
-                        intent.putExtra("code", detail.code);
-                        startActivity(intent);
-                    }
-                });
-                mCode.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        ClipboardManager clip = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                        clip.setPrimaryClip(ClipData.newPlainText("番号", detail.code));
-                        Toast.makeText(MovieActivity.this, "已复制番号", Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                });
-            } else {
-                mCode.setVisibility(View.GONE);
-            }
-        }
-
         //Info
         {
             RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.headers_recycler_view);
