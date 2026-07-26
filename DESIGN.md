@@ -522,7 +522,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 ## 8. 技术债务
 
 ### 线程安全
-- ~~`csrfToken` 后台线程写入、主线程读取，无同步~~ — 遗留死代码，当前数据源不需要 CSRF，可安全移除
+- ~~`csrfToken` 后台线程写入、主线程读取，无同步~~ — **已验证为死代码**：当前数据源不返回 `_csrf` cookie，token 永远为 null，header 从未添加。可安全移除。
 - ~~`SERVICE` 在 `recreateService()` 中被替换，可能与进行中的请求冲突~~ — 低风险，旧引用仍有效
 - ~~`starred_movies/actresses` 列表多处修改，无同步~~ — 所有操作在 UI 线程，无问题
 
