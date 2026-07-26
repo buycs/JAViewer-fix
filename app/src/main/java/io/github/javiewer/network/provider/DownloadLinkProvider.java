@@ -19,6 +19,9 @@ public abstract class DownloadLinkProvider {
                 return new TorrentKittyLinkProvider();
             case "btsearch":
                 return new BtSearchLinkProvider();
+            case "ciliinfo":
+            case "cili":
+                return new CiliInfoLinkProvider();
             default:
                 return null;
         }

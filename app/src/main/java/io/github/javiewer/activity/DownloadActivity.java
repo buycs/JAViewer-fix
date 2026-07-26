@@ -15,6 +15,7 @@ import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.ViewPagerAdapter;
 import io.github.javiewer.fragment.BtSearchFragment;
+import io.github.javiewer.fragment.DownloadFragment;
 
 public class DownloadActivity extends SecureActivity {
 
@@ -47,10 +48,17 @@ public class DownloadActivity extends SecureActivity {
         Fragment fragment;
 
         fragment = new BtSearchFragment();
-        bundle = (Bundle) bundle.clone();
-        bundle.putString("keyword", this.keyword);
-        fragment.setArguments(bundle);
-        adapter.addFragment(fragment, "磁力搜索");
+        Bundle btBundle = (Bundle) bundle.clone();
+        btBundle.putString("keyword", this.keyword);
+        fragment.setArguments(btBundle);
+        adapter.addFragment(fragment, "BtSearch");
+
+        fragment = new DownloadFragment();
+        Bundle ciliBundle = (Bundle) bundle.clone();
+        ciliBundle.putString("keyword", this.keyword);
+        ciliBundle.putString("provider", "ciliinfo");
+        fragment.setArguments(ciliBundle);
+        adapter.addFragment(fragment, "无极磁链");
 
         mViewPager.setAdapter(adapter);
 

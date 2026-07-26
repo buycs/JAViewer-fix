@@ -105,6 +105,7 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
                 } else {
                     getItems().addAll(downloads);
                     getAdapter().notifyItemRangeInserted(pos, downloads.size());
+                    setEnd(true);
                 }
             }
         });

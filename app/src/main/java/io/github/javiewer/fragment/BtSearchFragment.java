@@ -102,7 +102,7 @@ public class BtSearchFragment extends Fragment {
                     items.addAll(newItems);
                     adapter.notifyItemRangeInserted(pos, newItems.size());
                     currentPage++;
-                } else {
+                } else if (getContext() != null) {
                     Toast.makeText(getContext(), "搜索失败", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -110,7 +110,9 @@ public class BtSearchFragment extends Fragment {
             @Override
             public void onFailure(Call<BtSearch.SearchResult> call, Throwable t) {
                 refreshLayout.setRefreshing(false);
-                Toast.makeText(getContext(), "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

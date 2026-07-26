@@ -139,7 +139,7 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
             firstVisibleItem = ((LinearLayoutManager) mLayoutManager).findFirstVisibleItemPosition();
         }
 
-        return (totalItemCount - visibleItemCount) <= (firstVisibleItem + this.loadThreshold);
+        return !isEnd() && (totalItemCount - visibleItemCount) <= (firstVisibleItem + this.loadThreshold);
     }
 
     public boolean isLoading() {
