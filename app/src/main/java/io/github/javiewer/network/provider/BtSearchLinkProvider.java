@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.javiewer.adapter.item.DownloadLink;
+import io.github.javiewer.adapter.item.MagnetFile;
 import io.github.javiewer.adapter.item.MagnetLink;
 import io.github.javiewer.network.BtSearch;
 import okhttp3.ResponseBody;
@@ -42,13 +43,16 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
                 String magnetLink = "magnet:?xt=urn:btih:" + item.hash;
                 String infoUrl = BtSearch.BASE_URL + "/torrent/" + item.id;
 
-                links.add(DownloadLink.create(
+                DownloadLink link = DownloadLink.create(
                         name,
                         size,
                         item.createdAt != null ? item.createdAt.substring(0, 10) : "",
                         infoUrl,
                         magnetLink
-                ));
+                );
+                // Initialize empty files list to show expand indicator
+                link.setFiles(new ArrayList<>());
+                links.add(link);
             } catch (Exception ignored) {
             }
         }
@@ -66,13 +70,30 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
         }
         String magnetLink = "magnet:?xt=urn:btih:" + detail.hash;
         String size = formatSize(Long.parseLong(detail.size));
-        links.add(DownloadLink.create(
+
+        DownloadLink link = DownloadLink.create(
                 detail.name,
                 size,
                 detail.createdAt != null ? detail.createdAt.substring(0, 10) : "",
                 null,
                 magnetLink
-        ));
+        );
+
+        // Parse file list from torrentfile array
+        if (detail.torrentfile != null && !detail.torrentfile.isEmpty()) {
+            ArrayList<MagnetFile> files = new ArrayList<>();
+            for (BtSearch.TorrentFile tf : detail.torrentfile) {
+                MagnetFile file = new MagnetFile();
+                file.hash = detail.hash;
+                file.torrentName = detail.name;
+                file.filename = tf.name;
+                file.size = Long.parseLong(tf.size);
+                files.add(file);
+            }
+            link.setFiles(files);
+        }
+
+        links.add(link);
         return links;
     }
 
@@ -84,6 +105,22 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
     @Override
     public MagnetLink parseMagnetLink(String htmlContent) {
         return null;
+    }
+
+    public List<MagnetFile> parseFilesFromDetail(BtSearch.TorrentDetail detail) {
+        ArrayList<MagnetFile> files = new ArrayList<>();
+        if (detail == null || detail.torrentfile == null) {
+            return files;
+        }
+        for (BtSearch.TorrentFile tf : detail.torrentfile) {
+            MagnetFile file = new MagnetFile();
+            file.hash = detail.hash;
+            file.torrentName = detail.name;
+            file.filename = tf.name;
+            file.size = Long.parseLong(tf.size);
+            files.add(file);
+        }
+        return files;
     }
 
     private String formatSize(long bytes) {

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.javiewer.adapter.item.DownloadLink;
+import io.github.javiewer.adapter.item.MagnetFile;
 import io.github.javiewer.adapter.item.MagnetLink;
 import io.github.javiewer.network.CiliInfo;
 import okhttp3.ResponseBody;
@@ -29,7 +30,7 @@ public class CiliInfoLinkProvider extends DownloadLinkProvider {
     public List<DownloadLink> parseDownloadLinks(String htmlContent) {
         ArrayList<DownloadLink> links = new ArrayList<>();
         Document doc = Jsoup.parse(htmlContent);
-        Elements rows = doc.select("table.file-list tbody tr");
+        Elements rows = doc.select("table.table-hover.file-list tbody tr");
 
         for (Element row : rows) {
             try {
@@ -41,14 +42,16 @@ public class CiliInfoLinkProvider extends DownloadLinkProvider {
                     String title = a.text();
                     String size = sizeTd != null ? sizeTd.text() : "";
 
-                    // href format: /!lBfm
-                    links.add(DownloadLink.create(
+                    DownloadLink link = DownloadLink.create(
                             title,
                             size,
                             "",
                             href,
                             null
-                    ));
+                    );
+                    // Initialize empty files list to show expand indicator
+                    link.setFiles(new ArrayList<>());
+                    links.add(link);
                 }
             } catch (Exception ignored) {
             }
@@ -78,6 +81,61 @@ public class CiliInfoLinkProvider extends DownloadLinkProvider {
             }
         }
 
+        return null;
+    }
+
+    public List<MagnetFile> parseFileList(String htmlContent) {
+        ArrayList<MagnetFile> files = new ArrayList<>();
+        Document doc = Jsoup.parse(htmlContent);
+        // Only select the main file list table (with hover class), not the related resources table
+        Elements rows = doc.select("table.table-hover.file-list tbody tr");
+
+        for (Element row : rows) {
+            try {
+                MagnetFile file = new MagnetFile();
+                file.filename = row.select("td").first().text();
+                String sizeText = row.select("td.td-size").text();
+                file.size = parseSize(sizeText);
+                files.add(file);
+            } catch (Exception ignored) {
+            }
+        }
+        return files;
+    }
+
+    private long parseSize(String sizeText) {
+        try {
+            String text = sizeText.trim().toUpperCase();
+            if (text.endsWith("GB")) {
+                return (long) (Double.parseDouble(text.replace("GB", "").trim()) * 1073741824);
+            } else if (text.endsWith("MB")) {
+                return (long) (Double.parseDouble(text.replace("MB", "").trim()) * 1048576);
+            } else if (text.endsWith("KB")) {
+                return (long) (Double.parseDouble(text.replace("KB", "").trim()) * 1024);
+            }
+            return Long.parseLong(text.replace(",", "").replace(" B", ""));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    @Override
+    public String parseDate(String htmlContent) {
+        Document doc = Jsoup.parse(htmlContent);
+        Elements dts = doc.select("dt");
+        for (Element dt : dts) {
+            if (dt.text().contains("发布日期")) {
+                Element dd = dt.nextElementSibling();
+                if (dd != null) {
+                    String dateText = dd.text().trim();
+                    // Extract just the date part (YYYY-MM-DD)
+                    if (dateText.length() >= 10) {
+                        return dateText.substring(0, 10);
+                    }
+                    return dateText;
+                }
+            }
+        }
         return null;
     }
 }

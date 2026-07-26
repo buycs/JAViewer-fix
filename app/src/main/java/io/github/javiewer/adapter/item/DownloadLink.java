@@ -1,5 +1,8 @@
 package io.github.javiewer.adapter.item;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Project: JAViewer
  */
@@ -8,6 +11,8 @@ public class DownloadLink extends Linkable {
     protected String size;
     protected String date;
     protected MagnetLink magnetLink;
+    protected List<MagnetFile> files;
+    public boolean filesExpanded;
 
     public static DownloadLink create(String title, String size, String date, String link, String magnetLink) {
         DownloadLink download = new DownloadLink();
@@ -32,10 +37,26 @@ public class DownloadLink extends Linkable {
     }
 
     public boolean hasMagnetLink() {
-        return magnetLink.getMagnetLink() != null;
+        return magnetLink != null && magnetLink.getMagnetLink() != null;
     }
 
     public String getMagnetLink() {
-        return magnetLink.getMagnetLink();
+        return magnetLink != null ? magnetLink.getMagnetLink() : null;
+    }
+
+    public void setMagnetLink(MagnetLink magnetLink) {
+        this.magnetLink = magnetLink;
+    }
+
+    public List<MagnetFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<MagnetFile> files) {
+        this.files = files;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 }
