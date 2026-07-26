@@ -60,7 +60,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_download, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_magnet_file, parent, false);
         return new ViewHolder(v);
     }
 
@@ -158,7 +158,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                                         String date = provider.parseDate(html);
                                         if (date != null && !date.isEmpty()) {
                                             link.setDate(date);
-                                            holder.mTextDate.setText(date);
+                                            holder.torrentDate.setText(date);
                                         }
                                     }
                                 } catch (Exception ignored) {
@@ -191,7 +191,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
             }
         });
 
-        holder.mView.setOnClickListener(new View.OnClickListener() {
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!link.hasMagnetLink()) {
@@ -221,7 +221,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                                     String date = provider.parseDate(html);
                                     if (date != null && !date.isEmpty()) {
                                         link.setDate(date);
-                                        holder.mTextDate.setText(date);
+                                        holder.torrentDate.setText(date);
                                     }
                                 }
 
@@ -331,13 +331,11 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        public TextView mTextTitle;
+        public TextView torrentName;
 
-        public TextView mTextSize;
+        public TextView torrentSize;
 
-        public TextView mTextDate;
-
-        public View mView;
+        public TextView torrentDate;
 
         public LinearLayout filesContainer;
 
@@ -345,18 +343,17 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
         public ViewHolder(View view) {
             super(view);
-            mTextTitle = view.findViewById(R.id.download_title);
-            mTextSize = view.findViewById(R.id.download_size);
-            mTextDate = view.findViewById(R.id.download_date);
-            mView = view.findViewById(R.id.layout_download);
+            torrentName = view.findViewById(R.id.torrent_name);
+            torrentSize = view.findViewById(R.id.torrent_size);
+            torrentDate = view.findViewById(R.id.torrent_date);
             filesContainer = view.findViewById(R.id.files_container);
             expandIndicator = view.findViewById(R.id.expand_indicator);
         }
 
         public void parse(DownloadLink link) {
-            mTextSize.setText(link.getSize());
-            mTextTitle.setText(link.getTitle());
-            mTextDate.setText(link.getDate());
+            torrentSize.setText(link.getSize());
+            torrentName.setText(link.getTitle());
+            torrentDate.setText(link.getDate());
         }
     }
 }

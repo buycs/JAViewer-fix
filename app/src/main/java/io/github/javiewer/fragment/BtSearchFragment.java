@@ -20,7 +20,6 @@ import io.github.javiewer.adapter.DownloadLinkAdapter;
 import io.github.javiewer.adapter.item.DownloadLink;
 import io.github.javiewer.network.BtSearch;
 import io.github.javiewer.network.provider.BtSearchLinkProvider;
-import io.github.javiewer.view.decoration.DownloadItemDecoration;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -51,7 +50,6 @@ public class BtSearchFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new DownloadLinkAdapter(items, getActivity(), provider, keyword);
         recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(new DownloadItemDecoration());
 
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
