@@ -181,13 +181,13 @@ public class AVMOProvider {
                     if (!genres.isEmpty()) {
                         String label;
                         switch (key) {
-                            case "0": label = "熱門類型"; break;
-                            case "1": label = "職業扮演"; break;
+                            case "0": label = "热门类型"; break;
+                            case "1": label = "职业扮演"; break;
                             case "2": label = "衣着造型"; break;
                             case "3": label = "身材特征"; break;
-                            case "4": label = "性愛玩法"; break;
-                            case "5": label = "道具調教"; break;
-                            case "6": label = "製作系列"; break;
+                            case "4": label = "性爱玩法"; break;
+                            case "5": label = "道具调教"; break;
+                            case "6": label = "制作系列"; break;
                             case "7": label = "AV OPEN"; break;
                             default: label = key; break;
                         }
@@ -229,13 +229,13 @@ public class AVMOProvider {
                 }
                 String label;
                 switch (String.valueOf(type)) {
-                    case "0": label = "熱門類型"; break;
-                    case "1": label = "職業扮演"; break;
+                    case "0": label = "热门类型"; break;
+                    case "1": label = "职业扮演"; break;
                     case "2": label = "衣着造型"; break;
                     case "3": label = "身材特征"; break;
-                    case "4": label = "性愛玩法"; break;
-                    case "5": label = "道具調教"; break;
-                    case "6": label = "製作系列"; break;
+                    case "4": label = "性爱玩法"; break;
+                    case "5": label = "道具调教"; break;
+                    case "6": label = "制作系列"; break;
                     case "7": label = "AV OPEN"; break;
                     default: label = String.valueOf(type); break;
                 }
