@@ -2,7 +2,7 @@ package io.github.javiewer.activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.app.ProgressDialog;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -157,6 +157,22 @@ public class MovieActivity extends SecureActivity {
                 t.printStackTrace();
             }
         });
+    }
+
+    private AlertDialog showLoadingDialog(String message) {
+        ProgressBar progressBar = new ProgressBar(this);
+        progressBar.setIndeterminate(true);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        progressBar.setPadding(padding, padding, padding, padding);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("请稍后")
+                .setView(progressBar)
+                .setMessage(message)
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        return dialog;
     }
 
     private void displayInfo(MovieDetail detail) {
@@ -437,7 +453,7 @@ public class MovieActivity extends SecureActivity {
             return;
         }
 
-        final ProgressDialog dialog = ProgressDialog.show(this, "请稍后", "正在搜索该影片的预览视频", true, false);
+        final AlertDialog dialog = showLoadingDialog("正在搜索该影片的预览视频");
 
         Call<AvgleSearchResult> call = PSVS.INSTANCE.search(movie.code);
         call.enqueue(new Callback<AvgleSearchResult>() {
@@ -480,7 +496,7 @@ public class MovieActivity extends SecureActivity {
             return;
         }
 
-        final ProgressDialog dialog = ProgressDialog.show(this, "请稍后", "正在搜索该影片的在线视频源", true, false);
+        final AlertDialog dialog = showLoadingDialog("正在搜索该影片的在线视频源");
 
         Call<AvgleSearchResult> call = PSVS.INSTANCE.search(movie.code);
         call.enqueue(new Callback<AvgleSearchResult>() {
