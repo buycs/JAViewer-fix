@@ -63,6 +63,7 @@ public class DownloadActivity extends SecureActivity {
         fragment.setArguments(magnetBundle);
         adapter.addFragment(fragment, "btsow");
 
+        mViewPager.setOffscreenPageLimit(2);
         mViewPager.setAdapter(adapter);
 
         mTabLayout.setupWithViewPager(mViewPager);

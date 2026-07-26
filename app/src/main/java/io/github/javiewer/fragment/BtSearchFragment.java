@@ -18,8 +18,10 @@ import java.util.List;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.DownloadLinkAdapter;
 import io.github.javiewer.adapter.item.DownloadLink;
+import io.github.javiewer.adapter.item.MagnetFile;
 import io.github.javiewer.network.BtSearch;
 import io.github.javiewer.network.provider.BtSearchLinkProvider;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -100,6 +102,7 @@ public class BtSearchFragment extends Fragment {
                     items.addAll(newItems);
                     adapter.notifyItemRangeInserted(pos, newItems.size());
                     currentPage++;
+                    preloadFiles(newItems);
                 } else if (getContext() != null) {
                     Toast.makeText(getContext(), "搜索失败", Toast.LENGTH_SHORT).show();
                 }
@@ -113,5 +116,47 @@ public class BtSearchFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void preloadFiles(List<DownloadLink> newItems) {
+        for (final DownloadLink link : newItems) {
+            final long torrentId = extractTorrentId(link.getLink());
+            if (torrentId <= 0) continue;
+
+            Call<ResponseBody> call = provider.getDetail(torrentId, keyword);
+            call.enqueue(new Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    try {
+                        String body = response.body().string();
+                        List<MagnetFile> files = provider.parseFilesFromJson(body);
+                        if (files.isEmpty()) {
+                            files = provider.parseFilesFromHtml(body);
+                        }
+                        if (!files.isEmpty()) {
+                            link.setFiles(files);
+                            int idx = items.indexOf(link);
+                            if (idx >= 0) {
+                                adapter.notifyItemChanged(idx);
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                }
+            });
+        }
+    }
+
+    private long extractTorrentId(String url) {
+        try {
+            String[] parts = url.split("/");
+            return Long.parseLong(parts[parts.length - 1]);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }
