@@ -2,6 +2,7 @@ package io.github.javiewer.activity;
 
 import android.os.Bundle;
 import com.google.android.material.appbar.AppBarLayout;
+import androidx.core.content.ContextCompat;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.widget.Toolbar;
 
@@ -49,7 +50,7 @@ public class FavouriteActivity extends SecureActivity {
         mAppBarLayout = findViewById(R.id.app_bar_fav);
         mBottomNav = findViewById(R.id.bottom_navigation);
         mToolbar = findViewById(R.id.toolbar_fav);
-        mColorPrimary = getResources().getColor(R.color.colorPrimary);
+        mColorPrimary = ContextCompat.getColor(this, R.color.colorPrimary);
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

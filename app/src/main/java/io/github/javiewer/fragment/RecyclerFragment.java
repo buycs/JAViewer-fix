@@ -1,6 +1,8 @@
 package io.github.javiewer.fragment;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
@@ -104,7 +106,13 @@ public abstract class RecyclerFragment<I, LM extends RecyclerView.LayoutManager>
         );
 
         if (savedInstanceState != null) {
-            this.getLayoutManager().onRestoreInstanceState(savedInstanceState.getParcelable("LayoutManagerState"));
+            Parcelable state;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                state = savedInstanceState.getParcelable("LayoutManagerState", Parcelable.class);
+            } else {
+                state = savedInstanceState.getParcelable("LayoutManagerState");
+            }
+            this.getLayoutManager().onRestoreInstanceState(state);
             this.setItems((ArrayList<I>) savedInstanceState.getSerializable("Items", ArrayList.class));
             if (this.getOnScrollListener() != null) {
                 this.getOnScrollListener().restoreState(savedInstanceState.getBundle("ScrollListenerState"));

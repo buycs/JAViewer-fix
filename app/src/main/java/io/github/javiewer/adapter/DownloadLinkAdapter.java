@@ -2,7 +2,6 @@ package io.github.javiewer.adapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -13,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,12 +89,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
             public void onClick(View v) {
                 // If files not loaded yet, fetch detail page first
                 if (link.getFiles().isEmpty() && link.getLink() != null) {
-                    final ProgressDialog mDialog = new ProgressDialog(mParentActivity);
-                    mDialog.setTitle("请稍后");
-                    mDialog.setMessage("正在获取文件列表");
-                    mDialog.setIndeterminate(false);
-                    mDialog.setCancelable(false);
-                    mDialog.show();
+                    final AlertDialog mDialog = createLoadingDialog("正在获取文件列表");
 
                     // Check if this is BtSearch (detail API) or CiliInfo (HTML page)
                     if (provider instanceof io.github.javiewer.network.provider.BtSearchLinkProvider) {
@@ -200,13 +195,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
             @Override
             public void onClick(View v) {
                 if (!link.hasMagnetLink()) {
-                    final ProgressDialog mDialog;
-                    mDialog = new ProgressDialog(mParentActivity);
-                    mDialog.setTitle("请稍后");
-                    mDialog.setMessage("正在获取磁力链接");
-                    mDialog.setIndeterminate(false);
-                    mDialog.setCancelable(false);
-                    mDialog.show();
+                    final AlertDialog mDialog = createLoadingDialog("正在获取磁力链接");
 
                     Call<ResponseBody> call = provider.get(link.getLink());
                     call.enqueue(new Callback<ResponseBody>() {
@@ -322,6 +311,22 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
             return String.format(Locale.US, "%.1f KB", bytes / 1024.0);
         }
         return bytes + " B";
+    }
+
+    private AlertDialog createLoadingDialog(String message) {
+        ProgressBar progressBar = new ProgressBar(mParentActivity);
+        progressBar.setIndeterminate(true);
+        int padding = (int) (20 * mParentActivity.getResources().getDisplayMetrics().density);
+        progressBar.setPadding(padding, padding, padding, padding);
+
+        AlertDialog dialog = new AlertDialog.Builder(mParentActivity)
+                .setTitle("请稍后")
+                .setView(progressBar)
+                .setMessage(message)
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        return dialog;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
