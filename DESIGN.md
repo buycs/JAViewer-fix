@@ -1,6 +1,6 @@
 # JAViewer Android 项目完整设计文档
 
-> 版本: v2.1.0 (versionCode 17)  
+> 版本: v2.2.0 (versionCode 18)  
 > 最后更新: 2026-07-26
 
 ## 1. 项目概况
@@ -11,7 +11,7 @@
 | compileSdk / targetSdk / minSdk | 35 / 35 / 21 |
 | Java 版本 | 17 |
 | 应用 ID | `io.github.javiewer` |
-| 版本名 / 版本号 | 2.1.0 / 17 |
+| 版本名 / 版本号 | 2.2.0 / 18 |
 | ProGuard | 关闭 (minifyEnabled false) |
 | NDK | arm64-v8a only |
 
@@ -65,7 +65,7 @@
 | `CONFIGURATIONS` | Configurations | 用户配置（收藏、数据源） |
 | `DATA_SOURCES` | List\<DataSource\> | 从 properties.json 加载 |
 | `hostReplacements` | Map | 旧域名 → 新域名映射 |
-| `csrfToken` | String | 异步获取，无同步机制 |
+| `csrfToken` | String | 异步获取，无同步机制（已验证为死代码） |
 | `COOKIE_JAR` | CookieJar | 内存 Cookie 存储 |
 
 ### 2.3 Activity 继承关系 (10 个)
@@ -78,13 +78,12 @@ AppCompatActivity
     ├── MovieActivity → 电影详情 + 收藏 + 分享 + 预览视频
     ├── MovieListActivity → 电影列表容器
     ├── GalleryActivity → 全屏图片画廊 (ViewPager + 缩放)
-    ├── DownloadActivity → 磁力搜索 (BtSearch + 无极磁链 双Tab)
+    ├── DownloadActivity → 磁力搜索 (BtSearch + 无极磁链 + btsow 三Tab)
     ├── FavouriteActivity → 收藏夹 (底部导航, 双Tab)
     ├── WebViewActivity → 内嵌 WebView (验证码)
-    └── MagnetSearchActivity → 磁力搜索 (btsow.pics API)
 ```
 
-### 2.4 Fragment 继承关系 (14 个)
+### 2.4 Fragment 继承关系 (15 个)
 
 ```
 RecyclerFragment<I, LM> (抽象基类: 分页 + 下拉刷新 + 状态保存)
@@ -105,6 +104,9 @@ ExtendedAppBarFragment
 
 BtSearchFragment (独立 Fragment, 非继承 RecyclerFragment)
 └── BtSearch 下载列表
+
+MagnetSearchFragment (独立 Fragment, 非继承 RecyclerFragment) ← 新增
+└── btsow 磁力搜索列表
 ```
 
 ---
@@ -203,6 +205,9 @@ BtSearchFragment (独立 Fragment, 非继承 RecyclerFragment)
 }
 ```
 
+- **使用者**: `MagnetSearchFragment` (DownloadActivity Tab 3)
+- **网络请求**: 直接使用 `JAViewer.HTTP_CLIENT` + `okhttp3.Request`，无 Provider
+
 ### 3.3 其他第三方 API
 
 | API | 接口文件 | 用途 | 状态 |
@@ -246,7 +251,7 @@ BtSearchFragment (独立 Fragment, 非继承 RecyclerFragment)
 }
 ```
 
-触发保存：数据源切换、域名编辑、收藏操作、下载计数。
+触发保存：数据源切换、域名编辑、收藏操作。
 
 ### 4.2 网络请求流程
 
@@ -258,20 +263,28 @@ UI 触发 → newCall(page) → OkHttp 拦截器(域名替换/UA/CSRF)
 ### 4.3 磁力搜索数据流
 
 ```
-DownloadActivity
-├── BtSearch Tab
+MovieActivity
+├── FAB 按钮 → DownloadActivity (keyword = movie.getCode())
+└── 点击"影片番号" Header → DownloadActivity (keyword = detail.code)
+
+DownloadActivity (三 Tab)
+├── Tab 1 "BtSearch"
 │   ├── 搜索: BtSearch.searchApi() → parseSearchResult() → DownloadLink 列表
 │   ├── 点击三角: BtSearch.getDetail() → parseFilesFromJson() → 展开文件列表
 │   └── 点击整行: 弹出磁力链接对话框
 │
-└── 无极磁链 Tab
-    ├── 搜索: CiliInfo.search() → parseDownloadLinks() → DownloadLink 列表
-    ├── 点击三角: CiliInfo.get() → parseMagnetLink() + parseFileList() + parseDate()
-    └── 点击整行: 弹出磁力链接对话框
+├── Tab 2 "无极磁链"
+│   ├── 搜索: CiliInfo.search() → parseDownloadLinks() → DownloadLink 列表
+│   ├── 点击三角: CiliInfo.get() → parseMagnetLink() + parseFileList() + parseDate()
+│   └── 点击整行: 弹出磁力链接对话框
+│
+└── Tab 3 "btsow" ← 新增
+    ├── 搜索: POST btsow.pics/api/search → 解析 JSON → TorrentGroup 列表
+    ├── 同时获取文件列表: POST btsow.pics/api/magnet (每个 hash 单独请求)
+    ├── 点击三角 ▶: 展开/收起已加载的文件列表
+    └── 点击整行: 打开磁力链接 (ACTION_VIEW)
+```
 
-MagnetSearchActivity
-├── 搜索: btsow.pics/api/search → TorrentGroup 列表
-└── 文件列表: btsow.pics/api/magnet → 展开文件
 ```
 
 ### 4.4 数据源切换
@@ -323,7 +336,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ActressAdapter` | Actress | 女优卡片 |
 | `ActressPaletteAdapter` | Actress | 女优卡片 (Palette) |
 | `GenreAdapter` | Genre | 类型标签 |
-| `MovieHeaderAdapter` | MovieDetail.Header | 元数据行 |
+| `MovieHeaderAdapter` | MovieDetail.Header | 元数据行（含番号点击跳转） |
 | `ScreenshotAdapter` | Screenshot | 截图网格 |
 | `RelatedMovieAdapter` | Movie | 相关电影 |
 | `DownloadLinkAdapter` | DownloadLink | 下载链接 + 文件列表展开/收起 |
@@ -331,7 +344,11 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ViewPagerAdapter` | Fragments | ViewPager 适配 (FragmentStatePagerAdapter) |
 | `NavigationSpinnerAdapter` | Generic\<T\> | 下拉选择 |
 
-### 5.4 DownloadActivity 布局
+### 5.4 MovieHeaderAdapter 番号跳转
+
+`MovieHeaderAdapter` 在 `onBindViewHolder` 中检测 `header.name == "影片番号"`，点击时跳转到 `DownloadActivity` 并传递 `keyword = header.getValue()`。
+
+### 5.5 DownloadActivity 布局
 
 ```
 ┌─────────────────────────────────────┐
@@ -349,12 +366,12 @@ MaterialDrawerTheme.Light.DarkToolbar
 - 三角符号垂直居中右侧
 - 文件列表在主内容下方展开
 
-### 5.5 布局文件 (49 个)
+### 5.6 布局文件 (50 个)
 
 | 类别 | 文件数 | 说明 |
 |------|--------|------|
 | Activity | 10 | 各 Activity 布局 |
-| Fragment | 5 | RecyclerView、Genre、Favourite 等 |
+| Fragment | 6 | RecyclerView、Genre、Favourite、MagnetSearch 等 |
 | Card | 8 | 电影、女优、类型、下载、磁力文件等 |
 | Content | 8 | 电影详情各区块 |
 | Layout | 8 | 通用布局组件 |
@@ -372,7 +389,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `Configurations.java` | 用户配置持久化 |
 | `Properties.java` | properties.json 数据模型 |
 
-### activity/ (10 个)
+### activity/ (9 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -382,12 +399,11 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MovieActivity.java` | 电影详情、收藏、分享、预览视频 |
 | `MovieListActivity.java` | 电影列表容器 |
 | `GalleryActivity.java` | 全屏图片画廊 |
-| `DownloadActivity.java` | 磁力搜索 (BtSearch + 无极磁链 双Tab) |
+| `DownloadActivity.java` | 磁力搜索 (BtSearch + 无极磁链 + btsow 三Tab) |
 | `FavouriteActivity.java` | 收藏夹 (底部导航) |
 | `WebViewActivity.java` | 内嵌 WebView |
-| `MagnetSearchActivity.java` | 磁力搜索 (btsow.pics API) |
 
-### fragment/ (14 个)
+### fragment/ (15 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -401,6 +417,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ExtendedAppBarFragment.java` | 扩展 AppBar 基类 |
 | `DownloadFragment.java` | 无极磁链下载列表 |
 | `BtSearchFragment.java` | BtSearch 下载列表 |
+| `MagnetSearchFragment.java` | btsow 磁力搜索列表 (新增) |
 | `genre/GenreTabsFragment.java` | 类型标签页 |
 | `genre/GenreFragment.java` | 类型网格 |
 | `favourite/FavouriteFragment.java` | 收藏基类 |
@@ -417,7 +434,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `ActressAdapter.java` | 女优卡片 |
 | `ActressPaletteAdapter.java` | 女优卡片 (Palette) |
 | `GenreAdapter.java` | 类型标签 |
-| `MovieHeaderAdapter.java` | 元数据行 |
+| `MovieHeaderAdapter.java` | 元数据行（含番号点击跳转 DownloadActivity） |
 | `ScreenshotAdapter.java` | 截图网格 |
 | `RelatedMovieAdapter.java` | 相关电影 |
 | `DownloadLinkAdapter.java` | 下载链接 + 文件列表展开/收起 |
@@ -544,6 +561,11 @@ MaterialDrawerTheme.Light.DarkToolbar
 - `MagnetLink.create()` 用 `indexOf("&")` 截断磁力链接可能抛异常
 - `MovieActivity.getScreenBitmap()` 可能 OOM
 
+### 死代码
+- **`csrfToken` 相关代码** — 已验证为死代码，已在 v2.1.0 提交 `4d7710e` 中清理
+
+### 代码重复
+
 ### TODO 标记
 - `MovieActivity.java:450,487,535` — 视频播放相关，标记为 Deprecated
 
@@ -553,5 +575,6 @@ MaterialDrawerTheme.Light.DarkToolbar
 
 | 版本 | 变更 |
 |------|------|
+| v2.2.0 | DownloadActivity 新增 btsow Tab (MagnetSearchFragment)、番号点击统一跳转 DownloadActivity、MovieActivity 番号改为 Header 列表传递、AVMOProvider "时长"改名"影片时长"、简化"系列"字段逻辑、移除下载计数提示弹窗、移除 MagnetSearchActivity 死代码、csrfToken 死代码已清理 |
 | v2.1.0 | 新增 cili.info 磁力搜索源、文件列表展开/收起、BtSearch 详情 API 修复、MagnetSearch 时间显示、UI 优化、修复已弃用 API、移除 jcenter/fabric 仓库、类型标签简体中文 |
 | v2.0.3 | BtSearch 磁力搜索、UI 优化 |
