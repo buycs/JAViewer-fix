@@ -486,8 +486,9 @@ MaterialDrawerTheme.Light.DarkToolbar
 - `MovieActivity.getScreenBitmap()` 可能 OOM
 
 ### 仓库依赖
-- `jcenter.bintray.com` 已关闭
-- `maven.fabric.io` 已关闭
+- ~~`jcenter.bintray.com` 已关闭~~ ✅ 已移除
+- ~~`maven.fabric.io` 已关闭~~ ✅ 已移除
+- 当前仓库: `google()`, `mavenCentral()`, `jitpack.io`
 
 ---
 
