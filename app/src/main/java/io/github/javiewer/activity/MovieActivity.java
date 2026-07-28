@@ -52,6 +52,7 @@ import cn.jzvd.JZVideoPlayer;
 import cn.jzvd.JZVideoPlayerStandard;
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
+import io.github.javiewer.network.BasicService;
 import io.github.javiewer.adapter.ActressPaletteAdapter;
 import io.github.javiewer.adapter.MovieHeaderAdapter;
 import io.github.javiewer.adapter.RelatedMovieAdapter;
@@ -129,7 +130,13 @@ public class MovieActivity extends SecureActivity {
         mFab.bringToFront();
 
         String movieId = this.movie.getLink();
-        Call<ResponseBody> call = JAViewer.SERVICE.getMovie(Arrays.asList(movieId, "cn"));
+        BasicService service = JAViewer.getService();
+        if (service == null) {
+            Toast.makeText(this, "服务初始化失败，请检查数据源配置", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        Call<ResponseBody> call = service.getMovie(Arrays.asList(movieId, "cn"));
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
@@ -265,7 +272,7 @@ public class MovieActivity extends SecureActivity {
             RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.related_recycler_view);
             ImageView mIcon = (ImageView) findViewById(R.id.movie_icon_related);
 
-            Call<ResponseBody> relatedCall = JAViewer.SERVICE.getRelatedMovies(Arrays.asList(movie.getLink(), "cn", 12));
+            Call<ResponseBody> relatedCall = JAViewer.getService().getRelatedMovies(Arrays.asList(movie.getLink(), "cn", 12));
             relatedCall.enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

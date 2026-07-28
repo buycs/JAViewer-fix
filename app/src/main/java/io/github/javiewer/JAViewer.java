@@ -144,6 +144,13 @@ public class JAViewer extends Application {
         }
     }
 
+    public static BasicService getService() {
+        if (SERVICE == null) {
+            recreateService();
+        }
+        return SERVICE;
+    }
+
     public static File getStorageDir() {
         File dir = new File(appContext.getExternalFilesDir(null), "JAViewer/");
         dir.mkdirs();
