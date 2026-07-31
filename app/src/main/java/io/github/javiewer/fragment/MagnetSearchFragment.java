@@ -92,7 +92,7 @@ public class MagnetSearchFragment extends Fragment {
                     String json = "[{\"search\":\"" + code + "\"},30,1]";
                     RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
                     Request request = new Request.Builder()
-                            .url("https://btsow.pics/bts/data/api/search")
+                            .url("https://btsow.live/bts/data/api/search")
                             .post(body)
                             .addHeader("content-type", "application/json")
                             .build();
@@ -139,7 +139,7 @@ public class MagnetSearchFragment extends Fragment {
                             String json2 = "[\"" + hash + "\"]";
                             RequestBody body2 = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json2);
                             Request request2 = new Request.Builder()
-                                    .url("https://btsow.pics/bts/data/api/magnet")
+                                    .url("https://btsow.live/bts/data/api/magnet")
                                     .post(body2)
                                     .addHeader("content-type", "application/json")
                                     .build();

@@ -27,6 +27,9 @@ import retrofit2.Response;
 
 public class GenreTabsFragment extends ExtendedAppBarFragment {
 
+    private static final int MAX_RETRY = 3;
+    private static final long RETRY_DELAY_MS = 2000;
+
     public TabLayout mTabLayout;
     public ViewPager mViewPager;
     public ProgressBar mProgressBar;
@@ -44,16 +47,35 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
         mViewPager.setAdapter(mAdapter);
         mTabLayout.setupWithViewPager(mViewPager);
 
-        Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("cn"));
+        loadGenres(0);
+    }
+
+    private void loadGenres(final int attempt) {
+        if (getActivity() == null) {
+            return;
+        }
+        Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("ja"));
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                mProgressBar.setVisibility(View.GONE);
+                if (getActivity() == null) {
+                    return;
+                }
                 try {
+                    if (response.body() == null) {
+                        retry(attempt);
+                        return;
+                    }
                     String body = response.body().string();
                     android.util.Log.d("GenreTabs", "Response body: " + body.substring(0, Math.min(500, body.length())));
                     LinkedHashMap<String, List<Genre>> genres = AVMOProvider.parseGenres(body);
 
+                    if (genres.isEmpty()) {
+                        retry(attempt);
+                        return;
+                    }
+
+                    mProgressBar.setVisibility(View.GONE);
                     GenreFragment fragment;
                     for (String title : genres.keySet()) {
                         fragment = new GenreFragment();
@@ -65,15 +87,33 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
 
                     mTabLayout.setVisibility(View.VISIBLE);
                 } catch (Throwable e) {
-                    onFailure(call, e);
+                    retry(attempt);
                 }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 t.printStackTrace();
+                retry(attempt);
             }
         });
+    }
+
+    private void retry(final int attempt) {
+        if (getActivity() == null) {
+            return;
+        }
+        if (attempt < MAX_RETRY) {
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    loadGenres(attempt + 1);
+                }
+            }, RETRY_DELAY_MS);
+        } else {
+            mProgressBar.setVisibility(View.GONE);
+            mTabLayout.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
