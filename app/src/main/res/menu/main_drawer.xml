@@ -37,4 +37,13 @@
             android:title="类别" />
     </group>
 
+    <group
+        android:id="@+id/nav_group3"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_source"
+            android:icon="@drawable/ic_menu_github"
+            android:title="源码" />
+    </group>
+
 </menu>

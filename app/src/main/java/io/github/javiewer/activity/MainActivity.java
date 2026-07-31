@@ -269,12 +269,23 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         int id = item.getItemId();
         if (id == R.id.nav_favourite) {
             startActivity(new Intent(this, FavouriteActivity.class));
+        } else if (id == R.id.nav_source) {
+            openSourceRepository();
         } else {
             item.setChecked(true);
             setFragment(id);
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void openSourceRepository() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/SplashCodes/JAViewer"));
+            startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void restart() {
