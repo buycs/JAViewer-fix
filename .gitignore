@@ -10,3 +10,9 @@
 /JAViewer.iml
 build/
 cookies.txt
+
+# 设计与开发内部文档（不上传）
+AGENTS.md
+DESIGN.md
+API_DOCUMENTATION.md
+MAGNET_SEARCH.md
