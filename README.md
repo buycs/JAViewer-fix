@@ -2,7 +2,7 @@
 
 > 质感设计 · 更优雅的驾车体验
 
-基于 [SplashCodes/JAViewer](https://github.com/SplashCodes/JAViewer) 二次开发的 Android 电影元数据浏览器。在保留原有浏览、搜索、播放等核心功能的基础上，进行了大量修复与功能增强，并完成新版本 Android 系统的兼容性适配。
+基于 [SplashCodes/JAViewer](https://github.com/SplashCodes/JAViewer) 二次开发的 Android 电影元数据浏览器。在保留原有浏览、搜索、磁力下载等核心功能的基础上，进行了大量修复与功能增强，并完成新版本 Android 系统的兼容性适配。
 
 - 原项目源码: https://github.com/SplashCodes/JAViewer
 - 本项目源码: https://github.com/buycs/JAViewer-fix
@@ -34,10 +34,9 @@
 - 多磁力搜索源，自动切换可用源
 - 文件列表展开 / 收起，点击整行复制磁力链接 / 打开外部下载器
 
-### 视频播放
-- 在线视频源搜索 + 签名生成播放地址
-- 预览视频播放
-- 全屏播放器（兼容多个播放内核）
+### 视频播放（未实现）
+- 播放 / 预览按钮已布局，但尚未接线可用视频源
+- 原有在线视频源 API 已失效，功能待后续实现
 
 ### 系统 / 兼容性
 - 防截图（SecureActivity，FLAG_SECURE）
