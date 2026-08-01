@@ -94,9 +94,9 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
             public void onResult(ResponseBody response) throws Exception {
                 super.onResult(response);
                 String html = response.string();
-                android.util.Log.d("JAViewer", "TorrentKitty response length: " + html.length());
+                android.util.Log.d("JAViewer", "download response length: " + html.length());
                 if (html.length() < 1000) {
-                    android.util.Log.d("JAViewer", "TorrentKitty response: " + html);
+                    android.util.Log.d("JAViewer", "download response: " + html);
                 }
                 List<DownloadLink> downloads = provider.parseDownloadLinks(html);
 

@@ -1,6 +1,6 @@
 # JAViewer API 接口文档
 
-> 基于项目源码 v2.2.1 整理
+> 基于项目源码 v2.0.1 整理
 
 ---
 
@@ -9,14 +9,13 @@
 1. [数据源配置](#1-数据源配置)
 2. [BasicService — 主数据源 API](#2-basicservice--主数据源-api)
 3. [Avgle — 视频搜索 API](#3-avgle--视频搜索-api)
-4. [BTSO — BT 搜索 API](#4-btso--bt-搜索-api)
-5. [BtSearch — 带签名验证的 BT 搜索 API](#5-btsearch--带签名验证的-bt-搜索-api)
-6. [CiliInfo — 无极磁链 HTML 解析 API](#6-ciliinfo--无极磁链-html-解析-api)
-7. [PSVS — 在线视频播放 API](#7-psvs--在线视频播放-api)
-8. [btsow — 磁力搜索 API（OkHttp 直连）](#8-btsow--磁力搜索-apiokhttp-直连)
-9. [Provider 层](#9-provider-层)
-10. [数据模型](#10-数据模型)
-11. [接口调用流程图](#11-接口调用流程图)
+4. [BtSearch — 带签名验证的 BT 搜索 API](#4-btsearch--带签名验证的-bt-搜索-api)
+5. [CiliInfo — 无极磁链 HTML 解析 API](#5-ciliinfo--无极磁链-html-解析-api)
+6. [PSVS — 在线视频播放 API](#6-psvs--在线视频播放-api)
+7. [btsow — 磁力搜索 API（OkHttp 直连）](#7-btsow--磁力搜索-apiokhttp-直连)
+8. [Provider 层](#8-provider-层)
+9. [数据模型](#9-数据模型)
+10. [接口调用流程图](#10-接口调用流程图)
 
 ---
 
@@ -265,42 +264,9 @@ GET /{path}
 
 ---
 
-## 4. BTSO — BT 搜索 API
+## 4. BTSO — 已移除
 
-**文件:** `network/BTSO.java`
-
-**Base URL:** `https://api.rekonquer.com`
-
-```java
-BTSO INSTANCE = new Retrofit.Builder()
-    .baseUrl("https://api.rekonquer.com")
-    .client(JAViewer.HTTP_CLIENT)
-    .build()
-    .create(BTSO.class);
-```
-
-### 4.1 搜索
-
-```
-GET /btso.php?kw={keyword}&page={page}
-Headers:
-  Accept-Language: zh-CN,zh;q=0.8,en;q=0.6
-```
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `kw` | string | 搜索关键词 |
-| `page` | int | 页码 |
-
-**响应:** HTML，由 `BTSOLinkProvider.parseDownloadLinks()` 通过 Jsoup 解析。
-
-### 4.2 通用 GET
-
-```
-GET {url}
-```
-
-获取详情页 HTML。
+> ⚠️ **BTSO (api.rekonquer.com) 旧下载链接 API 已在 v2.0.1 移除。** 原实现 `network/BTSO.java`、`BTSOLinkProvider.java` 及 `network/TorrentKitty.java`、`TorrentKittyLinkProvider.java` 均为死代码，不再使用。btsow 磁力搜索改用 [btsow — 磁力搜索 API（OkHttp 直连）](#7-btsow--磁力搜索-apiokhttp-直连)。
 
 ---
 
@@ -539,7 +505,7 @@ BtSearch.INSTANCE.search(keyword, 10, (page-1)*10, "", "", "", "asc", "");
 
 ---
 
-## 6. CiliInfo — 无极磁链 HTML 解析 API
+## 5. CiliInfo — 无极磁链 HTML 解析 API
 
 **文件:** `network/CiliInfo.java`
 
@@ -603,7 +569,7 @@ GET {url}  (e.g., /!lBfm 或 https://cili.info/!lBfm)
 
 ---
 
-## 7. PSVS — 在线视频播放 API
+## 6. PSVS — 在线视频播放 API
 
 **文件:** `network/PSVS.java`
 
@@ -652,7 +618,7 @@ return bytesToHex(bytes);
 
 ---
 
-## 8. btsow — 磁力搜索 API（OkHttp 直连）
+## 7. btsow — 磁力搜索 API（OkHttp 直连）
 
 **文件:** `fragment/MagnetSearchFragment.java`（非 Retrofit，直接使用 OkHttp）
 
@@ -666,7 +632,7 @@ btsow API **无显式鉴权**（无 API Key、无签名算法）。请求通过�
 |--------|------|----------|
 | 域名替换 | 将请求 URL 中匹配 `hostReplacements` 的 host 替换为当前活跃域名 | `JAViewer.replaceUrl()` |
 | User-Agent | 覆盖 `User-Agent` 头为 Chrome 91 Windows UA | `JAViewer.java:107` |
-| X-Requested-With | 添加 `X-Requested-With: XMLHttpRequest`（对所有非 torrentkitty/btsearch 的 host） | `JAViewer.java:110-111` |
+| X-Requested-With | 添加 `X-Requested-With: XMLHttpRequest`（对所有非 btsearch 的 host） | `JAViewer.java:110` |
 | Cookie 持久化 | 自动保存/发送 `Cookie` 头（内存级 `CookieJar`） | `JAViewer.COOKIE_JAR` |
 
 **btsow 请求实际发出的请求头示例:**
@@ -742,9 +708,9 @@ magnet:?xt=urn:btih:{hash}&dn={torrentName}
 
 ---
 
-## 9. Provider 层
+## 8. Provider 层
 
-### 9.1 AVMOProvider
+### 8.1 AVMOProvider
 
 **文件:** `network/provider/AVMOProvider.java`
 
@@ -780,7 +746,7 @@ magnet:?xt=urn:btih:{hash}&dn={torrentName}
 | `Header.name/value` | `data.releaseDate/length/director/studio/label/series` | 元数据 |
 | `data[].movieId`/`data[].starId` | `link` | 用于后续 API 调用 |
 
-### 9.2 DownloadLinkProvider 体系
+### 8.2 DownloadLinkProvider 体系
 
 **文件:** `network/provider/DownloadLinkProvider.java`（抽象基类）
 
@@ -788,8 +754,6 @@ magnet:?xt=urn:btih:{hash}&dn={torrentName}
 
 | 名称 | 实现类 | 网络接口 |
 |------|--------|----------|
-| `"btso"` | `BTSOLinkProvider` | `BTSO` |
-| `"torrentkitty"` | `TorrentKittyLinkProvider` | `TorrentKitty` |
 | `"btsearch"` | `BtSearchLinkProvider` | `BtSearch` |
 | `"ciliinfo"` / `"cili"` | `CiliInfoLinkProvider` | `CiliInfo` |
 
@@ -804,25 +768,7 @@ magnet:?xt=urn:btih:{hash}&dn={torrentName}
 | `parseFileList(html)` | `List<MagnetFile>` | 解析文件列表（可选） |
 | `parseDate(html)` | `String` | 解析发布日期（可选） |
 
-### 9.3 BTSOLinkProvider
-
-**文件:** `network/provider/BTSOLinkProvider.java`
-
-解析 BTSO HTML:
-
-- 搜索: 按 `class="row"` 提取 `a` 标签 URL + `file` / `size` / `date` class
-- 详情: 按 `class="magnet-link"` 提取磁力链接文本
-
-### 9.4 TorrentKittyLinkProvider
-
-**文件:** `network/provider/TorrentKittyLinkProvider.java`
-
-解析 TorrentKitty HTML:
-
-- 搜索: 按 `#archiveResult` 表格中的 `class="name"` / `size` / `date` 提取
-- 详情: 按 `class="magnet-link"` 提取磁力链接
-
-### 9.5 BtSearchLinkProvider
+### 8.3 BtSearchLinkProvider
 
 **文件:** `network/provider/BtSearchLinkProvider.java`
 
@@ -832,7 +778,7 @@ BtSearch JSON 解析:
 - `parseFilesFromJson()`: 解析 `torrentfile` JSON 数组
 - `parseFilesFromHtml()`: 后备解析方案（Jsoup 解析 HTML）
 
-### 9.6 CiliInfoLinkProvider
+### 8.4 CiliInfoLinkProvider
 
 **文件:** `network/provider/CiliInfoLinkProvider.java`
 
@@ -845,7 +791,7 @@ BtSearch JSON 解析:
 
 ---
 
-## 10. 数据模型
+## 9. 数据模型
 
 **包:** `adapter/item/`
 
@@ -868,7 +814,7 @@ BtSearch JSON 解析:
 
 ---
 
-## 11. 接口调用流程图
+## 10. 接口调用流程图
 
 ```
 应用启动
@@ -918,7 +864,7 @@ DownloadActivity (三 Tab)
 
 通用 OkHttp 拦截器:
   └─ User-Agent: Chrome 91
-  └─ X-Requested-With: XMLHttpRequest (非 torrentkitty/btsearch)
+  └─ X-Requested-With: XMLHttpRequest (非 btsearch)
   └─ 域名替换: hostReplacements Map → 自动替换 host
 ```
 

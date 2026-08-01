@@ -285,7 +285,7 @@ DownloadActivity (三 Tab)
 
 | 版本 | 变更 |
 |------|------|
-| v2.2.1 | 修复 MovieActivity 空指针：`JAViewer.SERVICE` 改为 `getService()` 懒初始化，增加 null 安全处理 |
-| v2.2.0 | DownloadActivity 新增 btsow Tab (MagnetSearchFragment)、番号点击统一跳转 DownloadActivity、移除下载计数提示弹窗、移除 MagnetSearchActivity 死代码 |
+| v2.0.1 | 修复 MovieActivity 空指针：`JAViewer.SERVICE` 改为 `getService()` 懒初始化，增加 null 安全处理 |
+| v2.0.1 | DownloadActivity 新增 btsow Tab (MagnetSearchFragment)、番号点击统一跳转 DownloadActivity、移除下载计数提示弹窗、移除 MagnetSearchActivity 死代码 |
 | v2.1.0 | 新增 cili.info 源、文件列表展开/收起、BtSearch 详情 API 修复、MagnetSearch 时间显示 |
 | v2.0.3 | BtSearch 磁力搜索、UI 优化 |

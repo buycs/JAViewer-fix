@@ -18,7 +18,7 @@ gradlew.bat assembleDebug      # Windows
 ./gradlew clean
 ```
 
-AGP 8.9.0, Gradle 8.13, compileSdk 35, minSdk 21, NDK arm64-v8a only.
+AGP 8.9.0, Gradle 8.13, compileSdk 35, minSdk 21, 全 ABI（无 native 代码）。
 
 ## Architecture
 
@@ -37,7 +37,7 @@ AGP 8.9.0, Gradle 8.13, compileSdk 35, minSdk 21, NDK arm64-v8a only.
 - `activity/` — Activities (Start, Main, Movie, Gallery, Download, WebView, MagnetSearch, Favourite)
 - `fragment/` — Fragments (Home, Popular, Released, Actresses, Genre, Movie, Download, Favourite tabs)
 - `adapter/` — RecyclerView adapters + data models in `adapter/item/`
-- `network/` — Retrofit interfaces (BasicService, Avgle, TorrentKitty, BTSO) and JSON providers
+- `network/` — Retrofit interfaces (BasicService, Avgle, BtSearch, CiliInfo, PSVS) and JSON providers
 - `view/` — Custom views and scroll listeners
 - `util/` — IO and video player utilities
 
@@ -49,7 +49,6 @@ AGP 8.9.0, Gradle 8.13, compileSdk 35, minSdk 21, NDK arm64-v8a only.
 - **Cleartext traffic permitted** in `network_security_config.xml` — intentional for the data sources.
 - **Config persistence** writes to external storage (`/sdcard/JAViewer/configurations.json`). The app creates a `.nomedia` file there.
 - **`SecureActivity`** sets `FLAG_SECURE` on pause, clears on resume — prevents screenshots. `MainActivity` extends it.
-- **CSRF token** is fetched asynchronously on `MainActivity.onCreate`. Network calls may fail if they race with token fetch.
 - **Domain switching** rebuilds the Retrofit service and recreates the Activity. The `hostReplacements` map redirects legacy domains to the active domain.
 - **`android.nonTransitiveRClass=false`** in gradle.properties — R class references are transitive.
 

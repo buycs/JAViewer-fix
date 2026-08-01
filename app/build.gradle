@@ -27,6 +27,8 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 用 debug 签名保证 release APK 可直接安装；正式发布前请换成正式签名
+            signingConfig signingConfigs.debug
         }
     }
     applicationVariants.all { variant ->

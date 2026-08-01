@@ -14,10 +14,6 @@ import retrofit2.Call;
 public abstract class DownloadLinkProvider {
     public static DownloadLinkProvider getProvider(String name) {
         switch (name.toLowerCase().trim()) {
-            case "btso":
-                return new BTSOLinkProvider();
-            case "torrentkitty":
-                return new TorrentKittyLinkProvider();
             case "btsearch":
                 return new BtSearchLinkProvider();
             case "ciliinfo":

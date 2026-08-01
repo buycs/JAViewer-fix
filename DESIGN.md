@@ -1,6 +1,6 @@
 # JAViewer Android 项目完整设计文档
 
-> 版本: v2.2.0 (versionCode 18)  
+> 版本: v2.0.1 (versionCode 18)  
 > 最后更新: 2026-07-26
 
 ## 1. 项目概况
@@ -11,9 +11,9 @@
 | compileSdk / targetSdk / minSdk | 35 / 35 / 21 |
 | Java 版本 | 17 |
 | 应用 ID | `io.github.javiewer` |
-| 版本名 / 版本号 | 2.2.0 / 18 |
+| 版本名 / 版本号 | 2.0.1 / 18 |
 | ProGuard | 关闭 (minifyEnabled false) |
-| NDK | arm64-v8a only |
+| NDK | 无 (无 native 代码，支持全 ABI) |
 
 ### 核心依赖
 
@@ -216,8 +216,8 @@ MagnetSearchFragment (独立 Fragment, 非继承 RecyclerFragment) ← 新增
 | PSVS | `PSVS.java` | 预览视频 | 使用中 |
 | BtSearch | `BtSearch.java` | 磁力搜索 (JSON API) | 使用中 |
 | CiliInfo | `CiliInfo.java` | 磁力搜索 (HTML) | 使用中 |
-| BTSO | `BTSO.java` | 下载链接 | 保留 (旧) |
-| TorrentKitty | `TorrentKitty.java` | 下载链接 | 保留 (旧) |
+| ~~BTSO~~ | ~~`BTSO.java`~~ | 下载链接 | ✅ 已移除 (v2.0.1) |
+| ~~TorrentKitty~~ | ~~`TorrentKitty.java`~~ | 下载链接 | ✅ 已移除 (v2.0.1) |
 
 ### 3.4 OkHttp 拦截器
 
@@ -379,7 +379,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 
 ---
 
-## 6. 完整文件清单 (84 个 Java 源文件)
+## 6. 完整文件清单 (82 个 Java 源文件)
 
 ### 根包
 
@@ -458,7 +458,7 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `MagnetFile.java` | 磁力文件模型 |
 | `TorrentGroup.java` | Torrent 分组模型 (date) |
 
-### network/ (7 个)
+### network/ (5 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -467,10 +467,8 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `PSVS.java` | PSVS API |
 | `BtSearch.java` | BtSearch API + 签名 (独立 OkHttpClient) |
 | `CiliInfo.java` | cili.info API (Retrofit + ResponseBody) |
-| `BTSO.java` | BTSO API (旧) |
-| `TorrentKitty.java` | TorrentKitty API (旧) |
 
-### network/provider/ (6 个)
+### network/provider/ (4 个)
 
 | 文件 | 职责 |
 |------|------|
@@ -478,8 +476,6 @@ MaterialDrawerTheme.Light.DarkToolbar
 | `DownloadLinkProvider.java` | 下载链接抽象基类 (parseFileList, parseDate) |
 | `BtSearchLinkProvider.java` | BtSearch JSON 解析 + 文件列表 |
 | `CiliInfoLinkProvider.java` | cili.info HTML 解析 + 文件列表 + 日期 |
-| `BTSOLinkProvider.java` | BTSO HTML 解析 (旧) |
-| `TorrentKittyLinkProvider.java` | TorrentKitty HTML 解析 (旧) |
 
 ### view/ (7 个)
 
@@ -575,6 +571,6 @@ MaterialDrawerTheme.Light.DarkToolbar
 
 | 版本 | 变更 |
 |------|------|
-| v2.2.0 | DownloadActivity 新增 btsow Tab (MagnetSearchFragment)、番号点击统一跳转 DownloadActivity、MovieActivity 番号改为 Header 列表传递、AVMOProvider "时长"改名"影片时长"、简化"系列"字段逻辑、移除下载计数提示弹窗、移除 MagnetSearchActivity 死代码、csrfToken 死代码已清理 |
+| v2.0.1 | DownloadActivity 新增 btsow Tab (MagnetSearchFragment)、番号点击统一跳转 DownloadActivity、MovieActivity 番号改为 Header 列表传递、AVMOProvider "时长"改名"影片时长"、简化"系列"字段逻辑、移除下载计数提示弹窗、移除 MagnetSearchActivity 死代码、csrfToken 死代码已清理 |
 | v2.1.0 | 新增 cili.info 磁力搜索源、文件列表展开/收起、BtSearch 详情 API 修复、MagnetSearch 时间显示、UI 优化、修复已弃用 API、移除 jcenter/fabric 仓库、类型标签简体中文 |
 | v2.0.3 | BtSearch 磁力搜索、UI 优化 |

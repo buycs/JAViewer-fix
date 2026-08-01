@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.jzvd.JZVideoPlayer;
+import cat.ereza.customactivityoncrash.CustomActivityOnCrash;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.fragment.ActressesFragment;
 import io.github.javiewer.fragment.HomeFragment;
@@ -107,7 +108,7 @@ public class JAViewer extends Application {
                     .header("User-Agent", USER_AGENT);
 
             String host = original.url().host();
-            if (!host.contains("torrentkitty") && !host.contains("btsearch")) {
+            if (!host.contains("btsearch")) {
                 builder.header("X-Requested-With", "XMLHttpRequest");
             }
 
@@ -209,5 +210,6 @@ public class JAViewer extends Application {
     public void onCreate() {
         super.onCreate();
         appContext = this;
+        CustomActivityOnCrash.install(this);
     }
 }
