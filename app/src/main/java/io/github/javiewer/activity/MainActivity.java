@@ -270,7 +270,9 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         if (id == R.id.nav_favourite) {
             startActivity(new Intent(this, FavouriteActivity.class));
         } else if (id == R.id.nav_source) {
-            openSourceRepository();
+            openSourceRepository("https://github.com/SplashCodes/JAViewer");
+        } else if (id == R.id.nav_source_fork) {
+            openSourceRepository("https://github.com/buycs/JAViewer-fix");
         } else {
             item.setChecked(true);
             setFragment(id);
@@ -279,9 +281,9 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         return true;
     }
 
-    public void openSourceRepository() {
+    public void openSourceRepository(String url) {
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/SplashCodes/JAViewer"));
+            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
             startActivity(intent);
         } catch (Exception e) {
             e.printStackTrace();
