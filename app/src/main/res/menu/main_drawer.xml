@@ -43,7 +43,7 @@
         <item
             android:id="@+id/nav_source"
             android:icon="@drawable/ic_menu_github"
-            android:title="SplashCodes源码" />
+            android:title="原项目源码" />
         <item
             android:id="@+id/nav_source_fork"
             android:icon="@drawable/ic_menu_github"
