@@ -3,18 +3,13 @@ package io.github.javiewer.view;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -42,7 +37,6 @@ import io.github.javiewer.view.AnimationUtil;
 import io.github.javiewer.view.SearchAdapter;
 
 import java.lang.reflect.Field;
-import java.util.List;
 
 import io.github.javiewer.R;
 
@@ -50,8 +44,6 @@ import io.github.javiewer.R;
  * @author Miguel Catalan Bañuls
  */
 public class SimpleSearchView extends FrameLayout implements Filter.FilterListener {
-    public static final int REQUEST_VOICE = 9999;
-
     private MenuItem mMenuItem;
     private boolean mIsSearchOpen = false;
     private int mAnimationDuration;
@@ -63,7 +55,7 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
     private ListView mSuggestionsListView;
     private EditText mSearchSrcTextView;
     private ImageButton mBackBtn;
-    private ImageButton mVoiceBtn;
+    private ImageButton mSubmitBtn;
     private ImageButton mEmptyBtn;
     private RelativeLayout mSearchTopBar;
 
@@ -80,7 +72,6 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
 
     private boolean ellipsize = false;
 
-    private boolean allowVoiceSearch;
     private Drawable suggestionIcon;
 
     private Context mContext;
@@ -89,10 +80,10 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         public void onClick(View v) {
             if (v == mBackBtn) {
                 closeSearch();
-            } else if (v == mVoiceBtn) {
-                onVoiceClicked();
             } else if (v == mEmptyBtn) {
                 mSearchSrcTextView.setText(null);
+            } else if (v == mSubmitBtn) {
+                onSubmitQuery();
             } else if (v == mSearchSrcTextView) {
                 showSuggestions();
             } else if (v == mTintView) {
@@ -204,19 +195,15 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         mSuggestionsListView = (ListView) mSearchLayout.findViewById(R.id.suggestion_list);
         mSearchSrcTextView = (EditText) mSearchLayout.findViewById(R.id.searchTextView);
         mBackBtn = (ImageButton) mSearchLayout.findViewById(R.id.action_up_btn);
-        mVoiceBtn = (ImageButton) mSearchLayout.findViewById(R.id.action_voice_btn);
+        mSubmitBtn = (ImageButton) mSearchLayout.findViewById(R.id.action_submit_btn);
         mEmptyBtn = (ImageButton) mSearchLayout.findViewById(R.id.action_empty_btn);
         mTintView = mSearchLayout.findViewById(R.id.transparent_view);
 
         mSearchSrcTextView.setOnClickListener(mOnClickListener);
         mBackBtn.setOnClickListener(mOnClickListener);
-        mVoiceBtn.setOnClickListener(mOnClickListener);
+        mSubmitBtn.setOnClickListener(mOnClickListener);
         mEmptyBtn.setOnClickListener(mOnClickListener);
         mTintView.setOnClickListener(mOnClickListener);
-
-        allowVoiceSearch = false;
-
-        showVoice(true);
 
         initSearchView();
 
@@ -269,27 +256,11 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         }
     }
 
-    private void onVoiceClicked() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        //intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak an item name or number");    // user hint
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);    // setting recognition model, optimized for short phrases – search queries
-        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);    // quantity of results we want to receive
-        if (mContext instanceof Activity) {
-            ((Activity) mContext).startActivityForResult(intent, REQUEST_VOICE);
-        }
-    }
-
     private void onTextChanged(CharSequence newText) {
         CharSequence text = mSearchSrcTextView.getText();
         mUserQuery = text;
         boolean hasText = !TextUtils.isEmpty(text);
-        if (hasText) {
-            mEmptyBtn.setVisibility(VISIBLE);
-            showVoice(false);
-        } else {
-            mEmptyBtn.setVisibility(GONE);
-            showVoice(true);
-        }
+        mEmptyBtn.setVisibility(hasText ? VISIBLE : GONE);
 
         if (mOnQueryChangeListener != null && !TextUtils.equals(newText, mOldQueryText)) {
             mOnQueryChangeListener.onQueryTextChange(newText.toString());
@@ -305,16 +276,6 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
                 mSearchSrcTextView.setText(null);
             }
         }
-    }
-
-    private boolean isVoiceAvailable() {
-        if (isInEditMode()) {
-            return true;
-        }
-        PackageManager pm = getContext().getPackageManager();
-        List<ResolveInfo> activities = pm.queryIntentActivities(
-                new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
-        return activities.size() == 0;
     }
 
     public void hideKeyboard(View view) {
@@ -360,7 +321,7 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
     }
 
     public void setVoiceIcon(Drawable drawable) {
-        mVoiceBtn.setImageDrawable(drawable);
+        mSubmitBtn.setImageDrawable(drawable);
     }
 
     public void setCloseIcon(Drawable drawable) {
@@ -395,10 +356,6 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
     }
 
     //Public Methods
-
-    public void setVoiceSearch(boolean voiceSearch) {
-        allowVoiceSearch = voiceSearch;
-    }
 
     /**
      * Call this method to show suggestions list. This shows up when adapter is set. Call {@link #setAdapter(ListAdapter)} before calling this.
@@ -483,19 +440,6 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         }
         if (submit && !TextUtils.isEmpty(query)) {
             onSubmitQuery();
-        }
-    }
-
-    /**
-     * if show is true, this will enable voice search. If voice is not available on the device, this method call has not effect.
-     *
-     * @param show
-     */
-    public void showVoice(boolean show) {
-        if (show && isVoiceAvailable() && allowVoiceSearch) {
-            mVoiceBtn.setVisibility(VISIBLE);
-        } else {
-            mVoiceBtn.setVisibility(GONE);
         }
     }
 

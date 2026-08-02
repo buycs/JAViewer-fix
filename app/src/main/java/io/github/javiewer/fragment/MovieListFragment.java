@@ -5,6 +5,8 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import io.github.javiewer.JAViewer;
 import okhttp3.ResponseBody;
@@ -29,6 +31,9 @@ public class MovieListFragment extends MovieFragment {
         if ("genre".equals(action) || "star".equals(action) || "studio".equals(action) || "director".equals(action) || "label".equals(action) || "series".equals(action)) {
             return JAViewer.SERVICE.getFilterMovies(Arrays.asList(action, keyword, "cn", 60, page));
         }
-        return JAViewer.SERVICE.search(Arrays.asList(keyword, 60, page));
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("search", keyword);
+        params.put("lang", "cn");
+        return JAViewer.SERVICE.search(Arrays.<Object>asList(params, 60, page));
     }
 }

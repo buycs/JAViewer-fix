@@ -30,9 +30,7 @@
             <io.github.javiewer.view.SimpleSearchView
                 android:id="@+id/search_view"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="搜索"
-                android:textColorHint="#757575" />
+                android:layout_height="wrap_content" />
         </FrameLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
