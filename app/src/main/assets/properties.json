@@ -1,7 +1,7 @@
 {
-  "latest_version": "2.0.1",
-  "latest_version_code": "18",
-  "changelog": "**v2.0.1**\n1. 新增 btsow 磁力搜索 Tab\n2. 番号点击统一跳转下载页\n3. 兼容性优化（全 ABI、存储权限适配）\n4. 修复已知问题",
+  "latest_version": "2.0.2",
+  "latest_version_code": "19",
+  "changelog": "**v2.0.2**\n1. 修复搜索框不可见问题\n2. 搜索框右侧新增搜索提交按钮\n3. 修复搜索接口返回空结果（请求体格式与新版站点 API 对齐）\n4. 清理废弃的语音按钮代码",
   "data_sources": [
     {
       "name": "骑兵",
