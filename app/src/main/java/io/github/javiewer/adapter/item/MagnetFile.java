@@ -1,6 +1,8 @@
 package io.github.javiewer.adapter.item;
 
-public class MagnetFile {
+import java.io.Serializable;
+
+public class MagnetFile implements Serializable {
     public String hash;
     public String torrentName;
     public String filename;
