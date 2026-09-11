@@ -1,5 +1,6 @@
 package io.github.javiewer.activity;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -263,8 +264,10 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         if (id == R.id.nav_favourite || id == R.id.nav_settings) {
             mDrawerLayout.closeDrawer(GravityCompat.START, false);
             Class<?> target = id == R.id.nav_favourite ? FavouriteActivity.class : SettingsActivity.class;
-            startActivity(new Intent(this, target));
-            overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+            Intent intent = new Intent(this, target);
+            Bundle options = ActivityOptions.makeCustomAnimation(
+                    this, R.anim.activity_open_enter, R.anim.activity_open_exit).toBundle();
+            startActivity(intent, options);
             return true;
         }
         item.setChecked(true);

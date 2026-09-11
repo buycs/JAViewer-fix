@@ -18,7 +18,9 @@
         <item name="android:windowActionBarOverlay">true</item>
     </style>
 
-    <style name="AppTheme.ActivityAnimation">
+    <style name="AppTheme.ActivityAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@anim/activity_open_enter</item>
+        <item name="android:windowExitAnimation">@anim/activity_close_exit</item>
         <item name="android:activityOpenEnterAnimation">@anim/activity_open_enter</item>
         <item name="android:activityOpenExitAnimation">@anim/activity_open_exit</item>
         <item name="android:activityCloseEnterAnimation">@anim/activity_close_enter</item>
