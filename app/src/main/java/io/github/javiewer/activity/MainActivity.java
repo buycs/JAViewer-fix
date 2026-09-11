@@ -58,7 +58,7 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_home);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_drawer);
 
         mDrawerLayout = findViewById(R.id.drawer_layout);
         mNavigationView = findViewById(R.id.nav_view);
@@ -262,8 +262,10 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         int id = item.getItemId();
         if (id == R.id.nav_favourite) {
             startActivity(new Intent(this, FavouriteActivity.class));
+            overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
         } else if (id == R.id.nav_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+            overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
         } else {
             item.setChecked(true);
             setFragment(id);

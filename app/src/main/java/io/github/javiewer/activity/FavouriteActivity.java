@@ -156,4 +156,10 @@ public class FavouriteActivity extends SecureActivity {
         onBackPressed();
         return true;
     }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
+    }
 }

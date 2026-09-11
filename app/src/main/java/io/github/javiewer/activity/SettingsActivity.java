@@ -57,7 +57,7 @@ public class SettingsActivity extends SecureActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("设置");
         }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         if (savedInstanceState == null) {
             getSupportFragmentManager()
@@ -65,6 +65,12 @@ public class SettingsActivity extends SecureActivity {
                     .replace(R.id.settings_container, new SettingsFragment())
                     .commit();
         }
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
     }
 
     @Override
