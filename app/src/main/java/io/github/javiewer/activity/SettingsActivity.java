@@ -4,7 +4,9 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.method.LinkMovementMethod;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -102,6 +104,7 @@ public class SettingsActivity extends SecureActivity {
         public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
             setPreferencesFromResource(R.xml.preferences, rootKey);
             bindDataSource();
+            bindEditDataSourceDomain();
             bindCheckUpdate();
             bindClearCache();
             bindClearSearchHistory();
@@ -133,7 +136,7 @@ public class SettingsActivity extends SecureActivity {
             preference.setEntries(names);
             preference.setEntryValues(values);
             preference.setValue(selected);
-            preference.setSummary(current != null ? current.getName() : null);
+            preference.setSummary(sourceSummary(current));
             preference.setOnPreferenceChangeListener((pref, newValue) -> {
                 int index = Integer.parseInt(String.valueOf(newValue));
                 if (index < 0 || index >= JAViewer.DATA_SOURCES.size()) {
@@ -152,6 +155,62 @@ public class SettingsActivity extends SecureActivity {
                 requireActivity().finish();
                 return true;
             });
+        }
+
+        private void bindEditDataSourceDomain() {
+            Preference preference = findPreference("edit_data_source_domain");
+            if (preference == null) {
+                return;
+            }
+            DataSource current = JAViewer.getDataSource();
+            preference.setSummary(current != null ? current.domain : null);
+            preference.setOnPreferenceClickListener(pref -> {
+                showDomainEditor();
+                return true;
+            });
+        }
+
+        private void showDomainEditor() {
+            final DataSource current = JAViewer.getDataSource();
+            if (current == null) {
+                Toast.makeText(requireContext(), "数据源不可用", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            final EditText input = new EditText(requireContext());
+            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+            input.setText(current.domain);
+            if (current.domain != null) {
+                input.setSelection(input.getText().length());
+            }
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("编辑数据源域名")
+                    .setView(input)
+                    .setPositiveButton("保存", (dialog, which) -> {
+                        String newDomain = input.getText().toString().trim();
+                        if (newDomain.isEmpty() || newDomain.equals(current.domain)) {
+                            return;
+                        }
+                        current.domain = newDomain;
+                        JAViewer.CONFIGURATIONS.setDataSource(current);
+                        JAViewer.CONFIGURATIONS.save();
+                        JAViewer.recreateService();
+                        Intent intent = new Intent(requireContext(), MainActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        requireActivity().finish();
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        }
+
+        private static String sourceSummary(DataSource source) {
+            if (source == null) {
+                return null;
+            }
+            if (source.domain == null || source.domain.isEmpty()) {
+                return source.getName();
+            }
+            return source.getName() + " · " + source.domain;
         }
 
         private void bindCheckUpdate() {
