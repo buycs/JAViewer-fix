@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:key="data_source"
+        android:persistent="false"
+        android:title="数据源" />
+
+    <Preference
+        android:key="check_update"
+        android:persistent="false"
+        android:title="检查更新" />
+
+    <Preference
+        android:key="clear_cache"
+        android:persistent="false"
+        android:title="清除缓存" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="hide_recent_preview"
+        android:persistent="false"
+        android:summary="在最近任务中隐藏本应用画面"
+        android:title="最近任务隐藏内容" />
+
+    <Preference
+        android:key="about"
+        android:persistent="false"
+        android:summary="本应用仅供学习交流，请勿用于非法用途"
+        android:title="关于" />
+</PreferenceScreen>

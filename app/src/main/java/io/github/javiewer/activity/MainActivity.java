@@ -307,6 +307,8 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         int id = item.getItemId();
         if (id == R.id.nav_favourite) {
             startActivity(new Intent(this, FavouriteActivity.class));
+        } else if (id == R.id.nav_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
         } else if (id == R.id.nav_source) {
             openSourceRepository("https://github.com/SplashCodes/JAViewer");
         } else if (id == R.id.nav_source_fork) {

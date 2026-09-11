@@ -12,4 +12,14 @@
         android:icon="@drawable/ic_menu_share"
         android:title="分享"
         app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/action_copy_code"
+        android:title="复制番号"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_open_browser"
+        android:title="在浏览器打开"
+        app:showAsAction="never" />
 </menu>

@@ -31,6 +31,8 @@ public class Configurations {
 
     private DataSource data_source;
 
+    private boolean hide_recent_preview;
+
     public static Configurations load(File file) {
         Configurations.file = file;
         Configurations config = parseFile(file, StandardCharsets.UTF_8);
@@ -98,6 +100,14 @@ public class Configurations {
 
     public void setDataSource(DataSource source) {
         this.data_source = source;
+    }
+
+    public boolean isHideRecentPreview() {
+        return hide_recent_preview;
+    }
+
+    public void setHideRecentPreview(boolean hideRecentPreview) {
+        this.hide_recent_preview = hideRecentPreview;
     }
 
     public synchronized void save() {

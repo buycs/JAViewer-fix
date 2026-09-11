@@ -2,6 +2,8 @@ package io.github.javiewer.activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -44,6 +46,7 @@ import io.github.javiewer.adapter.ActressPaletteAdapter;
 import io.github.javiewer.adapter.MovieHeaderAdapter;
 import io.github.javiewer.adapter.RelatedMovieAdapter;
 import io.github.javiewer.adapter.ScreenshotAdapter;
+import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.adapter.item.Genre;
 import io.github.javiewer.view.decoration.GridSpacingItemDecoration;
 import io.github.javiewer.adapter.item.Movie;
@@ -331,13 +334,63 @@ public class MovieActivity extends SecureActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            onBackPressed();
+            return true;
         }
-
+        if (id == R.id.action_copy_code) {
+            copyMovieCode();
+            return true;
+        }
+        if (id == R.id.action_open_browser) {
+            openMovieInBrowser();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void copyMovieCode() {
+        String code = movie != null ? movie.getCode() : null;
+        if (code == null || code.trim().isEmpty()) {
+            Toast.makeText(this, "复制失败", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (clipboard == null) {
+            Toast.makeText(this, "复制失败", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        clipboard.setPrimaryClip(ClipData.newPlainText("code", code));
+        Toast.makeText(this, "已复制 " + code, Toast.LENGTH_SHORT).show();
+    }
+
+    private void openMovieInBrowser() {
+        String link = movie != null ? movie.getLink() : null;
+        if (link == null || link.trim().isEmpty()) {
+            Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String url;
+        if (link.startsWith("http://") || link.startsWith("https://")) {
+            url = link;
+        } else {
+            DataSource source = JAViewer.getDataSource();
+            String domain = source != null ? source.domain : null;
+            if (domain == null || domain.trim().isEmpty()) {
+                Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (domain.endsWith("/")) {
+                domain = domain.substring(0, domain.length() - 1);
+            }
+            url = domain + "/movie/" + link;
+        }
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Exception e) {
+            Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

@@ -99,6 +99,19 @@ public class ConfigurationsSaveTest {
     }
 
     @Test
+    public void saveThenReloadPreservesHideRecentPreview() throws Exception {
+        Configurations config = new Configurations();
+        assertFalse(config.isHideRecentPreview());
+        config.setHideRecentPreview(true);
+        config.save();
+
+        Configurations reloaded = readConfig(configFile);
+        assertTrue(reloaded.isHideRecentPreview());
+        String json = new String(Files.readAllBytes(configFile.toPath()));
+        assertTrue(json.contains("hide_recent_preview"));
+    }
+
+    @Test
     public void overwriteKeepsLastSave() throws Exception {
         Configurations config = new Configurations();
         config.getStarredMovies().add(Movie.create("one", "ONE-1", null, null, "l1", false));

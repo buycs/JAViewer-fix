@@ -57,6 +57,12 @@
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
+            android:name=".activity.SettingsActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|uiMode|orientation|screenSize|smallestScreenSize"
+            android:exported="false"
+            android:label="设置"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name="cat.ereza.customactivityoncrash.activity.DefaultErrorActivity"
             android:exported="false"
             android:process=":error_activity"

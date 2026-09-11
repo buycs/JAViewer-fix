@@ -8,6 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="cardViewStyle">@style/CardView.Light</item>
         <item name="materialCardViewStyle">@style/CardView.Light</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
     </style>
 
     <style name="AppTheme.Start" parent="AppTheme">
