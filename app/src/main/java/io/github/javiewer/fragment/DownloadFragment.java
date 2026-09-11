@@ -11,16 +11,12 @@ import java.util.List;
 
 import io.github.javiewer.adapter.DownloadLinkAdapter;
 import io.github.javiewer.adapter.item.DownloadLink;
-import io.github.javiewer.adapter.item.MagnetFile;
-import io.github.javiewer.adapter.item.MagnetLink;
 import io.github.javiewer.network.provider.DownloadLinkProvider;
 import io.github.javiewer.view.listener.BasicOnScrollListener;
 import jp.wasabeef.recyclerview.adapters.ScaleInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayoutManager> {
 
@@ -108,7 +104,6 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
                     getItems().addAll(downloads);
                     getAdapter().notifyItemRangeInserted(pos, downloads.size());
                     setEnd(true);
-                    preloadFiles(downloads);
                 }
             }
         });
@@ -126,44 +121,5 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
 
     public Call<ResponseBody> newCall(int page) {
         return this.provider.search(this.keyword, page);
-    }
-
-    private void preloadFiles(List<DownloadLink> downloads) {
-        for (final DownloadLink link : downloads) {
-            if (link.getLink() == null) continue;
-
-            Call<ResponseBody> call = provider.get(link.getLink());
-            call.enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    try {
-                        String html = response.body().string();
-                        MagnetLink magnetLink = provider.parseMagnetLink(html);
-                        if (magnetLink != null) {
-                            link.setMagnetLink(magnetLink);
-                        }
-                        List<MagnetFile> files = provider.parseFileList(html);
-                        if (files != null && !files.isEmpty()) {
-                            link.setFiles(files);
-                        }
-                        if (link.getDate() == null || link.getDate().isEmpty()) {
-                            String date = provider.parseDate(html);
-                            if (date != null && !date.isEmpty()) {
-                                link.setDate(date);
-                            }
-                        }
-                        int idx = getItems().indexOf(link);
-                        if (idx >= 0) {
-                            getAdapter().notifyItemChanged(idx);
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                }
-            });
-        }
     }
 }

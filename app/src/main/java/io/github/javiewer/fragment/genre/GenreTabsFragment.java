@@ -35,6 +35,10 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
     public ProgressBar mProgressBar;
     public ViewPagerAdapter mAdapter;
 
+    private Call<ResponseBody> genresCall;
+    private volatile boolean cancelled;
+    private final android.os.Handler retryHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+
     public GenreTabsFragment() {
     }
 
@@ -43,6 +47,7 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
         super.onActivityCreated(savedInstanceState);
         android.util.Log.d("GenreTabs", "onActivityCreated");
 
+        cancelled = false;
         mAdapter = new ViewPagerAdapter(getActivity().getSupportFragmentManager());
         mViewPager.setAdapter(mAdapter);
         mTabLayout.setupWithViewPager(mViewPager);
@@ -51,14 +56,18 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
     }
 
     private void loadGenres(final int attempt) {
-        if (getActivity() == null) {
+        if (cancelled || !isAdded() || getActivity() == null) {
             return;
         }
+        if (genresCall != null) {
+            genresCall.cancel();
+        }
         Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("ja"));
+        genresCall = call;
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                if (getActivity() == null) {
+                if (cancelled || !isAdded() || getActivity() == null) {
                     return;
                 }
                 try {
@@ -93,6 +102,9 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+                if (call.isCanceled() || cancelled || !isAdded()) {
+                    return;
+                }
                 t.printStackTrace();
                 retry(attempt);
             }
@@ -100,13 +112,16 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
     }
 
     private void retry(final int attempt) {
-        if (getActivity() == null) {
+        if (cancelled || !isAdded() || getActivity() == null) {
             return;
         }
         if (attempt < MAX_RETRY) {
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            retryHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    if (cancelled || !isAdded()) {
+                        return;
+                    }
                     loadGenres(attempt + 1);
                 }
             }, RETRY_DELAY_MS);
@@ -114,6 +129,17 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
             mProgressBar.setVisibility(View.GONE);
             mTabLayout.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        cancelled = true;
+        retryHandler.removeCallbacksAndMessages(null);
+        if (genresCall != null) {
+            genresCall.cancel();
+            genresCall = null;
+        }
+        super.onDestroyView();
     }
 
     @Override

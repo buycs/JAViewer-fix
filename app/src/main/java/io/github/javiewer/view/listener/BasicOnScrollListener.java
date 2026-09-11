@@ -27,9 +27,19 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
 
     private long token;
     private boolean end = false;
+    private Call<ResponseBody> currentCall;
 
+
+    public void cancel() {
+        if (currentCall != null) {
+            currentCall.cancel();
+            currentCall = null;
+        }
+        token = System.currentTimeMillis();
+    }
 
     public void reset() {
+        cancel();
         loading = false;
         loadThreshold = 5;
         currentPage = 0;
@@ -67,14 +77,20 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
     public abstract Call<ResponseBody> newCall(int page);
 
     public void refresh() {
-        setLoading(true);
         reset();
+        setLoading(true);
         onLoad(token = System.currentTimeMillis());
     }
 
     private void onLoad(final long token) {
+        if (currentCall != null) {
+            currentCall.cancel();
+            currentCall = null;
+        }
+
         final int page = currentPage;
         Call<ResponseBody> call = newCall(page + 1);
+        currentCall = call;
 
         if (call == null) {
             setLoading(false);
@@ -85,30 +101,41 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 android.util.Log.d("JAViewer", "onResponse code: " + response.code() + " url: " + call.request().url());
-                if (token == BasicOnScrollListener.this.token && page == currentPage) {
-                    try {
-                        if (response.isSuccessful() && response.body() != null) {
-                            onResult(response.body());
-                            currentPage++;
-                        } else {
-                            android.util.Log.w("JAViewer", "Response not successful: " + response.code());
-                            setEnd(true);
-                        }
-                    } catch (Throwable e) {
-                        android.util.Log.e("JAViewer", "onResult error: " + e.getMessage(), e);
-                        onFailure(call, e);
+                if (token != BasicOnScrollListener.this.token || page != currentPage) {
+                    return;
+                }
+                try {
+                    if (response.isSuccessful() && response.body() != null) {
+                        onResult(response.body());
+                        currentPage++;
+                    } else {
+                        android.util.Log.w("JAViewer", "Response not successful: " + response.code());
+                        setEnd(true);
                     }
+                } catch (Throwable e) {
+                    android.util.Log.e("JAViewer", "onResult error: " + e.getMessage(), e);
+                    onFailure(call, e);
+                    return;
                 }
 
                 setLoading(false);
-                getRefreshLayout().setRefreshing(false);
+                SwipeRefreshLayout refreshLayout = getRefreshLayout();
+                if (refreshLayout != null) {
+                    refreshLayout.setRefreshing(false);
+                }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+                if (call.isCanceled() || token != BasicOnScrollListener.this.token) {
+                    return;
+                }
                 android.util.Log.e("JAViewer", "onFailure: " + t.getMessage() + " url: " + call.request().url());
                 setLoading(false);
-                getRefreshLayout().setRefreshing(false);
+                SwipeRefreshLayout refreshLayout = getRefreshLayout();
+                if (refreshLayout != null) {
+                    refreshLayout.setRefreshing(false);
+                }
                 onExceptionCaught(t);
             }
         });

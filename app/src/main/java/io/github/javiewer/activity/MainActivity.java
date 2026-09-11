@@ -93,7 +93,27 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         if (savedInstanceState == null) {
             mNavigationView.setCheckedItem(R.id.nav_home);
             setFragment(R.id.nav_home);
+        } else if (currentFragment != null) {
+            int restoredId = menuIdForFragment(currentFragment);
+            if (restoredId != 0) {
+                mNavigationView.setCheckedItem(restoredId);
+                getSupportActionBar().setTitle(mNavigationView.getMenu().findItem(restoredId).getTitle());
+            }
+            if (currentFragment instanceof ExtendedAppBarFragment) {
+                findViewById(R.id.app_bar).setElevation(0);
+            } else {
+                findViewById(R.id.app_bar).setElevation(4 * getResources().getDisplayMetrics().density);
+            }
         }
+    }
+
+    private int menuIdForFragment(Fragment fragment) {
+        for (java.util.Map.Entry<Integer, Class<? extends Fragment>> entry : JAViewer.FRAGMENTS.entrySet()) {
+            if (entry.getValue() == fragment.getClass()) {
+                return entry.getKey();
+            }
+        }
+        return 0;
     }
 
     public void buildDrawerHeader() {
@@ -181,20 +201,7 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         if (this.savedInstanceState != null) {
             String tag = this.savedInstanceState.getString("CurrentFragment");
             this.currentFragment = fragmentManager.findFragmentByTag(tag);
-            return;
         }
-
-        FragmentTransaction transaction = this.fragmentManager.beginTransaction();
-        for (Class<? extends Fragment> fragmentClass : JAViewer.FRAGMENTS.values()) {
-            try {
-                Fragment fragment = fragmentClass.getConstructor(new Class[0]).newInstance();
-                transaction.add(R.id.content, fragment, fragmentClass.getSimpleName()).hide(fragment);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        transaction.commit();
-        this.fragmentManager.executePendingTransactions();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -225,10 +232,41 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
 
     private void setFragment(int id) {
         Class<? extends Fragment> fragmentClass = JAViewer.FRAGMENTS.get(id);
-        if (fragmentClass == null) return;
-        Fragment fragment = fragmentManager.findFragmentByTag(fragmentClass.getSimpleName());
-        CharSequence title = ((MenuItem) mNavigationView.getMenu().findItem(id)).getTitle();
-        this.setFragment(fragment, title);
+        if (fragmentClass == null || id == R.id.nav_favourite) {
+            return;
+        }
+
+        String tag = fragmentClass.getSimpleName();
+        Fragment fragment = fragmentManager.findFragmentByTag(tag);
+        CharSequence title = mNavigationView.getMenu().findItem(id).getTitle();
+
+        if (fragment == null) {
+            try {
+                fragment = fragmentClass.getConstructor(new Class[0]).newInstance();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+
+            getSupportActionBar().setTitle(title);
+
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            if (this.currentFragment != null) {
+                transaction.hide(this.currentFragment);
+            }
+            transaction.add(R.id.content, fragment, tag);
+            transaction.commit();
+
+            this.currentFragment = fragment;
+
+            if (fragment instanceof ExtendedAppBarFragment) {
+                findViewById(R.id.app_bar).setElevation(0);
+            } else {
+                findViewById(R.id.app_bar).setElevation(4 * getResources().getDisplayMetrics().density);
+            }
+        } else {
+            this.setFragment(fragment, title);
+        }
     }
 
     @Override

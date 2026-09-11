@@ -18,10 +18,8 @@ import java.util.List;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.DownloadLinkAdapter;
 import io.github.javiewer.adapter.item.DownloadLink;
-import io.github.javiewer.adapter.item.MagnetFile;
 import io.github.javiewer.network.BtSearch;
 import io.github.javiewer.network.provider.BtSearchLinkProvider;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -35,6 +33,9 @@ public class BtSearchFragment extends Fragment {
     private List<DownloadLink> items = new ArrayList<>();
     private BtSearchLinkProvider provider = new BtSearchLinkProvider();
     private int currentPage = 1;
+    private boolean loading = false;
+    private boolean ended = false;
+    private Call<BtSearch.SearchResult> searchCall;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +57,12 @@ public class BtSearchFragment extends Fragment {
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                if (searchCall != null) {
+                    searchCall.cancel();
+                    searchCall = null;
+                }
+                loading = false;
+                ended = false;
                 currentPage = 1;
                 items.clear();
                 adapter.notifyDataSetChanged();
@@ -68,7 +75,9 @@ public class BtSearchFragment extends Fragment {
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 LinearLayoutManager lm = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (!refreshLayout.isRefreshing() && lm.findLastVisibleItemPosition() >= items.size() - 3) {
+                if (!loading && !ended && !refreshLayout.isRefreshing()
+                        && !items.isEmpty()
+                        && lm.findLastVisibleItemPosition() >= items.size() - 3) {
                     loadData();
                 }
             }
@@ -77,6 +86,9 @@ public class BtSearchFragment extends Fragment {
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
+                if (!isAdded()) {
+                    return;
+                }
                 refreshLayout.setRefreshing(true);
                 loadData();
             }
@@ -85,9 +97,30 @@ public class BtSearchFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onDestroyView() {
+        if (searchCall != null) {
+            searchCall.cancel();
+            searchCall = null;
+        }
+        loading = false;
+        super.onDestroyView();
+    }
+
     private void loadData() {
+        if (loading || ended) {
+            return;
+        }
+        loading = true;
+
+        Call<BtSearch.SearchResult> previous = searchCall;
         Call<BtSearch.SearchResult> call = provider.searchApi(keyword, currentPage);
+        searchCall = call;
+        if (previous != null) {
+            previous.cancel();
+        }
         if (call == null) {
+            loading = false;
             refreshLayout.setRefreshing(false);
             return;
         }
@@ -95,14 +128,25 @@ public class BtSearchFragment extends Fragment {
         call.enqueue(new Callback<BtSearch.SearchResult>() {
             @Override
             public void onResponse(Call<BtSearch.SearchResult> call, Response<BtSearch.SearchResult> response) {
+                if (searchCall != call) {
+                    return;
+                }
+                searchCall = null;
+                loading = false;
+                if (!isAdded()) {
+                    return;
+                }
                 refreshLayout.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
                     List<DownloadLink> newItems = provider.parseSearchResult(response.body());
+                    if (newItems == null || newItems.isEmpty()) {
+                        ended = true;
+                        return;
+                    }
                     int pos = items.size();
                     items.addAll(newItems);
                     adapter.notifyItemRangeInserted(pos, newItems.size());
                     currentPage++;
-                    preloadFiles(newItems);
                 } else if (getContext() != null) {
                     Toast.makeText(getContext(), "搜索失败", Toast.LENGTH_SHORT).show();
                 }
@@ -110,53 +154,19 @@ public class BtSearchFragment extends Fragment {
 
             @Override
             public void onFailure(Call<BtSearch.SearchResult> call, Throwable t) {
+                if (searchCall != call) {
+                    return;
+                }
+                searchCall = null;
+                loading = false;
+                if (call.isCanceled() || !isAdded()) {
+                    return;
+                }
                 refreshLayout.setRefreshing(false);
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
-    }
-
-    private void preloadFiles(List<DownloadLink> newItems) {
-        for (final DownloadLink link : newItems) {
-            final long torrentId = extractTorrentId(link.getLink());
-            if (torrentId <= 0) continue;
-
-            Call<ResponseBody> call = provider.getDetail(torrentId, keyword);
-            call.enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    try {
-                        String body = response.body().string();
-                        List<MagnetFile> files = provider.parseFilesFromJson(body);
-                        if (files.isEmpty()) {
-                            files = provider.parseFilesFromHtml(body);
-                        }
-                        if (!files.isEmpty()) {
-                            link.setFiles(files);
-                            int idx = items.indexOf(link);
-                            if (idx >= 0) {
-                                adapter.notifyItemChanged(idx);
-                            }
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                }
-            });
-        }
-    }
-
-    private long extractTorrentId(String url) {
-        try {
-            String[] parts = url.split("/");
-            return Long.parseLong(parts[parts.length - 1]);
-        } catch (Exception e) {
-            return 0;
-        }
     }
 }

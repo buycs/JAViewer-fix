@@ -135,4 +135,12 @@ public abstract class RecyclerFragment<I, LM extends RecyclerView.LayoutManager>
 
         super.onSaveInstanceState(outState);
     }
+
+    @Override
+    public void onDestroyView() {
+        if (mScrollListener != null) {
+            mScrollListener.cancel();
+        }
+        super.onDestroyView();
+    }
 }
