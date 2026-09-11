@@ -1,21 +1,7 @@
 package io.github.javiewer.activity;
 
-import android.Manifest;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-
-import com.karumi.dexter.Dexter;
-import com.karumi.dexter.PermissionToken;
-import com.karumi.dexter.listener.PermissionDeniedResponse;
-import com.karumi.dexter.listener.PermissionGrantedResponse;
-import com.karumi.dexter.listener.PermissionRequest;
-import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +9,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import io.github.javiewer.Configurations;
 import io.github.javiewer.JAViewer;
@@ -31,10 +16,6 @@ import io.github.javiewer.Properties;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.util.IOUtils;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class StartActivity extends AppCompatActivity {
 
@@ -43,7 +24,7 @@ public class StartActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
 
-        checkPermissions(); //检查权限，创建配置
+        loadConfigurations();
     }
 
     public void readProperties() {
@@ -82,41 +63,7 @@ public class StartActivity extends AppCompatActivity {
         finish();
     }
 
-    private void checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q && this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Dexter.withActivity(this)
-                    .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    .withListener(new PermissionListener() {
-                        @Override
-                        public void onPermissionGranted(PermissionGrantedResponse response) {
-                            checkPermissions();
-                        }
-
-                        @Override
-                        public void onPermissionDenied(PermissionDeniedResponse response) {
-                            new AlertDialog.Builder(StartActivity.this)
-                                    .setTitle("权限申请")
-                                    .setCancelable(false)
-                                    .setMessage("JAViewer 需要储存空间权限，储存用户配置。请您允许。")
-                                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            checkPermissions();
-                                        }
-                                    })
-                                    .show();
-                        }
-
-                        @Override
-                        public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
-                            token.continuePermissionRequest();
-                        }
-                    })
-                    .onSameThread()
-                    .check();
-            return;
-        }
-
+    private void loadConfigurations() {
         File oldConfig = new File(StartActivity.this.getExternalFilesDir(null), "configurations.json");
         File config = new File(JAViewer.getStorageDir(), "configurations.json");
         if (oldConfig.exists()) {

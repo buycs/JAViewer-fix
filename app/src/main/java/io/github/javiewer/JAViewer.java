@@ -2,9 +2,6 @@ package io.github.javiewer;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.fragment.app.Fragment;
 
@@ -15,24 +12,21 @@ import com.google.gson.stream.JsonReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import cn.jzvd.JZVideoPlayer;
 import cat.ereza.customactivityoncrash.CustomActivityOnCrash;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.fragment.ActressesFragment;
 import io.github.javiewer.fragment.HomeFragment;
 import io.github.javiewer.fragment.PopularFragment;
 import io.github.javiewer.fragment.ReleasedFragment;
-import io.github.javiewer.fragment.favourite.FavouriteTabsFragment;
 import io.github.javiewer.fragment.genre.GenreTabsFragment;
 import io.github.javiewer.network.BasicService;
-import io.github.javiewer.util.ExoPlayerImpl;
+import okhttp3.Cache;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
@@ -59,7 +53,6 @@ public class JAViewer extends Application {
         put(R.id.nav_released, ReleasedFragment.class);
         put(R.id.nav_actresses, ActressesFragment.class);
         put(R.id.nav_genre, GenreTabsFragment.class);
-        put(R.id.nav_favourite, FavouriteTabsFragment.class);
     }};
     public static Configurations CONFIGURATIONS;
     public static BasicService SERVICE;
@@ -98,32 +91,41 @@ public class JAViewer extends Application {
         }
     };
 
-    public static final OkHttpClient HTTP_CLIENT = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
-        @Override
-        public Response intercept(Interceptor.Chain chain) throws IOException {
-            Request original = chain.request();
+    public static OkHttpClient HTTP_CLIENT = createHttpClient(null);
 
-            Request.Builder builder = original.newBuilder()
-                    .url(replaceUrl(original.url()))
-                    .header("User-Agent", USER_AGENT);
+    public static OkHttpClient createHttpClient(Cache cache) {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .writeTimeout(15, TimeUnit.SECONDS)
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public Response intercept(Interceptor.Chain chain) throws IOException {
+                        Request original = chain.request();
 
-            String host = original.url().host();
-            if (!host.contains("btsearch")) {
-                builder.header("X-Requested-With", "XMLHttpRequest");
-            }
+                        Request.Builder requestBuilder = original.newBuilder()
+                                .url(replaceUrl(original.url()))
+                                .header("User-Agent", USER_AGENT);
 
-            Request request = builder.build();
+                        String host = original.url().host();
+                        if (!host.contains("btsearch")) {
+                            requestBuilder.header("X-Requested-With", "XMLHttpRequest");
+                        }
 
-            android.util.Log.d("JAViewer", "Request URL: " + original.url());
-            android.util.Log.d("JAViewer", "Final URL: " + request.url());
-            return chain.proceed(request);
+                        Request request = requestBuilder.build();
+
+                        if (BuildConfig.DEBUG) {
+                            android.util.Log.d("JAViewer", "Request URL: " + original.url());
+                            android.util.Log.d("JAViewer", "Final URL: " + request.url());
+                        }
+                        return chain.proceed(request);
+                    }
+                })
+                .cookieJar(COOKIE_JAR);
+        if (cache != null) {
+            builder.cache(cache);
         }
-    })
-            .cookieJar(COOKIE_JAR)
-            .build();
-
-    static {
-        JZVideoPlayer.setMediaInterface(new ExoPlayerImpl());
+        return builder.build();
     }
 
     public static DataSource getDataSource() {
@@ -132,14 +134,16 @@ public class JAViewer extends Application {
 
     public static void recreateService() {
         try {
-            android.util.Log.d("JAViewer", "recreateService: " + JAViewer.getDataSource().getLink());
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(JAViewer.getDataSource().getLink())
                     .client(JAViewer.HTTP_CLIENT)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
             SERVICE = retrofit.create(BasicService.class);
-            android.util.Log.d("JAViewer", "recreateService: SUCCESS");
+            if (BuildConfig.DEBUG) {
+                android.util.Log.d("JAViewer", "recreateService: " + JAViewer.getDataSource().getLink());
+                android.util.Log.d("JAViewer", "recreateService: SUCCESS");
+            }
         } catch (Exception e) {
             android.util.Log.e("JAViewer", "recreateService: FAILED", e);
         }
@@ -180,28 +184,6 @@ public class JAViewer extends Application {
         return gson.fromJson(json, beanClass);
     }
 
-    public static String b(String s1, String s2) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] bytes = md.digest(String.format("%s%sBrynhildr", s1, s2).getBytes());
-            return bytesToHex(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        }
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        final char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-        char[] hexChars = new char[bytes.length * 2];
-        int v;
-        for (int j = 0; j < bytes.length; j++) {
-            v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
     public static boolean Objects_equals(Object a, Object b) {
         return (a == b) || (a != null && a.equals(b));
     }
@@ -210,6 +192,7 @@ public class JAViewer extends Application {
     public void onCreate() {
         super.onCreate();
         appContext = this;
+        HTTP_CLIENT = createHttpClient(new Cache(new File(getCacheDir(), "http"), 20L * 1024 * 1024));
         CustomActivityOnCrash.install(this);
     }
 }

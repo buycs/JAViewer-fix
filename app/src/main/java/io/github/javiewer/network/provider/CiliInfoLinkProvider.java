@@ -23,7 +23,7 @@ public class CiliInfoLinkProvider extends DownloadLinkProvider {
 
     @Override
     public Call<ResponseBody> search(String keyword, int page) {
-        return CiliInfo.INSTANCE.search(keyword);
+        return CiliInfo.get().search(keyword);
     }
 
     @Override
@@ -63,9 +63,9 @@ public class CiliInfoLinkProvider extends DownloadLinkProvider {
     public Call<ResponseBody> get(String url) {
         // url format: /!lBfm or https://cili.info/!lBfm
         if (url.startsWith("http")) {
-            return CiliInfo.INSTANCE.get(url);
+            return CiliInfo.get().get(url);
         }
-        return CiliInfo.INSTANCE.get(CiliInfo.BASE_URL + url);
+        return CiliInfo.get().get(CiliInfo.BASE_URL + url);
     }
 
     @Override

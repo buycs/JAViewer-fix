@@ -28,6 +28,9 @@ public interface BtSearch {
     String SECRET_KEY = "long2ice";
 
     OkHttpClient BTSEARCH_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor(chain -> {
                 Request original = chain.request();
                 HttpUrl url = original.url();
@@ -53,8 +56,9 @@ public interface BtSearch {
                         .header("Referer", BASE_URL + "/search");
 
                 Request finalRequest = builder.build();
-                android.util.Log.d("JAViewer", "BtSearch request: " + finalRequest.url());
-                android.util.Log.d("JAViewer", "BtSearch headers: TS=" + timestamp + " NONCE=" + nonce + " SIGN=" + sign);
+                if (io.github.javiewer.BuildConfig.DEBUG) {
+                    android.util.Log.d("JAViewer", "BtSearch request: " + finalRequest.url());
+                }
 
                 return chain.proceed(finalRequest);
             })

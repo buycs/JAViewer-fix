@@ -31,10 +31,6 @@ public class Configurations {
 
     private DataSource data_source;
 
-    private boolean show_ads;
-
-    private long download_counter;
-
     public static Configurations load(File file) {
         Configurations.file = file;
         Configurations config = parseFile(file, StandardCharsets.UTF_8);
@@ -142,21 +138,5 @@ public class Configurations {
                 tmp.delete();
             }
         }
-    }
-
-    public void setShowAds(boolean show_ads) {
-        this.show_ads = show_ads;
-    }
-
-    public boolean showAds() {
-        return show_ads;
-    }
-
-    public long getDownloadCounter() {
-        return download_counter;
-    }
-
-    public void setDownloadCounter(long download_counter) {
-        this.download_counter = download_counter;
     }
 }
