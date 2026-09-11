@@ -260,16 +260,15 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_favourite) {
-            startActivity(new Intent(this, FavouriteActivity.class));
+        if (id == R.id.nav_favourite || id == R.id.nav_settings) {
+            mDrawerLayout.closeDrawer(GravityCompat.START, false);
+            Class<?> target = id == R.id.nav_favourite ? FavouriteActivity.class : SettingsActivity.class;
+            startActivity(new Intent(this, target));
             overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
-        } else if (id == R.id.nav_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
-        } else {
-            item.setChecked(true);
-            setFragment(id);
+            return true;
         }
+        item.setChecked(true);
+        setFragment(id);
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
