@@ -1,51 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ListPreference
         android:key="data_source"
         android:persistent="false"
-        android:title="数据源切换" />
+        android:title="数据源切换"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="edit_data_source_domain"
         android:persistent="false"
-        android:title="数据源修改" />
+        android:title="数据源修改"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="check_update"
         android:persistent="false"
-        android:title="检查更新" />
+        android:title="检查更新"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="clear_cache"
         android:persistent="false"
-        android:title="清除缓存" />
+        android:title="清除缓存"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="clear_search_history"
         android:persistent="false"
-        android:title="清空搜索历史" />
+        android:title="清空搜索历史"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="export_favourites"
         android:persistent="false"
-        android:title="导出收藏" />
+        android:title="导出收藏"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="import_favourites"
         android:persistent="false"
-        android:title="导入收藏" />
+        android:title="导入收藏"
+        app:iconSpaceReserved="false" />
 
     <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="hide_recent_preview"
         android:persistent="false"
         android:summary="在最近任务中隐藏本应用画面"
-        android:title="最近任务隐藏内容" />
+        android:title="最近任务隐藏内容"
+        app:iconSpaceReserved="false" />
 
     <Preference
         android:key="about"
         android:persistent="false"
         android:summary="本应用仅供学习交流，请勿用于非法用途"
-        android:title="关于" />
+        android:title="关于"
+        app:iconSpaceReserved="false" />
 </PreferenceScreen>
