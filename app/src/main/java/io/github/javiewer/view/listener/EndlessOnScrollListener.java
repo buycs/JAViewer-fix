@@ -5,9 +5,4 @@ package io.github.javiewer.view.listener;
  */
 
 public abstract class EndlessOnScrollListener<I> extends BasicOnScrollListener<I> {
-
-    @Override
-    public boolean isEnd() {
-        return false;
-    }
 }

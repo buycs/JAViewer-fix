@@ -33,6 +33,7 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
         loading = false;
         loadThreshold = 5;
         currentPage = 0;
+        end = false;
         int oldSize = getItems().size();
         if (oldSize > 0) {
             getItems().clear();
@@ -43,11 +44,16 @@ public abstract class BasicOnScrollListener<I> extends RecyclerView.OnScrollList
     public Bundle saveState() {
         Bundle bundle = new Bundle();
         bundle.putInt("CurrentPage", currentPage);
+        bundle.putBoolean("End", end);
         return bundle;
     }
 
     public void restoreState(Bundle bundle) {
+        if (bundle == null) {
+            return;
+        }
         currentPage = bundle.getInt("CurrentPage");
+        end = bundle.getBoolean("End");
     }
 
     public abstract RecyclerView.LayoutManager getLayoutManager();

@@ -64,6 +64,7 @@ import io.github.javiewer.adapter.item.MovieDetail;
 import io.github.javiewer.network.PSVS;
 import io.github.javiewer.network.item.AvgleSearchResult;
 import io.github.javiewer.network.provider.AVMOProvider;
+import io.github.javiewer.util.BundleCompat;
 import io.github.javiewer.util.SimpleVideoPlayer;
 import io.github.javiewer.view.ViewUtil;
 import okhttp3.MediaType;
@@ -95,6 +96,8 @@ public class MovieActivity extends SecureActivity {
 
     MenuItem mStarButton;
 
+    private Call<ResponseBody> movieDetailCall;
+
     @Override
     @SuppressWarnings("ConstantConditions")
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +113,12 @@ public class MovieActivity extends SecureActivity {
         mFlowLayout = findViewById(R.id.genre_flow_layout);
 
         Bundle bundle = this.getIntent().getExtras();
-        movie = bundle.getSerializable("movie", Movie.class);
+        movie = BundleCompat.getSerializable(bundle, "movie", Movie.class);
+        if (movie == null) {
+            Toast.makeText(this, "影片数据无效", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -129,25 +137,39 @@ public class MovieActivity extends SecureActivity {
         });
         mFab.bringToFront();
 
-        String movieId = this.movie.getLink();
         BasicService service = JAViewer.getService();
         if (service == null) {
             Toast.makeText(this, "服务初始化失败，请检查数据源配置", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-        Call<ResponseBody> call = service.getMovie(Arrays.asList(movieId, "cn"));
-        call.enqueue(new Callback<ResponseBody>() {
+        loadMovieDetail();
+    }
+
+    private void loadMovieDetail() {
+        if (movieDetailCall != null) {
+            movieDetailCall.cancel();
+        }
+        mProgressBar.animate().setListener(null).cancel();
+        mProgressBar.setVisibility(View.VISIBLE);
+        mProgressBar.setAlpha(1f);
+        mContent.setVisibility(View.INVISIBLE);
+
+        movieDetailCall = JAViewer.getService().getMovie(Arrays.asList(this.movie.getLink(), "cn"));
+        movieDetailCall.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-
-                if (!response.isSuccessful()) {
+                if (isFinishing() || isDestroyed()) {
                     return;
                 }
 
-                MovieDetail detail;
+                if (!response.isSuccessful() || response.body() == null) {
+                    showDetailError();
+                    return;
+                }
+
                 try {
-                    detail = AVMOProvider.parseMoviesDetail(response.body().string());
+                    MovieDetail detail = AVMOProvider.parseMoviesDetail(response.body().string());
                     detail.headers.add(0, MovieDetail.Header.create("影片番号", detail.code, "magnet"));
                     detail.headers.add(1, MovieDetail.Header.create("影片名称", movie.getTitle(), null));
                     displayInfo(detail);
@@ -156,15 +178,41 @@ public class MovieActivity extends SecureActivity {
                             .load(detail.coverUrl)
                             .into(mToolbarLayoutBackground);
                 } catch (Exception e) {
-                    onFailure(call, e);
+                    e.printStackTrace();
+                    showDetailError();
                 }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+                if (call.isCanceled() || isFinishing() || isDestroyed()) {
+                    return;
+                }
                 t.printStackTrace();
+                showDetailError();
             }
         });
+    }
+
+    private void showDetailError() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        mProgressBar.animate().setDuration(200).alpha(0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mProgressBar.setVisibility(View.GONE);
+            }
+        }).start();
+        Snackbar.make(findViewById(android.R.id.content), "影片信息加载失败", Snackbar.LENGTH_INDEFINITE)
+                .setAction("重试", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        loadMovieDetail();
+                    }
+                })
+                .show();
     }
 
     private AlertDialog showLoadingDialog(String message) {
@@ -623,6 +671,10 @@ public class MovieActivity extends SecureActivity {
 
     @Override
     protected void onDestroy() {
+        if (movieDetailCall != null) {
+            movieDetailCall.cancel();
+            movieDetailCall = null;
+        }
         super.onDestroy();
         JZVideoPlayer.releaseAllVideos();
     }

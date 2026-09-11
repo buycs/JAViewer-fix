@@ -4,9 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import io.github.javiewer.adapter.item.Actress;
@@ -33,17 +37,38 @@ public class Configurations {
 
     public static Configurations load(File file) {
         Configurations.file = file;
-        Configurations config = null;
-        try {
-            config = JAViewer.parseJson(Configurations.class, new JsonReader(new FileReader(file)));
-        } catch (Exception ignored) {
+        Configurations config = parseFile(file, StandardCharsets.UTF_8);
+        if (config == null) {
+            Charset fallback = Charset.defaultCharset();
+            if (!StandardCharsets.UTF_8.equals(fallback)) {
+                config = parseFile(file, fallback);
+            }
         }
-
         if (config == null) {
             config = new Configurations();
         }
-
         return config;
+    }
+
+    private static Configurations parseFile(File file, Charset charset) {
+        try (FileInputStream in = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int) file.length()];
+            int offset = 0;
+            while (offset < bytes.length) {
+                int read = in.read(bytes, offset, bytes.length - offset);
+                if (read < 0) {
+                    break;
+                }
+                offset += read;
+            }
+            String json = new String(bytes, 0, offset, charset);
+            if (json.indexOf('\uFFFD') >= 0) {
+                return null;
+            }
+            return JAViewer.parseJson(Configurations.class, new JsonReader(new StringReader(json)));
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     public ArrayList<Movie> getStarredMovies() {
@@ -79,14 +104,43 @@ public class Configurations {
         this.data_source = source;
     }
 
-    public void save() {
+    public synchronized void save() {
+        if (file == null) {
+            return;
+        }
+        File tmp = new File(file.getAbsolutePath() + ".tmp");
+        File bak = new File(file.getAbsolutePath() + ".bak");
         try {
-            FileWriter writer = new FileWriter(file);
-            new Gson().toJson(this, writer);
-            writer.flush();
-            writer.close();
+            try (FileOutputStream fos = new FileOutputStream(tmp);
+                 OutputStreamWriter writer = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
+                new Gson().toJson(this, writer);
+                writer.flush();
+                fos.getFD().sync();
+            }
+            if (tmp.renameTo(file)) {
+                return;
+            }
+            if (bak.exists() && !bak.delete()) {
+                tmp.delete();
+                return;
+            }
+            if (file.exists() && !file.renameTo(bak)) {
+                tmp.delete();
+                return;
+            }
+            if (!tmp.renameTo(file)) {
+                if (bak.exists()) {
+                    bak.renameTo(file);
+                }
+                tmp.delete();
+                return;
+            }
+            bak.delete();
         } catch (IOException e) {
             e.printStackTrace();
+            if (tmp.exists()) {
+                tmp.delete();
+            }
         }
     }
 

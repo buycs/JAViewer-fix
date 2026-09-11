@@ -76,6 +76,10 @@ public abstract class MovieFragment extends RecyclerFragment<Movie, LinearLayout
 
                 getItems().addAll(wrappers);
                 getAdapter().notifyItemRangeInserted(pos, wrappers.size());
+
+                if (wrappers.isEmpty() || wrappers.size() < 60) {
+                    setEnd(true);
+                }
             }
         });
 

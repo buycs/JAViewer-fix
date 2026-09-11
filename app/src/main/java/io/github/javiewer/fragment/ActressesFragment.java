@@ -79,6 +79,10 @@ public class ActressesFragment extends RecyclerFragment<Actress, LinearLayoutMan
 
                 getItems().addAll(wrappers);
                 getAdapter().notifyItemRangeInserted(pos, wrappers.size());
+
+                if (wrappers.isEmpty() || wrappers.size() < 60) {
+                    setEnd(true);
+                }
             }
         });
 

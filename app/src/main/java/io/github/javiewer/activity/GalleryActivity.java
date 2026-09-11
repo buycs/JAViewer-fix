@@ -41,6 +41,7 @@ import java.io.OutputStream;
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.Movie;
+import io.github.javiewer.util.BundleCompat;
 
 public class GalleryActivity extends SecureActivity {
 
@@ -138,8 +139,15 @@ public class GalleryActivity extends SecureActivity {
         }
 
         Bundle bundle = this.getIntent().getExtras();
+        movie = BundleCompat.getSerializable(bundle, "movie", Movie.class);
+        imageUrls = bundle != null ? bundle.getStringArray("urls") : null;
+        if (movie == null || imageUrls == null || imageUrls.length == 0) {
+            Toast.makeText(this, "影片数据无效", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
-        mPager.setAdapter(new ImageAdapter(this, imageUrls = bundle.getStringArray("urls"), this));
+        mPager.setAdapter(new ImageAdapter(this, imageUrls, this));
         mPager.setCurrentItem(bundle.getInt("position"));
         mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -156,8 +164,6 @@ public class GalleryActivity extends SecureActivity {
             }
         });
         updateIndicator();
-
-        movie = bundle.getSerializable("movie", Movie.class);
     }
 
     private void updateIndicator() {
@@ -314,6 +320,8 @@ public class GalleryActivity extends SecureActivity {
 
                         @Override
                         public void onLoadFailed(Drawable errorDrawable) {
+                            progressBar.setVisibility(View.GONE);
+                            textView.setVisibility(View.VISIBLE);
                             textView.setText("图片加载失败 :(\n");
                         }
                     });
