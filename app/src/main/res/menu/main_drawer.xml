@@ -47,17 +47,4 @@
             android:title="设置" />
     </group>
 
-    <group
-        android:id="@+id/nav_group3"
-        android:checkableBehavior="none">
-        <item
-            android:id="@+id/nav_source"
-            android:icon="@drawable/ic_menu_github"
-            android:title="原项目源码" />
-        <item
-            android:id="@+id/nav_source_fork"
-            android:icon="@drawable/ic_menu_github"
-            android:title="本项目源码" />
-    </group>
-
 </menu>
