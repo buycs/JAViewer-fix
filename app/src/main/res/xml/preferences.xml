@@ -4,12 +4,12 @@
     <ListPreference
         android:key="data_source"
         android:persistent="false"
-        android:title="数据源" />
+        android:title="数据源切换" />
 
     <Preference
         android:key="edit_data_source_domain"
         android:persistent="false"
-        android:title="编辑数据源域名" />
+        android:title="数据源修改" />
 
     <Preference
         android:key="check_update"

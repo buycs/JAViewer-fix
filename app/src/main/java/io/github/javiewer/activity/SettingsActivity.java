@@ -183,7 +183,7 @@ public class SettingsActivity extends SecureActivity {
                 input.setSelection(input.getText().length());
             }
             new AlertDialog.Builder(requireContext())
-                    .setTitle("编辑数据源域名")
+                    .setTitle("数据源修改")
                     .setView(input)
                     .setPositiveButton("保存", (dialog, which) -> {
                         String newDomain = input.getText().toString().trim();
