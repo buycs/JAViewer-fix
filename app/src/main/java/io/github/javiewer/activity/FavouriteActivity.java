@@ -1,7 +1,11 @@
 package io.github.javiewer.activity;
 
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+
 import com.google.android.material.appbar.AppBarLayout;
+import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.widget.Toolbar;
@@ -25,6 +29,8 @@ public class FavouriteActivity extends SecureActivity {
     AHBottomNavigation mBottomNav;
     Toolbar mToolbar;
     int mColorPrimary;
+    private String filterQuery = "";
+    private int sortMode = FavouriteFragment.SORT_RECENT;
     private ViewPager.OnPageChangeListener mOnPageChangeListener = new ViewPager.SimpleOnPageChangeListener() {
         @Override
         public void onPageSelected(int position) {
@@ -83,6 +89,66 @@ public class FavouriteActivity extends SecureActivity {
                 return false;
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.favourite, menu);
+        MenuItem searchItem = menu.findItem(R.id.action_fav_search);
+        if (searchItem != null && searchItem.getActionView() instanceof SearchView) {
+            SearchView searchView = (SearchView) searchItem.getActionView();
+            searchView.setQueryHint("搜索收藏");
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    applyFilter(query);
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    applyFilter(newText);
+                    return true;
+                }
+            });
+        }
+        MenuItem recent = menu.findItem(R.id.action_fav_sort_recent);
+        MenuItem name = menu.findItem(R.id.action_fav_sort_name);
+        if (recent != null) {
+            recent.setChecked(sortMode == FavouriteFragment.SORT_RECENT);
+        }
+        if (name != null) {
+            name.setChecked(sortMode == FavouriteFragment.SORT_NAME);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_fav_sort_recent) {
+            item.setChecked(true);
+            sortMode = FavouriteFragment.SORT_RECENT;
+            applyFilter(filterQuery);
+            return true;
+        }
+        if (id == R.id.action_fav_sort_name) {
+            item.setChecked(true);
+            sortMode = FavouriteFragment.SORT_NAME;
+            applyFilter(filterQuery);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void applyFilter(String query) {
+        filterQuery = query == null ? "" : query;
+        if (mAdapter == null) {
+            return;
+        }
+        for (int i = 0; i < mAdapter.getCount(); i++) {
+            ((FavouriteFragment) mAdapter.getItem(i)).applyFilter(filterQuery, sortMode);
+        }
     }
 
     @Override

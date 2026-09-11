@@ -401,20 +401,22 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
      * @param suggestions array of suggestions
      */
     public void setSuggestions(String[] suggestions) {
-        if (suggestions != null && suggestions.length > 0) {
+        final String[] items = suggestions != null ? suggestions : new String[0];
+        if (items.length > 0) {
             mTintView.setVisibility(VISIBLE);
-            final SearchAdapter adapter = new SearchAdapter(mContext, suggestions, suggestionIcon, ellipsize);
-            setAdapter(adapter);
-
-            setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    setQuery((String) adapter.getItem(position), submit);
-                }
-            });
         } else {
             mTintView.setVisibility(GONE);
+            dismissSuggestions();
         }
+        final SearchAdapter adapter = new SearchAdapter(mContext, items, suggestionIcon, ellipsize);
+        setAdapter(adapter);
+
+        setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                setQuery((String) adapter.getItem(position), submit);
+            }
+        });
     }
 
     /**

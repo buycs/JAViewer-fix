@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 import androidx.core.text.HtmlCompat;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -24,17 +25,24 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 
 import io.github.javiewer.BuildConfig;
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
+import io.github.javiewer.util.FavouriteBackup;
 import io.github.javiewer.util.IOUtils;
 import okhttp3.Cache;
 
 public class SettingsActivity extends SecureActivity {
+
+    public static final int REQUEST_IMPORT_FAVOURITES = 2401;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +65,37 @@ public class SettingsActivity extends SecureActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_IMPORT_FAVOURITES || resultCode != RESULT_OK || data == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        if (uri == null || JAViewer.CONFIGURATIONS == null) {
+            Toast.makeText(this, "导入失败", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try (InputStream is = getContentResolver().openInputStream(uri)) {
+            if (is == null) {
+                Toast.makeText(this, "导入失败", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String json = IOUtils.readText(is, IOUtils.UTF_8);
+            FavouriteBackup.ImportResult result = FavouriteBackup.mergeJson(
+                    json,
+                    JAViewer.CONFIGURATIONS.getStarredMovies(),
+                    JAViewer.CONFIGURATIONS.getStarredActresses());
+            JAViewer.CONFIGURATIONS.save();
+            FavouriteActivity.update();
+            Toast.makeText(this,
+                    "已导入 " + result.moviesAdded + " 部影片、" + result.actressesAdded + " 位女优",
+                    Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "导入失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public static class SettingsFragment extends PreferenceFragmentCompat {
 
         @Override
@@ -65,6 +104,9 @@ public class SettingsActivity extends SecureActivity {
             bindDataSource();
             bindCheckUpdate();
             bindClearCache();
+            bindClearSearchHistory();
+            bindExportFavourites();
+            bindImportFavourites();
             bindHideRecentPreview();
             bindAbout();
         }
@@ -184,6 +226,93 @@ public class SettingsActivity extends SecureActivity {
                         }
                     });
                 }).start();
+                return true;
+            });
+        }
+
+        private void bindClearSearchHistory() {
+            Preference preference = findPreference("clear_search_history");
+            if (preference == null) {
+                return;
+            }
+            preference.setOnPreferenceClickListener(pref -> {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("清空搜索历史")
+                        .setMessage("确定清空全部搜索历史？")
+                        .setPositiveButton("清空", (dialog, which) -> {
+                            if (JAViewer.CONFIGURATIONS != null) {
+                                JAViewer.CONFIGURATIONS.clearSearchHistory();
+                                JAViewer.CONFIGURATIONS.save();
+                            }
+                            Toast.makeText(requireContext(), "搜索历史已清空", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+                return true;
+            });
+        }
+
+        private void bindExportFavourites() {
+            Preference preference = findPreference("export_favourites");
+            if (preference == null) {
+                return;
+            }
+            preference.setOnPreferenceClickListener(pref -> {
+                exportFavourites();
+                return true;
+            });
+        }
+
+        private void exportFavourites() {
+            if (JAViewer.CONFIGURATIONS == null) {
+                Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                File dir = requireContext().getExternalFilesDir("cache");
+                if (dir == null) {
+                    Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!dir.exists() && !dir.mkdirs()) {
+                    Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                File file = new File(dir, "javiewer-favourites.json");
+                String json = FavouriteBackup.toJson(
+                        JAViewer.CONFIGURATIONS.getStarredMovies(),
+                        JAViewer.CONFIGURATIONS.getStarredActresses());
+                try (FileOutputStream fos = new FileOutputStream(file);
+                     OutputStreamWriter writer = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
+                    writer.write(json);
+                    writer.flush();
+                }
+                Uri uri = FileProvider.getUriForFile(requireContext(), "io.github.javiewer.fileprovider", file);
+                Intent share = new Intent(Intent.ACTION_SEND);
+                share.setType("application/json");
+                share.putExtra(Intent.EXTRA_STREAM, uri);
+                share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(Intent.createChooser(share, "导出收藏"));
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        private void bindImportFavourites() {
+            Preference preference = findPreference("import_favourites");
+            if (preference == null) {
+                return;
+            }
+            preference.setOnPreferenceClickListener(pref -> {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/json");
+                Intent chooser = Intent.createChooser(intent, "导入收藏");
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.setType("*/*");
+                chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{fallback});
+                requireActivity().startActivityForResult(chooser, REQUEST_IMPORT_FAVOURITES);
                 return true;
             });
         }

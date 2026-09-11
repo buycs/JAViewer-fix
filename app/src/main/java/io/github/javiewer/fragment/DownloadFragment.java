@@ -79,6 +79,13 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
             }
 
             @Override
+            public void onExceptionCaught(Throwable t) {
+                if (getActivity() != null && isAdded()) {
+                    android.widget.Toast.makeText(getActivity(), "该源失败，请切换", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
             public void onResult(ResponseBody response) throws Exception {
                 super.onResult(response);
                 String html = response.string();

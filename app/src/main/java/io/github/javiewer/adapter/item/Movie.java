@@ -60,7 +60,8 @@ public class Movie extends Linkable {
         }
 
         if (obj instanceof Movie) {
-            return this.code.equals(((Movie) obj).code);
+            String other = ((Movie) obj).code;
+            return code == null ? other == null : code.equals(other);
         }
 
         return false;

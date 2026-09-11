@@ -37,7 +37,8 @@ public class SearchAdapter extends ArrayAdapter<String> {
         TextView text = view.findViewById(R.id.suggestion_text);
         ImageView icon = view.findViewById(R.id.suggestion_icon);
 
-        text.setText(suggestions[position]);
+        String suggestion = getItem(position);
+        text.setText(suggestion != null ? suggestion : "");
         if (ellipsize) {
             text.setSingleLine(true);
             text.setEllipsize(android.text.TextUtils.TruncateAt.END);

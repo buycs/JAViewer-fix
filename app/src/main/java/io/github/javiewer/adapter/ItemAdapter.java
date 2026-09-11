@@ -30,6 +30,11 @@ public abstract class ItemAdapter<I, VH extends RecyclerView.ViewHolder> extends
         notifyItemRangeInserted(0, items.size());
     }
 
+    public void showItems(List<I> display) {
+        this.items = display;
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemCount() {
         return getItems().size();

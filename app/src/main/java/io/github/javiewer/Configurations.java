@@ -29,6 +29,8 @@ public class Configurations {
 
     private ArrayList<Actress> starred_actresses;
 
+    private ArrayList<String> search_history;
+
     private DataSource data_source;
 
     private boolean hide_recent_preview;
@@ -81,6 +83,38 @@ public class Configurations {
             starred_actresses = new ArrayList<>();
         }
         return starred_actresses;
+    }
+
+    public ArrayList<String> getSearchHistory() {
+        if (search_history == null) {
+            search_history = new ArrayList<>();
+        }
+        return search_history;
+    }
+
+    public void addSearchHistory(String q) {
+        if (q == null) {
+            return;
+        }
+        String trimmed = q.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        ArrayList<String> history = getSearchHistory();
+        for (int i = history.size() - 1; i >= 0; i--) {
+            String existing = history.get(i);
+            if (existing != null && existing.equalsIgnoreCase(trimmed)) {
+                history.remove(i);
+            }
+        }
+        history.add(0, trimmed);
+        while (history.size() > 20) {
+            history.remove(history.size() - 1);
+        }
+    }
+
+    public void clearSearchHistory() {
+        getSearchHistory().clear();
     }
 
     public DataSource getDataSource() {

@@ -80,6 +80,8 @@ public abstract class MovieFragment extends RecyclerFragment<Movie, LinearLayout
                 if (wrappers.isEmpty() || wrappers.size() < 60) {
                     setEnd(true);
                 }
+
+                onMoviesParsed(wrappers, pos == 0);
             }
         });
 
@@ -92,6 +94,9 @@ public abstract class MovieFragment extends RecyclerFragment<Movie, LinearLayout
         });
 
         super.onActivityCreated(savedInstanceState);
+    }
+
+    protected void onMoviesParsed(List<Movie> movies, boolean firstPage) {
     }
 
     public abstract Call<ResponseBody> newCall(int page);

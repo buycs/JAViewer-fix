@@ -31,7 +31,8 @@ public class Actress extends Linkable {
         }
 
         if (obj instanceof Actress) {
-            return this.name.equals(((Actress) obj).getName());
+            String other = ((Actress) obj).getName();
+            return name == null ? other == null : name.equals(other);
         }
 
         return false;

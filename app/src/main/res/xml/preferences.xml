@@ -16,6 +16,21 @@
         android:persistent="false"
         android:title="清除缓存" />
 
+    <Preference
+        android:key="clear_search_history"
+        android:persistent="false"
+        android:title="清空搜索历史" />
+
+    <Preference
+        android:key="export_favourites"
+        android:persistent="false"
+        android:title="导出收藏" />
+
+    <Preference
+        android:key="import_favourites"
+        android:persistent="false"
+        android:title="导入收藏" />
+
     <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="hide_recent_preview"

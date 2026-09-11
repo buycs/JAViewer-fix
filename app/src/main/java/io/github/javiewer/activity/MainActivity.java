@@ -23,6 +23,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import java.util.ArrayList;
+
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
@@ -32,6 +34,7 @@ import io.github.javiewer.fragment.HomeFragment;
 import io.github.javiewer.fragment.PopularFragment;
 import io.github.javiewer.fragment.ReleasedFragment;
 import io.github.javiewer.fragment.genre.GenreTabsFragment;
+import io.github.javiewer.util.QueryNormalizer;
 import io.github.javiewer.view.SimpleSearchView;
 import io.github.javiewer.view.ViewUtil;
 
@@ -71,11 +74,19 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         mNavigationView.setNavigationItemSelectedListener(this);
 
         mSearchView = findViewById(R.id.search_view);
+        mSearchView.setSubmitOnClick(true);
         mSearchView.setOnQueryTextListener(new SimpleSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 if (query != null && !query.trim().isEmpty()) {
-                    startActivity(MovieListActivity.newIntent(MainActivity.this, query, query));
+                    String original = query.trim();
+                    if (JAViewer.CONFIGURATIONS != null) {
+                        JAViewer.CONFIGURATIONS.addSearchHistory(original);
+                        JAViewer.CONFIGURATIONS.save();
+                    }
+                    String keyword = QueryNormalizer.normalize(original);
+                    startActivity(MovieListActivity.newIntent(MainActivity.this, original, keyword, "search", original));
+                    applySearchSuggestions();
                 }
                 mSearchView.closeSearch();
                 return true;
@@ -84,6 +95,16 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
             @Override
             public boolean onQueryTextChange(String newText) {
                 return false;
+            }
+        });
+        mSearchView.setOnSearchViewListener(new SimpleSearchView.SearchViewListener() {
+            @Override
+            public void onSearchViewShown() {
+                applySearchSuggestions();
+            }
+
+            @Override
+            public void onSearchViewClosed() {
             }
         });
 
@@ -290,7 +311,19 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         mSearchView.setMenuItem(menu.findItem(R.id.action_search));
+        applySearchSuggestions();
         return true;
+    }
+
+    private void applySearchSuggestions() {
+        if (mSearchView == null) {
+            return;
+        }
+        ArrayList<String> history = JAViewer.CONFIGURATIONS != null
+                ? JAViewer.CONFIGURATIONS.getSearchHistory()
+                : new ArrayList<String>();
+        mSearchView.setSuggestions(history.toArray(new String[0]));
+        mSearchView.setSubmitOnClick(true);
     }
 
     @Override
