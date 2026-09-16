@@ -2,18 +2,11 @@ package io.github.javiewer.activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import androidx.core.content.FileProvider;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,8 +25,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.chip.Chip;
 import com.wefika.flowlayout.FlowLayout;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +37,6 @@ import io.github.javiewer.adapter.ActressPaletteAdapter;
 import io.github.javiewer.adapter.MovieHeaderAdapter;
 import io.github.javiewer.adapter.RelatedMovieAdapter;
 import io.github.javiewer.adapter.ScreenshotAdapter;
-import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.adapter.item.Genre;
 import io.github.javiewer.view.decoration.GridSpacingItemDecoration;
 import io.github.javiewer.adapter.item.Movie;
@@ -119,6 +109,25 @@ public class MovieActivity extends SecureActivity {
             }
         });
         mFab.bringToFront();
+
+        View preview = findViewById(R.id.view_preview);
+        if (preview != null) {
+            preview.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(MovieActivity.this, "预览暂未接通", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        View play = findViewById(R.id.view_play);
+        if (play != null) {
+            play.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(MovieActivity.this, "在线播放暂未接通", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
         BasicService service = JAViewer.getService();
         if (service == null) {
@@ -339,58 +348,7 @@ public class MovieActivity extends SecureActivity {
             onBackPressed();
             return true;
         }
-        if (id == R.id.action_copy_code) {
-            copyMovieCode();
-            return true;
-        }
-        if (id == R.id.action_open_browser) {
-            openMovieInBrowser();
-            return true;
-        }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void copyMovieCode() {
-        String code = movie != null ? movie.getCode() : null;
-        if (code == null || code.trim().isEmpty()) {
-            Toast.makeText(this, "复制失败", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        if (clipboard == null) {
-            Toast.makeText(this, "复制失败", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        clipboard.setPrimaryClip(ClipData.newPlainText("code", code));
-        Toast.makeText(this, "已复制 " + code, Toast.LENGTH_SHORT).show();
-    }
-
-    private void openMovieInBrowser() {
-        String link = movie != null ? movie.getLink() : null;
-        if (link == null || link.trim().isEmpty()) {
-            Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String url;
-        if (link.startsWith("http://") || link.startsWith("https://")) {
-            url = link;
-        } else {
-            DataSource source = JAViewer.getDataSource();
-            String domain = source != null ? source.domain : null;
-            if (domain == null || domain.trim().isEmpty()) {
-                Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (domain.endsWith("/")) {
-                domain = domain.substring(0, domain.length() - 1);
-            }
-            url = domain + "/movie/" + link;
-        }
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-        } catch (Exception e) {
-            Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
-        }
     }
 
     @Override
@@ -427,84 +385,7 @@ public class MovieActivity extends SecureActivity {
             }
         });
 
-        final MenuItem mShareButton = menu.findItem(R.id.action_share);
-        mShareButton.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                try {
-
-                    File cache = new File(getExternalFilesDir("cache"), "screenshot");
-
-                    //Generate screenshot
-                    FileOutputStream os = new FileOutputStream(cache);
-                    Bitmap screenshot = getScreenBitmap();
-                    screenshot.compress(Bitmap.CompressFormat.JPEG, 80, os);
-                    os.flush();
-                    os.close();
-
-                    Uri uri = FileProvider.getUriForFile(getApplicationContext(), "io.github.javiewer.fileprovider", cache);
-                    // Uri uri = Uri.fromFile(cache);
-                    Intent intent = new Intent(Intent.ACTION_SEND)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            .setType("image/jpeg")
-                            .putExtra(Intent.EXTRA_STREAM, uri);
-                    startActivity(Intent.createChooser(intent, "分享此影片"));
-
-                    return true;
-                } catch (OutOfMemoryError e) {
-                    e.printStackTrace();
-                    Toast.makeText(MovieActivity.this, "无法分享：内存不足", Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(MovieActivity.this, "无法分享：" + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-                return false;
-            }
-        });
-
         return super.onCreateOptionsMenu(menu);
-    }
-
-    public Bitmap getScreenBitmap() {
-        int imageHeight = mToolbarLayoutBackground.getHeight();
-        int scrollViewHeight = 0;
-        for (int i = 0; i < mContent.getChildCount(); i++) {
-            scrollViewHeight += mContent.getChildAt(i).getHeight();
-        }
-        Bitmap result = Bitmap.createBitmap(mContent.getWidth(), imageHeight + scrollViewHeight, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(result);
-        canvas.drawColor(Color.parseColor("#FAFAFA"));
-
-        //Image
-        {
-            Bitmap bitmap = Bitmap.createBitmap(mToolbarLayoutBackground.getWidth(), imageHeight, Bitmap.Config.ARGB_8888);
-            Canvas c = new Canvas(bitmap);
-            mToolbarLayoutBackground.draw(c);
-            canvas.drawBitmap(bitmap, 0, 0, null);
-        }
-
-        //ScrollView
-        {
-            Bitmap bitmap = Bitmap.createBitmap(mContent.getWidth(), scrollViewHeight, Bitmap.Config.ARGB_8888);
-            Canvas c = new Canvas(bitmap);
-            mContent.draw(c);
-            canvas.drawBitmap(bitmap, 0, imageHeight, null);
-        }
-
-        int maxSide = Math.max(result.getWidth(), result.getHeight());
-        if (maxSide > 1080) {
-            float scale = 1080f / maxSide;
-            int scaledWidth = Math.max(1, Math.round(result.getWidth() * scale));
-            int scaledHeight = Math.max(1, Math.round(result.getHeight() * scale));
-            Bitmap scaled = Bitmap.createScaledBitmap(result, scaledWidth, scaledHeight, true);
-            if (scaled != result) {
-                result.recycle();
-            }
-            return scaled;
-        }
-
-        return result;
     }
 
     @Override

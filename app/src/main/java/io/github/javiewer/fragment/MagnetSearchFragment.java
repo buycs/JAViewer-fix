@@ -108,7 +108,7 @@ public class MagnetSearchFragment extends Fragment {
             return;
         }
         progressBar.setVisibility(View.VISIBLE);
-        recyclerView.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.INVISIBLE);
         emptyText.setVisibility(View.GONE);
 
         final int generation = ++searchGeneration;
@@ -157,9 +157,18 @@ public class MagnetSearchFragment extends Fragment {
                         if (response.body() == null) {
                             throw new IOException("empty body");
                         }
+                        if (!response.isSuccessful()) {
+                            throw new IOException("http " + response.code());
+                        }
                         String resultStr = response.body().string();
                         JSONObject obj = new JSONObject(resultStr);
                         JSONArray data = obj.optJSONArray("data");
+                        if (data == null) {
+                            data = obj.optJSONArray("list");
+                        }
+                        if (data == null) {
+                            data = obj.optJSONArray("result");
+                        }
 
                         if (data == null || data.length() == 0) {
                             postSearchUi(generation, new Runnable() {
@@ -175,29 +184,37 @@ public class MagnetSearchFragment extends Fragment {
 
                         final List<TorrentGroup> allGroups = new ArrayList<>();
                         for (int i = 0; i < data.length(); i++) {
-                            JSONObject item = data.getJSONObject(i);
-                            String hash = item.getString("hash");
-                            String torrentName = item.getString("name").replaceAll("<[^>]+>", "");
-
-                            TorrentGroup group = new TorrentGroup();
-                            group.hash = hash;
-                            group.torrentName = torrentName;
-                            group.totalSize = item.getLong("size");
-                            if (item.has("lastUpdateTime")) {
-                                long timestamp = item.getLong("lastUpdateTime");
-                                if (timestamp > 0) {
-                                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
-                                    group.date = sdf.format(new java.util.Date(timestamp * 1000));
+                            try {
+                                JSONObject item = data.getJSONObject(i);
+                                String hash = item.optString("hash", item.optString("infoHash", ""));
+                                String torrentName = item.optString("name", item.optString("title", ""));
+                                torrentName = torrentName.replaceAll("<[^>]+>", "").trim();
+                                if (hash.isEmpty() || torrentName.isEmpty()) {
+                                    continue;
                                 }
-                            }
 
-                            MagnetFile mf = new MagnetFile();
-                            mf.hash = hash;
-                            mf.torrentName = torrentName;
-                            mf.filename = torrentName;
-                            mf.size = group.totalSize;
-                            group.files.add(mf);
-                            allGroups.add(group);
+                                TorrentGroup group = new TorrentGroup();
+                                group.hash = hash;
+                                group.torrentName = torrentName;
+                                group.totalSize = item.optLong("size", item.optLong("fileSize", 0));
+                                long timestamp = item.optLong("lastUpdateTime", item.optLong("time", 0));
+                                if (timestamp > 0) {
+                                    if (timestamp < 100000000000L) {
+                                        timestamp *= 1000;
+                                    }
+                                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+                                    group.date = sdf.format(new java.util.Date(timestamp));
+                                }
+
+                                MagnetFile mf = new MagnetFile();
+                                mf.hash = hash;
+                                mf.torrentName = torrentName;
+                                mf.filename = torrentName;
+                                mf.size = group.totalSize;
+                                group.files.add(mf);
+                                allGroups.add(group);
+                            } catch (Exception ignored) {
+                            }
                         }
 
                         postSearchUi(generation, new Runnable() {
@@ -215,6 +232,7 @@ public class MagnetSearchFragment extends Fragment {
                             }
                         });
                     } catch (Exception e) {
+                        android.util.Log.e("JAViewer", "btsow parse error", e);
                         postSearchUi(generation, new Runnable() {
                             @Override
                             public void run() {

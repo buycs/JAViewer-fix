@@ -75,18 +75,18 @@
 
     </RelativeLayout>
 
-    <View
-        android:id="@+id/transparent_view"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#30000000" />
-
     <ListView
         android:id="@+id/suggestion_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/white"
         android:visibility="gone" />
+
+    <View
+        android:id="@+id/transparent_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#30000000" />
 
 </LinearLayout>

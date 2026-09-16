@@ -64,6 +64,7 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
 
     private OnQueryTextListener mOnQueryChangeListener;
     private SearchViewListener mSearchViewListener;
+    private OnClearHistoryListener mOnClearHistoryListener;
 
     private ListAdapter mAdapter;
 
@@ -414,7 +415,14 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                setQuery((String) adapter.getItem(position), submit);
+                String value = (String) adapter.getItem(position);
+                if (SearchAdapter.isClearHistoryAction(value)) {
+                    if (mOnClearHistoryListener != null) {
+                        mOnClearHistoryListener.onClearHistory();
+                    }
+                    return;
+                }
+                setQuery(value, submit);
             }
         });
     }
@@ -499,6 +507,7 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         //Request Focus
         mSearchSrcTextView.setText(null);
         mSearchSrcTextView.requestFocus();
+        setVisibility(VISIBLE);
 
         if (animate) {
             setVisibleWithAnimation();
@@ -564,6 +573,7 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
                 clearFocus();
 
                 mSearchLayout.setVisibility(GONE);
+                SimpleSearchView.this.setVisibility(GONE);
                 if (mSearchViewListener != null) {
                     mSearchViewListener.onSearchViewClosed();
                 }
@@ -605,6 +615,10 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
      */
     public void setOnSearchViewListener(SearchViewListener listener) {
         mSearchViewListener = listener;
+    }
+
+    public void setOnClearHistoryListener(OnClearHistoryListener listener) {
+        mOnClearHistoryListener = listener;
     }
 
     /**
@@ -700,6 +714,10 @@ public class SimpleSearchView extends FrameLayout implements Filter.FilterListen
         void onSearchViewShown();
 
         void onSearchViewClosed();
+    }
+
+    public interface OnClearHistoryListener {
+        void onClearHistory();
     }
 
     static class SavedState extends BaseSavedState {

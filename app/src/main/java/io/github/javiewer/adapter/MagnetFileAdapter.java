@@ -17,11 +17,10 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
-import java.util.Locale;
 
 import io.github.javiewer.R;
-import io.github.javiewer.adapter.item.MagnetFile;
 import io.github.javiewer.adapter.item.TorrentGroup;
+import io.github.javiewer.util.MagnetFiles;
 
 public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.ViewHolder> {
 
@@ -45,17 +44,14 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
 
         holder.torrentName.setText(group.torrentName);
         holder.torrentDate.setText(group.date != null ? group.date : "");
-        holder.torrentSize.setText(formatSize(group.totalSize));
+        holder.torrentSize.setText(MagnetFiles.formatSize(group.totalSize));
         holder.expandIndicator.setText(group.expanded ? "▼" : "▶");
 
         holder.filesContainer.setVisibility(group.expanded ? View.VISIBLE : View.GONE);
-        holder.filesContainer.removeAllViews();
-        for (final MagnetFile file : group.files) {
-            View fileView = LayoutInflater.from(context).inflate(R.layout.item_magnet_file, holder.filesContainer, false);
-            ((TextView) fileView.findViewById(R.id.file_name)).setText(file.filename);
-            ((TextView) fileView.findViewById(R.id.file_size)).setText(formatSize(file.size));
-            holder.filesContainer.addView(fileView);
-        }
+        MagnetFiles.bindMediaFileList(
+                LayoutInflater.from(context),
+                holder.filesContainer,
+                group.files);
 
         holder.expandIndicator.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,17 +97,6 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
                         .show();
             }
         });
-    }
-
-    private String formatSize(long bytes) {
-        if (bytes >= 1073741824) {
-            return String.format(Locale.US, "%.1f GB", bytes / 1073741824.0);
-        } else if (bytes >= 1048576) {
-            return String.format(Locale.US, "%.1f MB", bytes / 1048576.0);
-        } else if (bytes >= 1024) {
-            return String.format(Locale.US, "%.1f KB", bytes / 1024.0);
-        }
-        return bytes + " B";
     }
 
     @Override

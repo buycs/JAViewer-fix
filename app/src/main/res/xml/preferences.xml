@@ -27,12 +27,6 @@
         app:iconSpaceReserved="false" />
 
     <Preference
-        android:key="clear_search_history"
-        android:persistent="false"
-        android:title="清空搜索历史"
-        app:iconSpaceReserved="false" />
-
-    <Preference
         android:key="export_favourites"
         android:persistent="false"
         android:title="导出收藏"

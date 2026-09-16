@@ -18,17 +18,14 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DownloadLink;
 import io.github.javiewer.adapter.item.MagnetFile;
 import io.github.javiewer.adapter.item.MagnetLink;
-import io.github.javiewer.network.BtSearch;
-import io.github.javiewer.network.provider.CiliInfoLinkProvider;
 import io.github.javiewer.network.provider.DownloadLinkProvider;
+import io.github.javiewer.util.MagnetFiles;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -77,8 +74,8 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
         if (link.getFiles() != null) {
             holder.expandIndicator.setVisibility(View.VISIBLE);
             holder.expandIndicator.setText(link.filesExpanded ? "▼" : "▶");
-            holder.filesContainer.setVisibility(link.filesExpanded && !link.getFiles().isEmpty() ? View.VISIBLE : View.GONE);
-            if (link.filesExpanded && !link.getFiles().isEmpty()) {
+            holder.filesContainer.setVisibility(link.filesExpanded ? View.VISIBLE : View.GONE);
+            if (link.filesExpanded) {
                 bindFileList(holder, link);
             }
         }
@@ -125,10 +122,8 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
                                 link.filesExpanded = true;
                                 holder.expandIndicator.setText("▼");
-                                if (!link.getFiles().isEmpty()) {
-                                    bindFileList(holder, link);
-                                    holder.filesContainer.setVisibility(View.VISIBLE);
-                                }
+                                bindFileList(holder, link);
+                                holder.filesContainer.setVisibility(View.VISIBLE);
                             }
 
                             @Override
@@ -167,10 +162,8 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
 
                                 link.filesExpanded = true;
                                 holder.expandIndicator.setText("▼");
-                                if (!link.getFiles().isEmpty()) {
-                                    bindFileList(holder, link);
-                                    holder.filesContainer.setVisibility(View.VISIBLE);
-                                }
+                                bindFileList(holder, link);
+                                holder.filesContainer.setVisibility(View.VISIBLE);
                             }
 
                             @Override
@@ -283,13 +276,10 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
     }
 
     private void bindFileList(ViewHolder holder, DownloadLink link) {
-        holder.filesContainer.removeAllViews();
-        for (final MagnetFile file : link.getFiles()) {
-            View fileView = LayoutInflater.from(mParentActivity).inflate(R.layout.item_magnet_file, holder.filesContainer, false);
-            ((TextView) fileView.findViewById(R.id.file_name)).setText(file.filename);
-            ((TextView) fileView.findViewById(R.id.file_size)).setText(formatSize(file.size));
-            holder.filesContainer.addView(fileView);
-        }
+        MagnetFiles.bindMediaFileList(
+                LayoutInflater.from(mParentActivity),
+                holder.filesContainer,
+                link.getFiles());
     }
 
     private long extractTorrentId(String url) {
@@ -300,17 +290,6 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
         } catch (Exception e) {
             return 0;
         }
-    }
-
-    private String formatSize(long bytes) {
-        if (bytes >= 1073741824) {
-            return String.format(Locale.US, "%.1f GB", bytes / 1073741824.0);
-        } else if (bytes >= 1048576) {
-            return String.format(Locale.US, "%.1f MB", bytes / 1048576.0);
-        } else if (bytes >= 1024) {
-            return String.format(Locale.US, "%.1f KB", bytes / 1024.0);
-        }
-        return bytes + " B";
     }
 
     private AlertDialog createLoadingDialog(String message) {

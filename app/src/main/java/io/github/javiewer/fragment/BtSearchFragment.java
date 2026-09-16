@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -29,6 +30,7 @@ public class BtSearchFragment extends Fragment {
     private String keyword;
     private RecyclerView recyclerView;
     private SwipeRefreshLayout refreshLayout;
+    private TextView emptyText;
     private DownloadLinkAdapter adapter;
     private List<DownloadLink> items = new ArrayList<>();
     private BtSearchLinkProvider provider = new BtSearchLinkProvider();
@@ -49,6 +51,7 @@ public class BtSearchFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_recycler, container, false);
         recyclerView = view.findViewById(R.id.recycler_view);
         refreshLayout = view.findViewById(R.id.refresh_layout);
+        emptyText = view.findViewById(R.id.empty_text);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new DownloadLinkAdapter(items, getActivity(), provider, keyword);
@@ -66,6 +69,7 @@ public class BtSearchFragment extends Fragment {
                 currentPage = 1;
                 items.clear();
                 adapter.notifyDataSetChanged();
+                showEmptyMessage(false);
                 loadData();
             }
         });
@@ -141,13 +145,20 @@ public class BtSearchFragment extends Fragment {
                     List<DownloadLink> newItems = provider.parseSearchResult(response.body());
                     if (newItems == null || newItems.isEmpty()) {
                         ended = true;
+                        if (items.isEmpty()) {
+                            showEmptyMessage(true);
+                        }
                         return;
                     }
                     int pos = items.size();
                     items.addAll(newItems);
                     adapter.notifyItemRangeInserted(pos, newItems.size());
                     currentPage++;
+                    showEmptyMessage(false);
                 } else if (getContext() != null) {
+                    if (items.isEmpty()) {
+                        showEmptyMessage(true);
+                    }
                     Toast.makeText(getContext(), "搜索失败", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -163,10 +174,22 @@ public class BtSearchFragment extends Fragment {
                     return;
                 }
                 refreshLayout.setRefreshing(false);
+                if (items.isEmpty()) {
+                    showEmptyMessage(true);
+                }
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
+    }
+
+    private void showEmptyMessage(boolean empty) {
+        if (emptyText != null) {
+            emptyText.setVisibility(empty ? View.VISIBLE : View.GONE);
+        }
+        if (recyclerView != null) {
+            recyclerView.setVisibility(empty ? View.INVISIBLE : View.VISIBLE);
+        }
     }
 }

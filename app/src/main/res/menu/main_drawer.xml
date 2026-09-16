@@ -11,7 +11,6 @@
 
         <item
             android:id="@+id/nav_favourite"
-            android:checkable="false"
             android:icon="@drawable/ic_menu_star"
             android:title="收藏夹" />
     </group>
@@ -39,10 +38,9 @@
 
     <group
         android:id="@+id/nav_group_settings"
-        android:checkableBehavior="none">
+        android:checkableBehavior="single">
         <item
             android:id="@+id/nav_settings"
-            android:checkable="false"
             android:icon="@drawable/ic_menu_home"
             android:title="设置" />
     </group>

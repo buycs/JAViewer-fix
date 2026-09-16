@@ -3,7 +3,9 @@ package io.github.javiewer.activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.InputType;
 import android.text.method.LinkMovementMethod;
 import android.widget.EditText;
@@ -73,37 +75,6 @@ public class SettingsActivity extends SecureActivity {
         overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQUEST_IMPORT_FAVOURITES || resultCode != RESULT_OK || data == null) {
-            return;
-        }
-        Uri uri = data.getData();
-        if (uri == null || JAViewer.CONFIGURATIONS == null) {
-            Toast.makeText(this, "导入失败", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try (InputStream is = getContentResolver().openInputStream(uri)) {
-            if (is == null) {
-                Toast.makeText(this, "导入失败", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            String json = IOUtils.readText(is, IOUtils.UTF_8);
-            FavouriteBackup.ImportResult result = FavouriteBackup.mergeJson(
-                    json,
-                    JAViewer.CONFIGURATIONS.getStarredMovies(),
-                    JAViewer.CONFIGURATIONS.getStarredActresses());
-            JAViewer.CONFIGURATIONS.save();
-            FavouriteActivity.update();
-            Toast.makeText(this,
-                    "已导入 " + result.moviesAdded + " 部影片、" + result.actressesAdded + " 位女优",
-                    Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "导入失败", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     public static class SettingsFragment extends PreferenceFragmentCompat {
 
         @Override
@@ -113,7 +84,6 @@ public class SettingsActivity extends SecureActivity {
             bindEditDataSourceDomain();
             bindCheckUpdate();
             bindClearCache();
-            bindClearSearchHistory();
             bindExportFavourites();
             bindImportFavourites();
             bindHideRecentPreview();
@@ -155,10 +125,9 @@ public class SettingsActivity extends SecureActivity {
                 JAViewer.CONFIGURATIONS.setDataSource(source);
                 JAViewer.CONFIGURATIONS.save();
                 JAViewer.recreateService();
-                Intent intent = new Intent(requireContext(), MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                requireActivity().finish();
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).restart();
+                }
                 return true;
             });
         }
@@ -200,10 +169,9 @@ public class SettingsActivity extends SecureActivity {
                         JAViewer.CONFIGURATIONS.setDataSource(current);
                         JAViewer.CONFIGURATIONS.save();
                         JAViewer.recreateService();
-                        Intent intent = new Intent(requireContext(), MainActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        requireActivity().finish();
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).restart();
+                        }
                     })
                     .setNegativeButton("取消", null)
                     .show();
@@ -295,28 +263,6 @@ public class SettingsActivity extends SecureActivity {
             });
         }
 
-        private void bindClearSearchHistory() {
-            Preference preference = findPreference("clear_search_history");
-            if (preference == null) {
-                return;
-            }
-            preference.setOnPreferenceClickListener(pref -> {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("清空搜索历史")
-                        .setMessage("确定清空全部搜索历史？")
-                        .setPositiveButton("清空", (dialog, which) -> {
-                            if (JAViewer.CONFIGURATIONS != null) {
-                                JAViewer.CONFIGURATIONS.clearSearchHistory();
-                                JAViewer.CONFIGURATIONS.save();
-                            }
-                            Toast.makeText(requireContext(), "搜索历史已清空", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton("取消", null)
-                        .show();
-                return true;
-            });
-        }
-
         private void bindExportFavourites() {
             Preference preference = findPreference("export_favourites");
             if (preference == null) {
@@ -333,17 +279,21 @@ public class SettingsActivity extends SecureActivity {
                 Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
                 return;
             }
+            java.util.List<?> movies = JAViewer.CONFIGURATIONS.getStarredMovies();
+            java.util.List<?> actresses = JAViewer.CONFIGURATIONS.getStarredActresses();
+            boolean noMovies = movies == null || movies.isEmpty();
+            boolean noActresses = actresses == null || actresses.isEmpty();
+            if (noMovies && noActresses) {
+                Toast.makeText(requireContext(), "收藏为空，无需导出", Toast.LENGTH_SHORT).show();
+                return;
+            }
             try {
-                File dir = requireContext().getExternalFilesDir("cache");
+                File dir = writableExportDir();
                 if (dir == null) {
                     Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (!dir.exists() && !dir.mkdirs()) {
-                    Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                File file = new File(dir, "javiewer-favourites.json");
+                File file = uniqueExportFile(dir);
                 String json = FavouriteBackup.toJson(
                         JAViewer.CONFIGURATIONS.getStarredMovies(),
                         JAViewer.CONFIGURATIONS.getStarredActresses());
@@ -352,15 +302,34 @@ public class SettingsActivity extends SecureActivity {
                     writer.write(json);
                     writer.flush();
                 }
-                Uri uri = FileProvider.getUriForFile(requireContext(), "io.github.javiewer.fileprovider", file);
-                Intent share = new Intent(Intent.ACTION_SEND);
-                share.setType("application/json");
-                share.putExtra(Intent.EXTRA_STREAM, uri);
-                share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivity(Intent.createChooser(share, "导出收藏"));
+                Toast.makeText(requireContext(), "已保存到 " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
             } catch (Exception e) {
                 Toast.makeText(requireContext(), "导出失败", Toast.LENGTH_SHORT).show();
             }
+        }
+
+        private File writableExportDir() {
+            File appDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (downloads != null) {
+                File publicDir = new File(downloads, "JAViewer");
+                if ((publicDir.exists() || publicDir.mkdirs()) && publicDir.canWrite()) {
+                    return publicDir;
+                }
+            }
+            if (appDir != null && (appDir.exists() || appDir.mkdirs())) {
+                return appDir;
+            }
+            return requireContext().getFilesDir();
+        }
+
+        private File uniqueExportFile(File dir) {
+            File file = new File(dir, "javiewer-favourites.json");
+            if (!file.exists()) {
+                return file;
+            }
+            java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US);
+            return new File(dir, "javiewer-favourites-" + format.format(new java.util.Date()) + ".json");
         }
 
         private void bindImportFavourites() {
@@ -377,9 +346,40 @@ public class SettingsActivity extends SecureActivity {
                 fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.setType("*/*");
                 chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{fallback});
-                requireActivity().startActivityForResult(chooser, REQUEST_IMPORT_FAVOURITES);
+                startActivityForResult(chooser, REQUEST_IMPORT_FAVOURITES);
                 return true;
             });
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if (requestCode != REQUEST_IMPORT_FAVOURITES || resultCode != android.app.Activity.RESULT_OK || data == null) {
+                return;
+            }
+            Uri uri = data.getData();
+            if (uri == null || JAViewer.CONFIGURATIONS == null) {
+                Toast.makeText(requireContext(), "导入失败", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try (InputStream is = requireContext().getContentResolver().openInputStream(uri)) {
+                if (is == null) {
+                    Toast.makeText(requireContext(), "导入失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                String json = IOUtils.readText(is, IOUtils.UTF_8);
+                FavouriteBackup.ImportResult result = FavouriteBackup.mergeJson(
+                        json,
+                        JAViewer.CONFIGURATIONS.getStarredMovies(),
+                        JAViewer.CONFIGURATIONS.getStarredActresses());
+                JAViewer.CONFIGURATIONS.save();
+                FavouriteActivity.update();
+                Toast.makeText(requireContext(),
+                        "已导入 " + result.moviesAdded + " 部影片、" + result.actressesAdded + " 位女优",
+                        Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "导入失败", Toast.LENGTH_SHORT).show();
+            }
         }
 
         private void bindHideRecentPreview() {

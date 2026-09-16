@@ -20,6 +20,7 @@ import io.github.javiewer.adapter.ViewPagerAdapter;
 import io.github.javiewer.fragment.favourite.FavouriteActressFragment;
 import io.github.javiewer.fragment.favourite.FavouriteFragment;
 import io.github.javiewer.fragment.favourite.FavouriteMovieFragment;
+import io.github.javiewer.fragment.favourite.FavouriteTabsFragment;
 
 public class FavouriteActivity extends SecureActivity {
 
@@ -40,11 +41,7 @@ public class FavouriteActivity extends SecureActivity {
     };
 
     public static void update() {
-        if (mAdapter != null) {
-            for (int i = 0; i < mAdapter.getCount(); i++) {
-                ((FavouriteFragment) mAdapter.getItem(i)).update();
-            }
-        }
+        FavouriteTabsFragment.update();
     }
 
     @Override

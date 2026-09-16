@@ -81,6 +81,7 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
             @Override
             public void onExceptionCaught(Throwable t) {
                 if (getActivity() != null && isAdded()) {
+                    showEmptyMessage(getItems().isEmpty());
                     android.widget.Toast.makeText(getActivity(), "该源失败，请切换", android.widget.Toast.LENGTH_SHORT).show();
                 }
             }
@@ -99,10 +100,12 @@ public class DownloadFragment extends RecyclerFragment<DownloadLink, LinearLayou
 
                 if (downloads.isEmpty()) {
                     setEnd(true);
+                    showEmptyMessage(getItems().isEmpty());
                 } else {
                     getItems().addAll(downloads);
                     getAdapter().notifyItemRangeInserted(pos, downloads.size());
                     setEnd(true);
+                    showEmptyMessage(false);
                 }
             }
         });

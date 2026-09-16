@@ -38,7 +38,8 @@ public class DownloadActivity extends SecureActivity {
         this.keyword = this.getIntent().getExtras().getString("keyword");
 
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setTitle(this.keyword);
+        getSupportActionBar().setTitle("");
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());

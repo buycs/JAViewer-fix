@@ -1,14 +1,17 @@
 package io.github.javiewer.activity;
 
-import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -25,6 +28,8 @@ import io.github.javiewer.fragment.ExtendedAppBarFragment;
 import io.github.javiewer.fragment.HomeFragment;
 import io.github.javiewer.fragment.PopularFragment;
 import io.github.javiewer.fragment.ReleasedFragment;
+import io.github.javiewer.fragment.favourite.FavouriteFragment;
+import io.github.javiewer.fragment.favourite.FavouriteTabsFragment;
 import io.github.javiewer.fragment.genre.GenreTabsFragment;
 import io.github.javiewer.util.QueryNormalizer;
 import io.github.javiewer.view.SimpleSearchView;
@@ -97,6 +102,24 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
 
             @Override
             public void onSearchViewClosed() {
+            }
+        });
+        mSearchView.setOnClearHistoryListener(new SimpleSearchView.OnClearHistoryListener() {
+            @Override
+            public void onClearHistory() {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("清空搜索历史")
+                        .setMessage("确定清空全部搜索历史？")
+                        .setPositiveButton("清空", (dialog, which) -> {
+                            if (JAViewer.CONFIGURATIONS != null) {
+                                JAViewer.CONFIGURATIONS.clearSearchHistory();
+                                JAViewer.CONFIGURATIONS.save();
+                            }
+                            applySearchSuggestions();
+                            Toast.makeText(MainActivity.this, "搜索历史已清空", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
             }
         });
 
@@ -172,11 +195,12 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         } else {
             findViewById(R.id.app_bar).setElevation(4 * getResources().getDisplayMetrics().density);
         }
+        invalidateOptionsMenu();
     }
 
     private void setFragment(int id) {
         Class<? extends Fragment> fragmentClass = JAViewer.FRAGMENTS.get(id);
-        if (fragmentClass == null || id == R.id.nav_favourite) {
+        if (fragmentClass == null) {
             return;
         }
 
@@ -208,6 +232,7 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
             } else {
                 findViewById(R.id.app_bar).setElevation(4 * getResources().getDisplayMetrics().density);
             }
+            invalidateOptionsMenu();
         } else {
             this.setFragment(fragment, title);
         }
@@ -235,7 +260,55 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         getMenuInflater().inflate(R.menu.main, menu);
         mSearchView.setMenuItem(menu.findItem(R.id.action_search));
         applySearchSuggestions();
+        if (currentFragment instanceof FavouriteTabsFragment) {
+            getMenuInflater().inflate(R.menu.favourite, menu);
+            MenuItem searchItem = menu.findItem(R.id.action_fav_search);
+            if (searchItem != null && searchItem.getActionView() instanceof SearchView) {
+                SearchView searchView = (SearchView) searchItem.getActionView();
+                searchView.setQueryHint("搜索收藏");
+                searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        if (currentFragment instanceof FavouriteTabsFragment) {
+                            ((FavouriteTabsFragment) currentFragment).applyFilter(query);
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        if (currentFragment instanceof FavouriteTabsFragment) {
+                            ((FavouriteTabsFragment) currentFragment).applyFilter(newText);
+                        }
+                        return true;
+                    }
+                });
+            }
+            int sortMode = ((FavouriteTabsFragment) currentFragment).getSortMode();
+            MenuItem recent = menu.findItem(R.id.action_fav_sort_recent);
+            MenuItem name = menu.findItem(R.id.action_fav_sort_name);
+            if (recent != null) {
+                recent.setChecked(sortMode == FavouriteFragment.SORT_RECENT);
+            }
+            if (name != null) {
+                name.setChecked(sortMode == FavouriteFragment.SORT_NAME);
+            }
+        }
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        boolean hideSearch = currentFragment instanceof FavouriteTabsFragment
+                || currentFragment instanceof SettingsActivity.SettingsFragment;
+        MenuItem search = menu.findItem(R.id.action_search);
+        if (search != null) {
+            search.setVisible(!hideSearch);
+        }
+        if (hideSearch && mSearchView != null && mSearchView.isSearchOpen()) {
+            mSearchView.closeSearch();
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     private void applySearchSuggestions() {
@@ -245,7 +318,11 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         ArrayList<String> history = JAViewer.CONFIGURATIONS != null
                 ? JAViewer.CONFIGURATIONS.getSearchHistory()
                 : new ArrayList<String>();
-        mSearchView.setSuggestions(history.toArray(new String[0]));
+        ArrayList<String> suggestions = new ArrayList<String>(history);
+        if (!suggestions.isEmpty()) {
+            suggestions.add(io.github.javiewer.view.SearchAdapter.CLEAR_HISTORY_ACTION);
+        }
+        mSearchView.setSuggestions(suggestions.toArray(new String[0]));
         mSearchView.setSubmitOnClick(true);
     }
 
@@ -255,21 +332,26 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
             mDrawerLayout.openDrawer(GravityCompat.START);
             return true;
         }
+        if (item.getItemId() == R.id.action_fav_sort_recent) {
+            if (currentFragment instanceof FavouriteTabsFragment) {
+                item.setChecked(true);
+                ((FavouriteTabsFragment) currentFragment).applySort(FavouriteFragment.SORT_RECENT);
+                return true;
+            }
+        }
+        if (item.getItemId() == R.id.action_fav_sort_name) {
+            if (currentFragment instanceof FavouriteTabsFragment) {
+                item.setChecked(true);
+                ((FavouriteTabsFragment) currentFragment).applySort(FavouriteFragment.SORT_NAME);
+                return true;
+            }
+        }
         return super.onOptionsItemSelected(item);
     }
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_favourite || id == R.id.nav_settings) {
-            mDrawerLayout.closeDrawer(GravityCompat.START, false);
-            Class<?> target = id == R.id.nav_favourite ? FavouriteActivity.class : SettingsActivity.class;
-            Intent intent = new Intent(this, target);
-            Bundle options = ActivityOptions.makeCustomAnimation(
-                    this, R.anim.activity_open_enter, R.anim.activity_open_exit).toBundle();
-            startActivity(intent, options);
-            return true;
-        }
         item.setChecked(true);
         setFragment(id);
         mDrawerLayout.closeDrawer(GravityCompat.START);

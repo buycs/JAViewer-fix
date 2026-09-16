@@ -19,11 +19,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import cat.ereza.customactivityoncrash.CustomActivityOnCrash;
+import io.github.javiewer.activity.SettingsActivity;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.fragment.ActressesFragment;
 import io.github.javiewer.fragment.HomeFragment;
 import io.github.javiewer.fragment.PopularFragment;
 import io.github.javiewer.fragment.ReleasedFragment;
+import io.github.javiewer.fragment.favourite.FavouriteTabsFragment;
 import io.github.javiewer.fragment.genre.GenreTabsFragment;
 import io.github.javiewer.network.BasicService;
 import okhttp3.Cache;
@@ -53,6 +55,8 @@ public class JAViewer extends Application {
         put(R.id.nav_released, ReleasedFragment.class);
         put(R.id.nav_actresses, ActressesFragment.class);
         put(R.id.nav_genre, GenreTabsFragment.class);
+        put(R.id.nav_favourite, FavouriteTabsFragment.class);
+        put(R.id.nav_settings, SettingsActivity.SettingsFragment.class);
     }};
     public static Configurations CONFIGURATIONS;
     public static BasicService SERVICE;
