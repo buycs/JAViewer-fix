@@ -542,8 +542,8 @@ public class SettingsActivity extends SecureActivity {
         private void showAboutDialog() {
             CharSequence message = HtmlCompat.fromHtml(
                     "版本：" + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")<br/><br/>"
-                            + "<a href=\"https://github.com/SplashCodes/JAViewer\">原项目源码</a><br/><br/>"
                             + "<a href=\"https://github.com/buycs/JAViewer-fix\">本项目源码</a><br/><br/>"
+                            + "<a href=\"https://github.com/SplashCodes/JAViewer\">原项目源码</a><br/><br/>"
                             + "免责声明：本应用仅供学习交流，请勿用于非法用途。",
                     HtmlCompat.FROM_HTML_MODE_LEGACY);
             AlertDialog dialog = new AlertDialog.Builder(requireContext())
