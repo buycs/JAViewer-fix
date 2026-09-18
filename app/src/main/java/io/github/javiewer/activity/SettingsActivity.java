@@ -9,6 +9,8 @@ import android.os.Environment;
 import android.text.InputType;
 import android.text.method.LinkMovementMethod;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import io.github.javiewer.BuildConfig;
 import io.github.javiewer.JAViewer;
@@ -42,6 +45,7 @@ import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.util.FavouriteBackup;
 import io.github.javiewer.util.IOUtils;
+import io.github.javiewer.util.ThemeHelper;
 import okhttp3.Cache;
 
 public class SettingsActivity extends SecureActivity {
@@ -80,8 +84,9 @@ public class SettingsActivity extends SecureActivity {
         @Override
         public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
             setPreferencesFromResource(R.xml.preferences, rootKey);
-            bindDataSource();
             bindEditDataSourceDomain();
+            bindEditMagnetSource();
+            bindThemeMode();
             bindCheckUpdate();
             bindClearCache();
             bindExportFavourites();
@@ -90,85 +95,102 @@ public class SettingsActivity extends SecureActivity {
             bindAbout();
         }
 
-        private void bindDataSource() {
-            ListPreference preference = findPreference("data_source");
-            if (preference == null || JAViewer.DATA_SOURCES.isEmpty()) {
-                return;
-            }
-
-            int size = JAViewer.DATA_SOURCES.size();
-            CharSequence[] names = new CharSequence[size];
-            CharSequence[] values = new CharSequence[size];
-            DataSource current = JAViewer.getDataSource();
-            String selected = "0";
-            for (int i = 0; i < size; i++) {
-                DataSource source = JAViewer.DATA_SOURCES.get(i);
-                names[i] = source.getName();
-                values[i] = String.valueOf(i);
-                if (source.equals(current)) {
-                    selected = String.valueOf(i);
-                }
-            }
-            preference.setEntries(names);
-            preference.setEntryValues(values);
-            preference.setValue(selected);
-            preference.setSummary(sourceSummary(current));
-            preference.setOnPreferenceChangeListener((pref, newValue) -> {
-                int index = Integer.parseInt(String.valueOf(newValue));
-                if (index < 0 || index >= JAViewer.DATA_SOURCES.size()) {
-                    return false;
-                }
-                DataSource source = JAViewer.DATA_SOURCES.get(index);
-                if (source.equals(JAViewer.getDataSource())) {
-                    return true;
-                }
-                JAViewer.CONFIGURATIONS.setDataSource(source);
-                JAViewer.CONFIGURATIONS.save();
-                JAViewer.recreateService();
-                if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).restart();
-                }
-                return true;
-            });
-        }
-
         private void bindEditDataSourceDomain() {
-            Preference preference = findPreference("edit_data_source_domain");
+            final Preference preference = findPreference("edit_data_source_domain");
             if (preference == null) {
                 return;
             }
-            DataSource current = JAViewer.getDataSource();
-            preference.setSummary(current != null ? current.domain : null);
+            preference.setSummary(sourceSummary(JAViewer.getDataSource()));
             preference.setOnPreferenceClickListener(pref -> {
-                showDomainEditor();
+                showDataSourceEditor(preference);
                 return true;
             });
         }
 
-        private void showDomainEditor() {
-            final DataSource current = JAViewer.getDataSource();
-            if (current == null) {
+        private void showDataSourceEditor(final Preference preference) {
+            final java.util.List<DataSource> sources = JAViewer.DATA_SOURCES;
+            final int size = sources.size();
+            if (size == 0) {
                 Toast.makeText(requireContext(), "数据源不可用", Toast.LENGTH_SHORT).show();
                 return;
             }
-            final EditText input = new EditText(requireContext());
-            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-            input.setText(current.domain);
-            if (current.domain != null) {
+            final DataSource current = JAViewer.getDataSource();
+            float density = getResources().getDisplayMetrics().density;
+
+            LinearLayout layout = new LinearLayout(requireContext());
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setPadding((int) (24 * density), (int) (8 * density), (int) (24 * density), 0);
+
+            final int[] selectedIndex = {0};
+            final RadioButton[] radios = new RadioButton[size];
+            final EditText[] inputs = new EditText[size];
+            for (int i = 0; i < size; i++) {
+                DataSource source = sources.get(i);
+                if (source.equals(current)) {
+                    selectedIndex[0] = i;
+                }
+                LinearLayout row = new LinearLayout(requireContext());
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+                final int index = i;
+                RadioButton radio = new RadioButton(requireContext());
+                radio.setText(source.getName());
+                radio.setOnCheckedChangeListener((v, checked) -> {
+                    if (!checked) {
+                        return;
+                    }
+                    selectedIndex[0] = index;
+                    for (int j = 0; j < radios.length; j++) {
+                        if (j != index && radios[j] != null) {
+                            radios[j].setChecked(false);
+                        }
+                    }
+                });
+                radios[i] = radio;
+
+                EditText input = new EditText(requireContext());
+                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+                String domain = source.domain == null ? "" : source.domain;
+                input.setText(domain);
                 input.setSelection(input.getText().length());
+                input.setSingleLine(true);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                input.setLayoutParams(lp);
+                inputs[i] = input;
+
+                row.addView(radio);
+                row.addView(input);
+                layout.addView(row);
             }
+            radios[selectedIndex[0]].setChecked(true);
+
             new AlertDialog.Builder(requireContext())
-                    .setTitle("数据源修改")
-                    .setView(input)
+                    .setTitle("数据源配置")
+                    .setView(layout)
                     .setPositiveButton("保存", (dialog, which) -> {
-                        String newDomain = input.getText().toString().trim();
-                        if (newDomain.isEmpty() || newDomain.equals(current.domain)) {
+                        boolean changed = !sources.get(selectedIndex[0]).equals(current);
+                        for (int i = 0; i < size; i++) {
+                            DataSource source = sources.get(i);
+                            String newDomain = inputs[i].getText().toString().trim();
+                            if (!newDomain.isEmpty() && !newDomain.equals(source.domain)) {
+                                source.domain = newDomain;
+                                changed = true;
+                            }
+                        }
+                        if (!changed) {
                             return;
                         }
-                        current.domain = newDomain;
-                        JAViewer.CONFIGURATIONS.setDataSource(current);
+                        Map<String, String> savedDomains = JAViewer.CONFIGURATIONS.getDataSourceDomains();
+                        savedDomains.clear();
+                        for (DataSource source : sources) {
+                            savedDomains.put(source.getName(), source.domain);
+                        }
+                        JAViewer.CONFIGURATIONS.setDataSource(sources.get(selectedIndex[0]));
                         JAViewer.CONFIGURATIONS.save();
                         JAViewer.recreateService();
+                        preference.setSummary(sourceSummary(sources.get(selectedIndex[0])));
                         if (getActivity() instanceof MainActivity) {
                             ((MainActivity) getActivity()).restart();
                         }
@@ -177,14 +199,116 @@ public class SettingsActivity extends SecureActivity {
                     .show();
         }
 
+        private void bindEditMagnetSource() {
+            final Preference preference = findPreference("edit_magnet_source_domain");
+            if (preference == null) {
+                return;
+            }
+            preference.setSummary(magnetSummary());
+            preference.setOnPreferenceClickListener(pref -> {
+                showMagnetSourceEditor(preference);
+                return true;
+            });
+        }
+
+        private void showMagnetSourceEditor(final Preference preference) {
+            final io.github.javiewer.Configurations config = JAViewer.CONFIGURATIONS;
+            float density = getResources().getDisplayMetrics().density;
+            LinearLayout layout = new LinearLayout(requireContext());
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setPadding((int) (24 * density), (int) (8 * density), (int) (24 * density), 0);
+
+            final EditText btInput = magnetInput(config.getMagnetSourceBtsearch());
+            final EditText ciliInput = magnetInput(config.getMagnetSourceCili());
+            final EditText btsowInput = magnetInput(config.getMagnetSourceBtsow());
+            layout.addView(magnetLabel("BtSearch"));
+            layout.addView(btInput);
+            layout.addView(magnetLabel("无极磁链"));
+            layout.addView(ciliInput);
+            layout.addView(magnetLabel("btsow"));
+            layout.addView(btsowInput);
+
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("磁力源配置")
+                    .setView(layout)
+                    .setPositiveButton("保存", (dialog, which) -> {
+                        config.setMagnetSourceBtsearch(btInput.getText().toString().trim());
+                        config.setMagnetSourceCili(ciliInput.getText().toString().trim());
+                        config.setMagnetSourceBtsow(btsowInput.getText().toString().trim());
+                        config.save();
+                        preference.setSummary(magnetSummary());
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        }
+
+        private EditText magnetInput(String value) {
+            EditText input = new EditText(requireContext());
+            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+            input.setText(value);
+            input.setSelection(input.getText().length());
+            return input;
+        }
+
+        private TextView magnetLabel(String text) {
+            TextView label = new TextView(requireContext());
+            label.setText(text);
+            return label;
+        }
+
+        private static String magnetSummary() {
+            io.github.javiewer.Configurations config = JAViewer.CONFIGURATIONS;
+            return "当前：" + shortHost(config.getMagnetSourceBtsearch())
+                    + " · " + shortHost(config.getMagnetSourceCili())
+                    + " · " + shortHost(config.getMagnetSourceBtsow());
+        }
+
+        private static String shortHost(String url) {
+            return url.replaceFirst("^https?://", "");
+        }
+
         private static String sourceSummary(DataSource source) {
             if (source == null) {
-                return null;
+                return "切换骑兵、步兵或欧美数据源";
             }
+            String name = source.getName() != null ? source.getName() : "";
             if (source.domain == null || source.domain.isEmpty()) {
-                return source.getName();
+                return "当前：" + name;
             }
-            return source.getName() + " · " + source.domain;
+            return "当前：" + name + " · " + source.domain;
+        }
+
+        private void bindThemeMode() {
+            ListPreference preference = findPreference("theme_mode");
+            if (preference == null || JAViewer.CONFIGURATIONS == null) {
+                return;
+            }
+            CharSequence[] values = {ThemeHelper.MODE_SYSTEM, ThemeHelper.MODE_LIGHT, ThemeHelper.MODE_DARK};
+            CharSequence[] names = new CharSequence[values.length];
+            for (int i = 0; i < values.length; i++) {
+                names[i] = ThemeHelper.displayName(values[i].toString());
+            }
+            preference.setEntries(names);
+            preference.setEntryValues(values);
+            String current = JAViewer.CONFIGURATIONS.getThemeMode();
+            preference.setValue(current);
+            preference.setSummary("当前：" + ThemeHelper.displayName(current));
+            preference.setOnPreferenceChangeListener((pref, newValue) -> {
+                String mode = String.valueOf(newValue);
+                if (mode.equals(JAViewer.CONFIGURATIONS.getThemeMode())) {
+                    return true;
+                }
+                JAViewer.CONFIGURATIONS.setThemeMode(mode);
+                JAViewer.CONFIGURATIONS.save();
+                ThemeHelper.apply(mode);
+                pref.setSummary("当前：" + ThemeHelper.displayName(mode));
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).restart();
+                } else if (getActivity() != null) {
+                    getActivity().recreate();
+                }
+                return true;
+            });
         }
 
         private void bindCheckUpdate() {
@@ -407,8 +531,8 @@ public class SettingsActivity extends SecureActivity {
             if (preference == null) {
                 return;
             }
-            preference.setTitle(BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")");
-            preference.setSummary("本应用仅供学习交流，请勿用于非法用途");
+            preference.setTitle("关于");
+            preference.setSummary(BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")");
             preference.setOnPreferenceClickListener(pref -> {
                 showAboutDialog();
                 return true;
@@ -418,7 +542,7 @@ public class SettingsActivity extends SecureActivity {
         private void showAboutDialog() {
             CharSequence message = HtmlCompat.fromHtml(
                     "版本：" + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")<br/><br/>"
-                            + "<a href=\"https://github.com/SplashCodes/JAViewer\">原项目源码</a><br/>"
+                            + "<a href=\"https://github.com/SplashCodes/JAViewer\">原项目源码</a><br/><br/>"
                             + "<a href=\"https://github.com/buycs/JAViewer-fix\">本项目源码</a><br/><br/>"
                             + "免责声明：本应用仅供学习交流，请勿用于非法用途。",
                     HtmlCompat.FROM_HTML_MODE_LEGACY);

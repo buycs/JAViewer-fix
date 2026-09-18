@@ -62,7 +62,7 @@ public class FavouriteTabsFragment extends Fragment {
 
         instance = this;
         mViewPager = view.findViewById(R.id.favourite_view_pager);
-        mBottomNav = view.findViewById(R.id.bottom_navigation);
+        mBottomNav = requireActivity().findViewById(R.id.bottom_navigation);
         mColorPrimary = ContextCompat.getColor(requireActivity(), R.color.colorPrimary);
 
         if (mOnPageChangeListener != null) {
@@ -90,7 +90,8 @@ public class FavouriteTabsFragment extends Fragment {
 
         AHBottomNavigationAdapter navigationAdapter = new AHBottomNavigationAdapter(requireActivity(), R.menu.nav_favourite);
         navigationAdapter.setupWithBottomNavigation(mBottomNav);
-        mBottomNav.setTranslucentNavigationEnabled(true);
+        mBottomNav.setTranslucentNavigationEnabled(false);
+        mBottomNav.setBehaviorTranslationEnabled(false);
         mBottomNav.setAccentColor(mColorPrimary);
         mBottomNav.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
 
@@ -105,6 +106,30 @@ public class FavouriteTabsFragment extends Fragment {
                 return false;
             }
         });
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (mBottomNav != null) {
+            mBottomNav.setVisibility(hidden ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mBottomNav != null && !isHidden()) {
+            mBottomNav.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mBottomNav != null) {
+            mBottomNav.setVisibility(View.GONE);
+        }
     }
 
     public void applyFilter(String query) {

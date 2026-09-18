@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.appcompat.widget.SearchView;
@@ -36,6 +37,8 @@ import io.github.javiewer.view.SimpleSearchView;
 import io.github.javiewer.view.ViewUtil;
 
 public class MainActivity extends SecureActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+    private static final String EXTRA_RESTART_FRAGMENT = "restart_fragment";
 
     public Fragment currentFragment;
     private SimpleSearchView mSearchView;
@@ -127,8 +130,12 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
         buildDrawerHeader();
 
         if (savedInstanceState == null) {
-            mNavigationView.setCheckedItem(R.id.nav_home);
-            setFragment(R.id.nav_home);
+            int targetId = getIntent().getIntExtra(EXTRA_RESTART_FRAGMENT, R.id.nav_home);
+            if (JAViewer.FRAGMENTS.get(targetId) == null) {
+                targetId = R.id.nav_home;
+            }
+            mNavigationView.setCheckedItem(targetId);
+            setFragment(targetId);
         } else if (currentFragment != null) {
             int restoredId = menuIdForFragment(currentFragment);
             if (restoredId != 0) {
@@ -140,6 +147,8 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
             } else {
                 findViewById(R.id.app_bar).setElevation(4 * getResources().getDisplayMetrics().density);
             }
+            setAppBarScrolling(!(currentFragment instanceof FavouriteTabsFragment
+                    || currentFragment instanceof SettingsActivity.SettingsFragment));
         }
     }
 
@@ -190,12 +199,35 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
 
         this.currentFragment = fragment;
 
+        setAppBarScrolling(!(fragment instanceof FavouriteTabsFragment
+                || fragment instanceof SettingsActivity.SettingsFragment));
+
         if (fragment instanceof ExtendedAppBarFragment) {
             findViewById(R.id.app_bar).setElevation(0);
         } else {
             findViewById(R.id.app_bar).setElevation(4 * getResources().getDisplayMetrics().density);
         }
         invalidateOptionsMenu();
+    }
+
+    private void setAppBarScrolling(boolean enabled) {
+        View bar = findViewById(R.id.app_bar);
+        if (!(bar instanceof AppBarLayout) || ((AppBarLayout) bar).getChildCount() == 0) {
+            return;
+        }
+        AppBarLayout appBar = (AppBarLayout) bar;
+        View child = appBar.getChildAt(0);
+        AppBarLayout.LayoutParams lp = (AppBarLayout.LayoutParams) child.getLayoutParams();
+        int flags = enabled
+                ? AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+                | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP
+                : 0;
+        if (lp.getScrollFlags() != flags) {
+            lp.setScrollFlags(flags);
+            child.setLayoutParams(lp);
+            appBar.setExpanded(true, false);
+        }
     }
 
     private void setFragment(int id) {
@@ -226,6 +258,9 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
             transaction.commit();
 
             this.currentFragment = fragment;
+
+            setAppBarScrolling(!(fragment instanceof FavouriteTabsFragment
+                    || fragment instanceof SettingsActivity.SettingsFragment));
 
             if (fragment instanceof ExtendedAppBarFragment) {
                 findViewById(R.id.app_bar).setElevation(0);
@@ -360,6 +395,12 @@ public class MainActivity extends SecureActivity implements NavigationView.OnNav
 
     public void restart() {
         Intent intent = getIntent();
+        if (currentFragment != null) {
+            int id = menuIdForFragment(currentFragment);
+            if (id != 0) {
+                intent.putExtra(EXTRA_RESTART_FRAGMENT, id);
+            }
+        }
         finish();
         startActivity(intent);
     }

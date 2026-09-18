@@ -24,8 +24,14 @@ import retrofit2.http.Query;
 
 public interface BtSearch {
 
-    String BASE_URL = "https://www.btsearch.love";
     String SECRET_KEY = "long2ice";
+
+    static String currentBaseUrl() {
+        if (io.github.javiewer.JAViewer.CONFIGURATIONS == null) {
+            return io.github.javiewer.Configurations.DEFAULT_MAGNET_SOURCE_BTSEARCH;
+        }
+        return io.github.javiewer.JAViewer.CONFIGURATIONS.getMagnetSourceBtsearch();
+    }
 
     OkHttpClient BTSEARCH_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
@@ -53,7 +59,7 @@ public interface BtSearch {
                         .header("x-sign", sign)
                         .header("Accept", "application/json")
                         .header("User-Agent", JAViewer.USER_AGENT)
-                        .header("Referer", BASE_URL + "/search");
+                        .header("Referer", currentBaseUrl() + "/search");
 
                 Request finalRequest = builder.build();
                 if (io.github.javiewer.BuildConfig.DEBUG) {
@@ -64,12 +70,30 @@ public interface BtSearch {
             })
             .build();
 
-    BtSearch INSTANCE = new Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(BTSEARCH_CLIENT)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(BtSearch.class);
+    static BtSearch get() {
+        return Holder.get(currentBaseUrl());
+    }
+
+    final class Holder {
+        private static String baseUrl;
+        private static BtSearch instance;
+
+        private Holder() {
+        }
+
+        static synchronized BtSearch get(String url) {
+            if (instance == null || !url.equals(baseUrl)) {
+                baseUrl = url;
+                instance = new Retrofit.Builder()
+                        .baseUrl(url)
+                        .client(BTSEARCH_CLIENT)
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build()
+                        .create(BtSearch.class);
+            }
+            return instance;
+        }
+    }
 
     @GET("/api/search")
     Call<SearchResult> search(

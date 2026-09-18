@@ -33,7 +33,7 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
     public Call<BtSearch.SearchResult> searchApi(String keyword, int page) {
         int limit = 10;
         int offset = (page - 1) * limit;
-        return BtSearch.INSTANCE.search(keyword, limit, offset, "", "", "", "asc", "");
+        return BtSearch.get().search(keyword, limit, offset, "", "", "", "asc", "");
     }
 
     public List<DownloadLink> parseSearchResult(BtSearch.SearchResult result) {
@@ -46,7 +46,7 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
                 String name = item.name.replaceAll("<[^>]+>", "");
                 String size = formatSize(Long.parseLong(item.size));
                 String magnetLink = "magnet:?xt=urn:btih:" + item.hash;
-                String infoUrl = BtSearch.BASE_URL + "/torrent/" + item.id;
+                String infoUrl = BtSearch.currentBaseUrl() + "/torrent/" + item.id;
 
                 DownloadLink link = DownloadLink.create(
                         name,
@@ -65,7 +65,7 @@ public class BtSearchLinkProvider extends DownloadLinkProvider {
     }
 
     public Call<ResponseBody> getDetail(long id, String keyword) {
-        return BtSearch.INSTANCE.getDetail(id, keyword);
+        return BtSearch.get().getDetail(id, keyword);
     }
 
     public List<MagnetFile> parseFilesFromJson(String jsonContent) {

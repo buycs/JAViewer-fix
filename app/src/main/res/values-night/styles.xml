@@ -1,0 +1,15 @@
+<resources>
+
+    <!-- 深色模式：仅覆盖有差异的 AppTheme（卡片样式），子主题沿用 values/ 中的定义，
+         其父级引用在运行时按当前配置解析到这里的 AppTheme，避免整份复制导致昼夜漂移 -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="cardViewStyle">@style/CardView.Dark</item>
+        <item name="materialCardViewStyle">@style/CardView.Dark</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
+</resources>

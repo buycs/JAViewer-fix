@@ -16,6 +16,7 @@ import io.github.javiewer.Properties;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.util.IOUtils;
+import io.github.javiewer.util.ThemeHelper;
 
 public class StartActivity extends AppCompatActivity {
 
@@ -41,6 +42,7 @@ public class StartActivity extends AppCompatActivity {
     public void handleProperties(Properties properties) {
         JAViewer.DATA_SOURCES.clear();
         JAViewer.DATA_SOURCES.addAll(properties.getDataSources());
+        JAViewer.CONFIGURATIONS.applyDataSourceDomains(JAViewer.DATA_SOURCES);
 
         JAViewer.hostReplacements.clear();
         for (DataSource source : JAViewer.DATA_SOURCES) {
@@ -78,6 +80,7 @@ public class StartActivity extends AppCompatActivity {
         }
 
         JAViewer.CONFIGURATIONS = Configurations.load(config);
+        ThemeHelper.apply(JAViewer.CONFIGURATIONS.getThemeMode());
 
         readProperties();
     }

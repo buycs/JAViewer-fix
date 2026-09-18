@@ -12,6 +12,9 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import io.github.javiewer.adapter.item.Actress;
 import io.github.javiewer.adapter.item.DataSource;
@@ -23,6 +26,10 @@ import io.github.javiewer.adapter.item.Movie;
 
 public class Configurations {
 
+    public static final String DEFAULT_MAGNET_SOURCE_BTSEARCH = "https://www.btsearch.love";
+    public static final String DEFAULT_MAGNET_SOURCE_CILI = "https://cili.info";
+    public static final String DEFAULT_MAGNET_SOURCE_BTSOW = "https://btsow.live";
+
     private static File file;
 
     private ArrayList<Movie> starred_movies;
@@ -32,6 +39,16 @@ public class Configurations {
     private ArrayList<String> search_history;
 
     private DataSource data_source;
+
+    private Map<String, String> data_source_domains;
+
+    private String magnet_source_btsearch;
+
+    private String magnet_source_cili;
+
+    private String magnet_source_btsow;
+
+    private String theme_mode;
 
     private boolean hide_recent_preview;
 
@@ -134,6 +151,78 @@ public class Configurations {
 
     public void setDataSource(DataSource source) {
         this.data_source = source;
+    }
+
+    public Map<String, String> getDataSourceDomains() {
+        if (data_source_domains == null) {
+            data_source_domains = new HashMap<>();
+        }
+        return data_source_domains;
+    }
+
+    public void applyDataSourceDomains(List<DataSource> sources) {
+        if (data_source_domains == null) {
+            return;
+        }
+        for (DataSource source : sources) {
+            String domain = data_source_domains.get(source.getName());
+            if (domain != null && !domain.trim().isEmpty()) {
+                source.domain = domain;
+            }
+        }
+    }
+
+    public String getMagnetSourceBtsearch() {
+        return normalizeMagnetSource(magnet_source_btsearch, DEFAULT_MAGNET_SOURCE_BTSEARCH);
+    }
+
+    public void setMagnetSourceBtsearch(String source) {
+        this.magnet_source_btsearch = source;
+    }
+
+    public String getMagnetSourceCili() {
+        return normalizeMagnetSource(magnet_source_cili, DEFAULT_MAGNET_SOURCE_CILI);
+    }
+
+    public void setMagnetSourceCili(String source) {
+        this.magnet_source_cili = source;
+    }
+
+    public String getMagnetSourceBtsow() {
+        return normalizeMagnetSource(magnet_source_btsow, DEFAULT_MAGNET_SOURCE_BTSOW);
+    }
+
+    public void setMagnetSourceBtsow(String source) {
+        this.magnet_source_btsow = source;
+    }
+
+    private static String normalizeMagnetSource(String value, String fallback) {
+        if (value == null || value.trim().isEmpty()) {
+            return fallback;
+        }
+        String trimmed = value.trim();
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
+    }
+
+    public String getThemeMode() {
+        if (theme_mode == null) {
+            return "system";
+        }
+        switch (theme_mode) {
+            case "light":
+            case "dark":
+            case "system":
+                return theme_mode;
+            default:
+                return "system";
+        }
+    }
+
+    public void setThemeMode(String themeMode) {
+        this.theme_mode = themeMode;
     }
 
     public boolean isHideRecentPreview() {

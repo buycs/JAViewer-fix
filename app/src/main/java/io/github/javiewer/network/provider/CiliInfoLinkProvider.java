@@ -65,7 +65,7 @@ public class CiliInfoLinkProvider extends DownloadLinkProvider {
         if (url.startsWith("http")) {
             return CiliInfo.get().get(url);
         }
-        return CiliInfo.get().get(CiliInfo.BASE_URL + url);
+        return CiliInfo.get().get(CiliInfo.currentBaseUrl() + url);
     }
 
     @Override

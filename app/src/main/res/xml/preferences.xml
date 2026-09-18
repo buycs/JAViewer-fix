@@ -2,39 +2,44 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ListPreference
-        android:key="data_source"
-        android:persistent="false"
-        android:title="数据源切换"
-        app:iconSpaceReserved="false" />
-
     <Preference
         android:key="edit_data_source_domain"
         android:persistent="false"
-        android:title="数据源修改"
+        android:summary="选择数据源并修改访问域名"
+        android:title="数据源配置"
         app:iconSpaceReserved="false" />
 
     <Preference
-        android:key="check_update"
+        android:key="edit_magnet_source_domain"
         android:persistent="false"
-        android:title="检查更新"
+        android:summary="修改磁力搜索访问域名"
+        android:title="磁力源配置"
+        app:iconSpaceReserved="false" />
+
+    <ListPreference
+        android:key="theme_mode"
+        android:persistent="false"
+        android:title="主题"
         app:iconSpaceReserved="false" />
 
     <Preference
         android:key="clear_cache"
         android:persistent="false"
+        android:summary="清除图片与网络缓存，释放本地空间"
         android:title="清除缓存"
         app:iconSpaceReserved="false" />
 
     <Preference
         android:key="export_favourites"
         android:persistent="false"
+        android:summary="将收藏影片和女优保存到本机文件"
         android:title="导出收藏"
         app:iconSpaceReserved="false" />
 
     <Preference
         android:key="import_favourites"
         android:persistent="false"
+        android:summary="从本机 JSON 文件合并导入收藏"
         android:title="导入收藏"
         app:iconSpaceReserved="false" />
 
@@ -47,9 +52,16 @@
         app:iconSpaceReserved="false" />
 
     <Preference
+        android:key="check_update"
+        android:persistent="false"
+        android:summary="对照内置版本信息检查是否有新版本"
+        android:title="检查更新"
+        app:iconSpaceReserved="false" />
+
+    <Preference
         android:key="about"
         android:persistent="false"
-        android:summary="本应用仅供学习交流，请勿用于非法用途"
+        android:summary="查看版本、源码地址与免责声明"
         android:title="关于"
         app:iconSpaceReserved="false" />
 </PreferenceScreen>

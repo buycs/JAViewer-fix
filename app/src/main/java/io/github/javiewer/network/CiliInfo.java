@@ -14,17 +14,21 @@ import retrofit2.http.Url;
  */
 public interface CiliInfo {
 
-    String BASE_URL = "https://cili.info";
+    static String currentBaseUrl() {
+        if (JAViewer.CONFIGURATIONS == null) {
+            return io.github.javiewer.Configurations.DEFAULT_MAGNET_SOURCE_CILI;
+        }
+        return JAViewer.CONFIGURATIONS.getMagnetSourceCili();
+    }
 
     static CiliInfo get() {
-        return Holder.get(JAViewer.HTTP_CLIENT);
+        return Holder.get(JAViewer.HTTP_CLIENT, currentBaseUrl());
     }
 
     @GET("/search")
     @Headers({
             "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language: zh-CN,zh;q=0.9",
-            "Referer: https://cili.info/",
             "Cache-Control: no-cache"
     })
     Call<ResponseBody> search(@retrofit2.http.Query("q") String keyword);
@@ -33,24 +37,31 @@ public interface CiliInfo {
     @Headers({
             "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language: zh-CN,zh;q=0.9",
-            "Referer: https://cili.info/",
             "Cache-Control: no-cache"
     })
     Call<ResponseBody> get(@Url String url);
 
     final class Holder {
         private static OkHttpClient client;
+        private static String baseUrl;
         private static CiliInfo instance;
 
         private Holder() {
         }
 
-        static synchronized CiliInfo get(OkHttpClient httpClient) {
-            if (instance == null || client != httpClient) {
+        static synchronized CiliInfo get(OkHttpClient httpClient, String url) {
+            if (instance == null || client != httpClient || !url.equals(baseUrl)) {
                 client = httpClient;
+                baseUrl = url;
+                OkHttpClient ciliClient = httpClient.newBuilder()
+                        .addInterceptor(chain -> chain.proceed(
+                                chain.request().newBuilder()
+                                        .header("Referer", url + "/")
+                                        .build()))
+                        .build();
                 instance = new Retrofit.Builder()
-                        .baseUrl(BASE_URL)
-                        .client(httpClient)
+                        .baseUrl(url)
+                        .client(ciliClient)
                         .build()
                         .create(CiliInfo.class);
             }

@@ -127,7 +127,7 @@ public class MagnetSearchFragment extends Fragment {
 
             RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), payload.toString());
             Request request = new Request.Builder()
-                    .url("https://btsow.live/bts/data/api/search")
+                    .url(JAViewer.CONFIGURATIONS.getMagnetSourceBtsow() + "/bts/data/api/search")
                     .post(body)
                     .addHeader("content-type", "application/json")
                     .build();
