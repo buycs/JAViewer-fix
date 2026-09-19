@@ -1,5 +1,6 @@
 package io.github.javiewer.activity;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -26,10 +27,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.bumptech.glide.Glide;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,12 +39,19 @@ import java.util.Map;
 
 import io.github.javiewer.BuildConfig;
 import io.github.javiewer.JAViewer;
+import io.github.javiewer.Properties;
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.util.FavouriteBackup;
 import io.github.javiewer.util.IOUtils;
 import io.github.javiewer.util.ThemeHelper;
+import io.github.javiewer.util.VersionUtil;
 import okhttp3.Cache;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class SettingsActivity extends SecureActivity {
 
@@ -311,6 +316,18 @@ public class SettingsActivity extends SecureActivity {
             });
         }
 
+        /**
+         * 远端版本信息直接取仓库里随包发布的 assets/properties.json。
+         *
+         * <p>刻意不用 GitHub API：未认证的 API 请求按出口 IP 限流（每小时 60 次），
+         * 在共享 IP / 运营商 NAT 下很容易直接 403；raw CDN 没有这个问题。
+         */
+        private static final String REMOTE_PROPERTIES =
+                "https://raw.githubusercontent.com/buycs/JAViewer-fix/master/app/src/main/assets/properties.json";
+
+        private static final String RELEASES_PAGE =
+                "https://github.com/buycs/JAViewer-fix/releases";
+
         private void bindCheckUpdate() {
             Preference preference = findPreference("check_update");
             if (preference == null) {
@@ -322,42 +339,108 @@ public class SettingsActivity extends SecureActivity {
             });
         }
 
+        /**
+         * 拉取远端 properties.json，与本地版本比较。
+         *
+         * <p>走 OkHttp 异步回调，避免在主线程发网络请求（会抛 NetworkOnMainThreadException）；
+         * 回调里再切回主线程弹窗。
+         */
         private void checkUpdate() {
-            try (InputStream is = requireContext().getAssets().open("properties.json")) {
-                String json = IOUtils.readText(is, IOUtils.UTF_8);
-                JsonObject object = JsonParser.parseString(json).getAsJsonObject();
-                int latest = readVersionCode(object.get("latest_version_code"));
-                String changelog = "";
-                if (object.has("changelog") && !object.get("changelog").isJsonNull()) {
-                    changelog = object.get("changelog").getAsString();
-                }
-                if (BuildConfig.VERSION_CODE >= latest) {
-                    Toast.makeText(requireContext(), "已是最新版本", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("发现新版本")
-                        .setMessage(changelog)
-                        .setPositiveButton("打开", (dialog, which) -> openUrl("https://github.com/buycs/JAViewer-fix"))
-                        .setNegativeButton("取消", null)
-                        .show();
-            } catch (Exception e) {
-                Toast.makeText(requireContext(), "检查更新失败", Toast.LENGTH_SHORT).show();
+            final Preference preference = findPreference("check_update");
+            final CharSequence originalSummary = preference != null ? preference.getSummary() : null;
+            if (preference != null) {
+                preference.setSummary("正在检查更新…");
             }
+
+            Request request = new Request.Builder().url(REMOTE_PROPERTIES).build();
+            JAViewer.HTTP_CLIENT.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    showUpdateResult(preference, originalSummary, null);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) {
+                    RemoteVersion remote = null;
+                    try (ResponseBody body = response.body()) {
+                        if (response.isSuccessful() && body != null) {
+                            remote = RemoteVersion.parse(body.string());
+                        }
+                    } catch (Exception ignored) {
+                        // 解析失败按「检查更新失败」处理
+                    }
+                    showUpdateResult(preference, originalSummary, remote);
+                }
+            });
         }
 
-        private static int readVersionCode(JsonElement element) {
-            if (element == null || !element.isJsonPrimitive()) {
-                return 0;
+        private void showUpdateResult(final Preference preference,
+                                      final CharSequence originalSummary,
+                                      final RemoteVersion remote) {
+            final Activity activity = getActivity();
+            if (activity == null) {
+                return;
             }
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) {
-                return primitive.getAsInt();
+            activity.runOnUiThread(() -> {
+                if (!isAdded() || getActivity() == null) {
+                    return;
+                }
+                if (preference != null) {
+                    preference.setSummary(originalSummary);
+                }
+                if (remote == null) {
+                    Toast.makeText(requireContext(), "检查更新失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!remote.isNewerThanCurrent()) {
+                    Toast.makeText(requireContext(),
+                            "已是最新版本 " + BuildConfig.VERSION_NAME, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                String message = remote.changelog.isEmpty()
+                        ? "点击「打开」前往下载页"
+                        : remote.changelog;
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("发现新版本 " + remote.displayVersion())
+                        .setMessage(message)
+                        .setPositiveButton("打开", (dialog, which) -> openUrl(RELEASES_PAGE))
+                        .setNegativeButton("取消", null)
+                        .show();
+            });
+        }
+
+        /** 远端 properties.json 里我们关心的字段。 */
+        private static final class RemoteVersion {
+            final int versionCode;
+            final String versionName;
+            final String changelog;
+
+            RemoteVersion(int versionCode, String versionName, String changelog) {
+                this.versionCode = versionCode;
+                this.versionName = versionName;
+                this.changelog = changelog;
             }
-            try {
-                return Integer.parseInt(primitive.getAsString().trim());
-            } catch (NumberFormatException e) {
-                return 0;
+
+            static RemoteVersion parse(String json) {
+                Properties properties = new Gson().fromJson(json, Properties.class);
+                if (properties == null) {
+                    return null;
+                }
+                String name = properties.getLatestVersion() != null ? properties.getLatestVersion() : "";
+                String log = properties.getChangelog() != null ? properties.getChangelog() : "";
+                return new RemoteVersion(properties.getLatestVersionCode(), name, log);
+            }
+
+            boolean isNewerThanCurrent() {
+                if (versionCode > 0) {
+                    return versionCode > BuildConfig.VERSION_CODE;
+                }
+                // 远端没给 versionCode 时，退回按版本号比较
+                return VersionUtil.isNewer(versionName, BuildConfig.VERSION_NAME);
+            }
+
+            String displayVersion() {
+                return versionName.isEmpty() ? String.valueOf(versionCode) : versionName;
             }
         }
 

@@ -54,7 +54,7 @@
     <Preference
         android:key="check_update"
         android:persistent="false"
-        android:summary="对照内置版本信息检查是否有新版本"
+        android:summary="从 GitHub Releases 检查是否有新版本"
         android:title="检查更新"
         app:iconSpaceReserved="false" />
 
