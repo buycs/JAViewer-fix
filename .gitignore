@@ -12,6 +12,7 @@ build/
 cookies.txt
 
 # 设计与开发内部文档（不上传）
+.workbuddy-ai/
 AGENTS.md
 DESIGN.md
 API_DOCUMENTATION.md
