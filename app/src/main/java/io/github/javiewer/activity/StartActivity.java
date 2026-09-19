@@ -65,12 +65,11 @@ public class StartActivity extends AppCompatActivity {
         boolean hide = JAViewer.CONFIGURATIONS != null && JAViewer.CONFIGURATIONS.isHideRecentPreview();
         closeStaleTasks(hide);
         Intent intent = new Intent(StartActivity.this, hide ? HiddenMainActivity.class : MainActivity.class);
-        if (hide) {
-            // excludeFromRecents 只对任务根生效：必须 NEW_TASK 让 HiddenMainActivity 自己成为任务根
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
+        // 两种入口各自用 taskAffinity 成为独立任务根：必须 NEW_TASK，避免落在 StartActivity 的启动任务里留下幽灵卡片
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-        finish();
+        // 连自己的启动任务一起移除，而不是只 finish()（否则空启动任务会挂在最近任务里）
+        finishAndRemoveTask();
     }
 
     /** 设置与已有任务类型不匹配时（开→关 / 关→开 后首次进入），结束旧任务，避免残留无法关闭的隐藏任务。 */
