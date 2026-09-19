@@ -520,7 +520,7 @@ public class SettingsActivity extends SecureActivity {
                     JAViewer.CONFIGURATIONS.save();
                 }
                 if (getActivity() instanceof SecureActivity) {
-                    ((SecureActivity) getActivity()).applySecureFlag();
+                    ((SecureActivity) getActivity()).applyHideRecentSetting();
                 }
                 return true;
             });

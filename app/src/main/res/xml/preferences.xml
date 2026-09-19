@@ -47,7 +47,7 @@
         android:defaultValue="false"
         android:key="hide_recent_preview"
         android:persistent="false"
-        android:summary="最近任务列表不显示本应用"
+        android:summary="最近任务列表不显示本应用（切换后重启应用生效）"
         android:title="最近任务隐藏"
         app:iconSpaceReserved="false" />
 

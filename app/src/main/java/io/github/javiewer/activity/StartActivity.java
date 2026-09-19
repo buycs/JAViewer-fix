@@ -1,5 +1,6 @@
 package io.github.javiewer.activity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -61,8 +62,36 @@ public class StartActivity extends AppCompatActivity {
     }
 
     public void start() {
-        startActivity(new Intent(StartActivity.this, MainActivity.class));
+        boolean hide = JAViewer.CONFIGURATIONS != null && JAViewer.CONFIGURATIONS.isHideRecentPreview();
+        closeStaleTasks(hide);
+        Intent intent = new Intent(StartActivity.this, hide ? HiddenMainActivity.class : MainActivity.class);
+        if (hide) {
+            // excludeFromRecents 只对任务根生效：必须 NEW_TASK 让 HiddenMainActivity 自己成为任务根
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        startActivity(intent);
         finish();
+    }
+
+    /** 设置与已有任务类型不匹配时（开→关 / 关→开 后首次进入），结束旧任务，避免残留无法关闭的隐藏任务。 */
+    private void closeStaleTasks(boolean hide) {
+        android.app.ActivityManager am =
+                (android.app.ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) {
+            return;
+        }
+        int myTask = getTaskId();
+        for (android.app.ActivityManager.AppTask task : am.getAppTasks()) {
+            android.app.TaskInfo info = task.getTaskInfo();
+            if (info == null || info.taskId == myTask || info.baseActivity == null) {
+                continue;
+            }
+            boolean taskIsHidden = HiddenMainActivity.class.getName()
+                    .equals(info.baseActivity.getClassName());
+            if (taskIsHidden != hide) {
+                task.finishAndRemoveTask();
+            }
+        }
     }
 
     private void loadConfigurations() {
