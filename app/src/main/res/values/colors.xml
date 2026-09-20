@@ -10,4 +10,7 @@
 
     <color name="black_overlay">#66000000</color>
     <color name="colorDivider">#1E000000</color>
+
+    <!-- 女优资料栏里属性胶囊的底色：浅色主题下用极淡的黑，深色主题见 values-night -->
+    <color name="actressChipBackground">#0F000000</color>
 </resources>

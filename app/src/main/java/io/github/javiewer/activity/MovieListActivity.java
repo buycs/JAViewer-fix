@@ -3,6 +3,7 @@ package io.github.javiewer.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,8 +13,10 @@ import androidx.appcompat.widget.Toolbar;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.appbar.AppBarLayout;
+import com.wefika.flowlayout.FlowLayout;
 
 import java.util.Collections;
+import java.util.List;
 
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
@@ -156,8 +159,8 @@ public class MovieListActivity extends SecureActivity {
         name.setSelected(true);
 
         bindHeaderLine(mActressHeader.findViewById(R.id.actress_header_count), detail.buildCountLine());
-        bindHeaderLine(mActressHeader.findViewById(R.id.actress_header_profile), detail.buildProfileLine());
-        bindHeaderLine(mActressHeader.findViewById(R.id.actress_header_origin), detail.buildOriginLine());
+        bindHeaderLine(mActressHeader.findViewById(R.id.actress_header_release), detail.buildReleaseLine());
+        bindMetaChips(detail.buildChips());
 
         if (!detail.avatarUrl.isEmpty()) {
             ImageView avatar = mActressHeader.findViewById(R.id.actress_header_avatar);
@@ -167,6 +170,23 @@ public class MovieListActivity extends SecureActivity {
                     .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .dontAnimate()
                     .into(avatar);
+        }
+    }
+
+    /**
+     * 逐枚渲染属性胶囊。接口没给的字段不会出现在 labels 里，所以这里不用再做判空；
+     * 一个字段都没有时整块隐藏，免得留一片空白。
+     */
+    private void bindMetaChips(List<String> labels) {
+        FlowLayout chips = mActressHeader.findViewById(R.id.actress_header_chips);
+        chips.removeAllViews();
+        chips.setVisibility(labels.isEmpty() ? View.GONE : View.VISIBLE);
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for (String label : labels) {
+            View chip = inflater.inflate(R.layout.chip_actress_meta, chips, false);
+            ((TextView) chip.findViewById(R.id.chip_actress_meta)).setText(label);
+            chips.addView(chip);
         }
     }
 

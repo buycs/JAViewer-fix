@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 女优资料栏里的属性胶囊：全圆角矩形，底色随主题走 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid android:color="@color/actressChipBackground" />
+
+    <corners android:radius="999dp" />
+
+</shape>

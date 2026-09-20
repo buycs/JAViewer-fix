@@ -71,46 +71,48 @@ public class ActressDetail {
         return CONSTELLATIONS[code];
     }
 
-    /** 作品数量一行，如 {@code 4617部作品 · 2433部可下载 · 最近发布 2026-09-19}。 */
+    /** 作品数量一行，如 {@code 4617 部作品 · 2433 部可下载}。 */
     public String buildCountLine() {
         List<String> parts = new ArrayList<>();
         if (movieCount > 0) {
-            parts.add(movieCount + "部作品");
+            parts.add(movieCount + " 部作品");
         }
         if (downloadMovieCount > 0) {
-            parts.add(downloadMovieCount + "部可下载");
-        }
-        if (!lastReleaseDate.isEmpty()) {
-            parts.add("最近发布 " + lastReleaseDate);
+            parts.add(downloadMovieCount + " 部可下载");
         }
         return join(parts, SEPARATOR);
     }
 
-    /** 基本资料一行，如 {@code 1988-05-24 · 双子座 · A型 · 163cm · B88(D) W59 H85}。 */
-    public String buildProfileLine() {
-        List<String> parts = new ArrayList<>();
-        parts.add(birthday);
-        parts.add(constellationName(constellation));
+    /** 最近发布一行，如 {@code 最近发布 2026-09-19}；没有数据时返回空串。 */
+    public String buildReleaseLine() {
+        return lastReleaseDate.isEmpty() ? "" : "最近发布 " + lastReleaseDate;
+    }
+
+    /**
+     * 资料胶囊的文案，按展示顺序返回。
+     *
+     * <p>命名规则：值本身就能说明是什么的（日期、星座、血型、身高）不加标签，
+     * 光看值看不出含义的（三围的 B/W/H 缩写、地名、爱好）带上短标签。
+     * 没有的属性不会出现在列表里，调用方直接逐条渲染即可。
+     */
+    public List<String> buildChips() {
+        List<String> chips = new ArrayList<>();
+        addIfPresent(chips, birthday);
+        addIfPresent(chips, constellationName(constellation));
         if (!bloodType.isEmpty()) {
-            parts.add(bloodType.endsWith("型") ? bloodType : bloodType + "型");
+            addIfPresent(chips, bloodType.endsWith("型") ? bloodType : bloodType + "型");
         }
         if (!height.isEmpty()) {
-            parts.add(height + "cm");
+            addIfPresent(chips, height + "cm");
         }
-        parts.add(buildMeasurement());
-        return join(parts, SEPARATOR);
-    }
-
-    /** 出生地与爱好一行，如 {@code 出生地 京都府 · 爱好 ゲーム}；两者都没有时返回空串。 */
-    public String buildOriginLine() {
-        List<String> parts = new ArrayList<>();
+        addIfPresent(chips, buildMeasurementChip());
         if (!hometown.isEmpty()) {
-            parts.add("出生地 " + hometown);
+            addIfPresent(chips, "出生地 " + hometown);
         }
         if (!hobby.isEmpty()) {
-            parts.add("爱好 " + hobby);
+            addIfPresent(chips, "爱好 " + hobby);
         }
-        return join(parts, SEPARATOR);
+        return chips;
     }
 
     /** 三围摘要，如 {@code B88(D) W59 H85}；只有部分数据时只拼出已有的那几项。 */
@@ -129,6 +131,15 @@ public class ActressDetail {
     }
 
     /**
+     * 带「三围」标签的三围，给胶囊用：{@code 三围 B88(D) W59 H85}。
+     * 光看 B/W/H 缩写认不出是什么，所以这里必须把标签补上。
+     */
+    public String buildMeasurementChip() {
+        String measurement = buildMeasurement();
+        return measurement.isEmpty() ? "" : "三围 " + measurement;
+    }
+
+    /**
      * 拼接非空片段。不用 {@code String.join}——那是 API 26 才有的方法，本应用 minSdk 21。
      */
     private static String join(List<String> parts, String separator) {
@@ -143,5 +154,11 @@ public class ActressDetail {
             builder.append(part);
         }
         return builder.toString();
+    }
+
+    private static void addIfPresent(List<String> parts, String part) {
+        if (part != null && !part.isEmpty()) {
+            parts.add(part);
+        }
     }
 }
