@@ -83,10 +83,10 @@ public class ActressAdapter extends ItemAdapter<Actress, ActressAdapter.ViewHold
             mTextName.setText(actress.getName());
             mTextName.setSelected(true);
 
-            // 数量未知时不显示，避免旧收藏数据出现「0 部」
+            // 数量未知时不显示，避免旧收藏数据出现「0部作品」
             int count = actress.getMovieCount();
             if (count > 0) {
-                mTextMovieCount.setText(count + " 部");
+                mTextMovieCount.setText(count + "部作品");
                 mTextMovieCount.setVisibility(View.VISIBLE);
             } else {
                 mTextMovieCount.setText("");
