@@ -17,9 +17,12 @@ import io.github.javiewer.util.GenreLabels;
 /**
  * 三个数据源的类别页解析契约。
  *
- * <p>站点把类别按 {@code type} 分成 8 组，但两个站点族的响应结构不同：
- * 骑兵的 {@code data} 是 dict（key 就是 type），步兵与欧美是 list of list（下标即 type）。
- * 这里用真实抓下来的响应形状钉住解析结果，重点是「同一个 type 在三个源上落到同一个分组」。
+ * <p>站点把类别按 {@code type} 分成若干组，但两个站点族的响应结构不同：
+ * 骑兵的 {@code data} 是 dict（key 就是 type，另含站点自己加的 {@code -1}），
+ * 步兵与欧美是 list of list（下标即 type）。
+ *
+ * <p>分组顺序与命名对齐原站类别页：骑兵渲染 9 段（0~6、AV OPEN、其他），
+ * 步兵与欧美 8 段（0~6、其他）。
  */
 public class AVMOProviderGenreTest {
 
@@ -73,14 +76,19 @@ public class AVMOProviderGenreTest {
         return list == null || list.isEmpty() ? null : list.get(0).getName();
     }
 
+    private static int sizeOf(LinkedHashMap<String, List<Genre>> map, String label) {
+        List<Genre> list = map.get(label);
+        return list == null ? 0 : list.size();
+    }
+
     @Test
-    public void javDictGroupsUseSiteSemantics() throws Exception {
+    public void javDictRendersNineGroupsInSiteOrder() throws Exception {
         LinkedHashMap<String, List<Genre>> map =
-                AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JA);
+                AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JAV);
 
         assertEquals(
                 Arrays.asList("テーマ", "キャラクター", "コスチューム", "身体",
-                        "性行為", "プレイ", "ジャンル", "その他"),
+                        "性行為", "プレイ", "ジャンル", "AV OPEN", "その他"),
                 keys(map));
         assertEquals("企画", nameOf(map, "テーマ"));
         assertEquals("巨乳", nameOf(map, "身体"));
@@ -89,50 +97,48 @@ public class AVMOProviderGenreTest {
     }
 
     @Test
-    public void javMinusOneAndSevenBothLandInOther() throws Exception {
+    public void javTypeSevenIsItsOwnAvOpenGroup() throws Exception {
         LinkedHashMap<String, List<Genre>> map =
-                AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JA);
+                AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JAV);
 
-        List<Genre> others = map.get("その他");
-        // -1 组的 2 条 + 7 组的 1 条
-        assertEquals(3, others.size());
-        assertEquals("パラダイスTV", others.get(0).getName());
-        assertEquals("AV OPEN 2016 人妻・熟女部門", others.get(others.size() - 1).getName());
-        // 以前骑兵把 7 单独标成「AV OPEN」，站点语义里它其实就是 other
-        assertFalse(map.containsKey("AV OPEN"));
+        // 原站第 8 段整段都是 AV OPEN，单独成组而不是并进「其他」
+        assertEquals(1, sizeOf(map, "AV OPEN"));
+        assertEquals("AV OPEN 2016 人妻・熟女部門", nameOf(map, "AV OPEN"));
     }
 
     @Test
-    public void javuListGroupsUseSameLabelsAsJav() throws Exception {
-        LinkedHashMap<String, List<Genre>> jav =
-                AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JA);
-        LinkedHashMap<String, List<Genre>> javu =
-                AVMOProvider.parseGenres(JAVU_LIST, GenreLabels.JA);
+    public void javMinusOneGroupIsKeptAndComesLast() throws Exception {
+        LinkedHashMap<String, List<Genre>> map =
+                AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JAV);
 
-        // 同一套 type 语义，两个源的 tab 名必须完全一致
-        assertEquals(keys(jav), keys(javu));
-        assertEquals("ウェディング", nameOf(javu, "テーマ"));
-        assertEquals("エステティシャン", nameOf(javu, "キャラクター"));
-        assertEquals("Cカップ", nameOf(javu, "身体"));
-        assertEquals("ドッキリ", nameOf(javu, "プレイ"));
+        List<String> keys = keys(map);
+        assertEquals("その他", keys.get(keys.size() - 1));
+        assertEquals(2, sizeOf(map, "その他"));
+        assertEquals("パラダイスTV", nameOf(map, "その他"));
     }
 
     @Test
-    public void javuTypeSevenIsFoldedIntoOther() throws Exception {
+    public void javuListRendersEightGroupsWithoutAvOpen() throws Exception {
         LinkedHashMap<String, List<Genre>> map =
-                AVMOProvider.parseGenres(JAVU_LIST, GenreLabels.JA);
+                AVMOProvider.parseGenres(JAVU_LIST, GenreLabels.JAVU);
 
-        List<Genre> others = map.get("その他");
-        assertEquals(1, others.size());
-        assertEquals("別荘", others.get(0).getName());
-        // 步兵没有 -1 组，所以「其他」只有 1 条
-        assertEquals(8, map.size());
+        assertEquals(
+                Arrays.asList("テーマ", "キャラクター", "コスチューム", "身体",
+                        "性行為", "プレイ", "ジャンル", "その他"),
+                keys(map));
+        assertEquals("ウェディング", nameOf(map, "テーマ"));
+        assertEquals("エステティシャン", nameOf(map, "キャラクター"));
+        assertEquals("Cカップ", nameOf(map, "身体"));
+        assertEquals("ドッキリ", nameOf(map, "プレイ"));
+        // 步兵没有 -1 组，type 7 就是普通的「其他」
+        assertEquals("別荘", nameOf(map, "その他"));
+        assertEquals(1, sizeOf(map, "その他"));
     }
 
     @Test
     public void wavUsesEnglishLabels() throws Exception {
         LinkedHashMap<String, List<Genre>> map =
-                AVMOProvider.parseGenres(WAV_LIST, GenreLabels.EN);
+                AVMOProvider.parseGenres(WAV_LIST, GenreLabels.WAV);
 
         assertEquals(
                 Arrays.asList("Theme", "Character", "Costume", "Body",
@@ -144,13 +150,11 @@ public class AVMOProviderGenreTest {
     }
 
     @Test
-    public void allThreeSourcesProduceTheSameNumberOfTabs() throws Exception {
-        int jav = AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JA).size();
-        int javu = AVMOProvider.parseGenres(JAVU_LIST, GenreLabels.JA).size();
-        int wav = AVMOProvider.parseGenres(WAV_LIST, GenreLabels.EN).size();
-        assertEquals(8, jav);
-        assertEquals(8, javu);
-        assertEquals(8, wav);
+    public void groupCountsMatchWhatTheSitesRender() throws Exception {
+        // 骑兵 9 段（多一个 -1），步兵与欧美各 8 段
+        assertEquals(9, AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JAV).size());
+        assertEquals(8, AVMOProvider.parseGenres(JAVU_LIST, GenreLabels.JAVU).size());
+        assertEquals(8, AVMOProvider.parseGenres(WAV_LIST, GenreLabels.WAV).size());
     }
 
     @Test
@@ -160,7 +164,8 @@ public class AVMOProviderGenreTest {
                 + "\"1\":[],"
                 + "\"2\":[{\"genreId\":\"b\",\"genreName\":\"コスプレ\",\"type\":2}]"
                 + "}}";
-        LinkedHashMap<String, List<Genre>> map = AVMOProvider.parseGenres(json, GenreLabels.JA);
+        LinkedHashMap<String, List<Genre>> map =
+                AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
         assertEquals(Arrays.asList("テーマ", "コスチューム"), keys(map));
         assertFalse(map.containsKey("キャラクター"));
@@ -172,7 +177,8 @@ public class AVMOProviderGenreTest {
                 + "[{\"genreId\":\"a\",\"genreName\":\"企画\",\"type\":0}],"
                 + "[{\"genreId\":\"z\",\"genreName\":\"謎\"}]"
                 + "]}";
-        LinkedHashMap<String, List<Genre>> map = AVMOProvider.parseGenres(json, GenreLabels.JA);
+        LinkedHashMap<String, List<Genre>> map =
+                AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
         assertEquals(Arrays.asList("テーマ", "その他"), keys(map));
         assertEquals("謎", nameOf(map, "その他"));
@@ -184,7 +190,8 @@ public class AVMOProviderGenreTest {
         String json = "{\"code\":200,\"data\":{"
                 + "\"0\":[{\"genreId\":\"a\",\"genreName\":null,\"type\":0}]"
                 + "}}";
-        LinkedHashMap<String, List<Genre>> map = AVMOProvider.parseGenres(json, GenreLabels.JA);
+        LinkedHashMap<String, List<Genre>> map =
+                AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
         assertEquals("", nameOf(map, "テーマ"));
     }
@@ -194,7 +201,8 @@ public class AVMOProviderGenreTest {
         String json = "{\"code\":200,\"data\":["
                 + "[{\"genreId\":\"a\",\"genreName\":\"企画\",\"type\":0}]"
                 + "]}";
-        LinkedHashMap<String, List<Genre>> map = AVMOProvider.parseGenres(json, GenreLabels.JA);
+        LinkedHashMap<String, List<Genre>> map =
+                AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
         assertEquals(1, map.size());
         assertFalse(map.containsKey("その他"));

@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.github.javiewer.adapter.item.Actress;
 import io.github.javiewer.adapter.item.ActressDetail;
@@ -209,35 +210,29 @@ public class AVMOProvider {
      * 步兵与欧美是 list of list（下标即 {@code type}）；两者元素里都带 {@code type} 字段，
      * 且与 key / 下标一致。
      *
-     * <p>{@code type} 0~6 各自成组，{@code 7} 与骑兵的 {@code -1} 都是站点定义的「其他」，
-     * 合并到最后一组，避免同一个 {@code type} 在三个数据源上落到不同分组。
+     * <p>顺序对齐原站类别页：先 {@code type} 0~7，再骑兵特有的 {@code -1}。
+     * 分组按标签归并，因此两个 type 拿到同一个标签时会自动合成一组
+     * （步兵与欧美的 {@code type 7} 都是兜底标签，但这两源没有 {@code -1}）。
      *
-     * @param groupLabels 分组名，由 {@link GenreLabels} 按当前数据源给出，长度需覆盖 0~7
+     * @param groupLabels 分组标签，由 {@link GenreLabels} 按当前数据源给出
      */
-    public static LinkedHashMap<String, List<Genre>> parseGenres(String json, String[] groupLabels)
+    public static LinkedHashMap<String, List<Genre>> parseGenres(String json, GenreLabels groupLabels)
             throws Exception {
         JSONObject obj = new JSONObject(json);
         LinkedHashMap<String, List<Genre>> map = new LinkedHashMap<>();
-        List<Genre> others = null;
 
         Object raw = obj.get("data");
         if (raw instanceof JSONObject) {
             JSONObject data = (JSONObject) raw;
-            for (int type = 0; type < GenreLabels.OTHER_INDEX; type++) {
+            for (int type = 0; type < groupLabels.typeCount(); type++) {
                 String key = String.valueOf(type);
-                if (!data.has(key)) {
-                    continue;
-                }
-                List<Genre> genres = parseGenreArray(data.getJSONArray(key));
-                if (!genres.isEmpty()) {
-                    map.put(GenreLabels.labelAt(groupLabels, type), genres);
+                if (data.has(key)) {
+                    append(map, groupLabels.at(type), parseGenreArray(data.getJSONArray(key)));
                 }
             }
-            others = new ArrayList<>();
-            for (String key : new String[]{"-1", "7"}) {
-                if (data.has(key)) {
-                    others.addAll(parseGenreArray(data.getJSONArray(key)));
-                }
+            // 骑兵特有的 -1 组（杂项 / 促销 / AV OPEN 2014・2015），原站排在最后
+            if (data.has("-1")) {
+                append(map, groupLabels.at(-1), parseGenreArray(data.getJSONArray("-1")));
             }
         } else {
             JSONArray data = (JSONArray) raw;
@@ -246,27 +241,25 @@ public class AVMOProvider {
                 if (group.length() == 0) {
                     continue;
                 }
-                int type = group.getJSONObject(0).optInt("type", GenreLabels.OTHER_INDEX);
-                List<Genre> genres = parseGenreArray(group);
-                if (genres.isEmpty()) {
-                    continue;
-                }
-                if (GenreLabels.isOther(type)) {
-                    if (others == null) {
-                        others = new ArrayList<>();
-                    }
-                    others.addAll(genres);
-                } else {
-                    map.put(GenreLabels.labelAt(groupLabels, type), genres);
-                }
+                int type = group.getJSONObject(0).optInt("type", -1);
+                append(map, groupLabels.at(type), parseGenreArray(group));
             }
         }
 
-        if (others != null && !others.isEmpty()) {
-            map.put(GenreLabels.labelAt(groupLabels, GenreLabels.OTHER_INDEX), others);
-        }
-
         return map;
+    }
+
+    /** 把一组类别并进对应标签；标签已存在就追加，保证首次出现的位置不变。 */
+    private static void append(Map<String, List<Genre>> map, String label, List<Genre> genres) {
+        if (genres.isEmpty()) {
+            return;
+        }
+        List<Genre> bucket = map.get(label);
+        if (bucket == null) {
+            map.put(label, genres);
+        } else {
+            bucket.addAll(genres);
+        }
     }
 
     private static List<Genre> parseGenreArray(JSONArray arr) throws JSONException {

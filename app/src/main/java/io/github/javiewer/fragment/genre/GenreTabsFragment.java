@@ -115,14 +115,14 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
     }
 
     /**
-     * 分组名跟随当前数据源。骑兵与步兵站点返回日文类别名，欧美站点没有日文名会回退英文，
+     * 分组标签跟随当前数据源。骑兵与步兵站点返回日文类别名，欧美站点没有日文名会回退英文，
      * tab 名取同一种语言，避免出现「日文类别名 + 中文 tab」的割裂。
      */
-    private String[] groupLabels() {
+    private GenreLabels groupLabels() {
         try {
             return GenreLabels.forApiPath(JAViewer.getDataSource().apiPath);
         } catch (Throwable e) {
-            return GenreLabels.JA;
+            return GenreLabels.JAV;
         }
     }
 
