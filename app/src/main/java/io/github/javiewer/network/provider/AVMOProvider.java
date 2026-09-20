@@ -5,7 +5,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -15,6 +14,7 @@ import io.github.javiewer.adapter.item.Genre;
 import io.github.javiewer.adapter.item.Movie;
 import io.github.javiewer.adapter.item.MovieDetail;
 import io.github.javiewer.adapter.item.Screenshot;
+import io.github.javiewer.util.GenreLabels;
 import io.github.javiewer.util.JsonText;
 
 public class AVMOProvider {
@@ -202,99 +202,84 @@ public class AVMOProvider {
         return movie;
     }
 
-    public static LinkedHashMap<String, List<Genre>> parseGenres(String json) throws Exception {
+    /**
+     * 解析类别列表。
+     *
+     * <p>两个站点族的响应结构不同：骑兵的 {@code data} 是 dict（key 就是 {@code type}），
+     * 步兵与欧美是 list of list（下标即 {@code type}）；两者元素里都带 {@code type} 字段，
+     * 且与 key / 下标一致。
+     *
+     * <p>{@code type} 0~6 各自成组，{@code 7} 与骑兵的 {@code -1} 都是站点定义的「其他」，
+     * 合并到最后一组，避免同一个 {@code type} 在三个数据源上落到不同分组。
+     *
+     * @param groupLabels 分组名，由 {@link GenreLabels} 按当前数据源给出，长度需覆盖 0~7
+     */
+    public static LinkedHashMap<String, List<Genre>> parseGenres(String json, String[] groupLabels)
+            throws Exception {
         JSONObject obj = new JSONObject(json);
         LinkedHashMap<String, List<Genre>> map = new LinkedHashMap<>();
         List<Genre> others = null;
 
-        try {
-            JSONObject data = obj.getJSONObject("data");
-            String[] order = {"0","1","2","3","4","5","6","7"};
-            for (String key : order) {
+        Object raw = obj.get("data");
+        if (raw instanceof JSONObject) {
+            JSONObject data = (JSONObject) raw;
+            for (int type = 0; type < GenreLabels.OTHER_INDEX; type++) {
+                String key = String.valueOf(type);
+                if (!data.has(key)) {
+                    continue;
+                }
+                List<Genre> genres = parseGenreArray(data.getJSONArray(key));
+                if (!genres.isEmpty()) {
+                    map.put(GenreLabels.labelAt(groupLabels, type), genres);
+                }
+            }
+            others = new ArrayList<>();
+            for (String key : new String[]{"-1", "7"}) {
                 if (data.has(key)) {
-                    JSONArray arr = data.getJSONArray(key);
-                    List<Genre> genres = new ArrayList<>();
-                    for (int i = 0; i < arr.length(); i++) {
-                        JSONObject g = arr.getJSONObject(i);
-                        genres.add(Genre.create(
-                                g.optString("genreName", ""),
-                                g.optString("genreId", "")
-                        ));
-                    }
-                    if (!genres.isEmpty()) {
-                        String label;
-                        switch (key) {
-                            case "0": label = "热门类型"; break;
-                            case "1": label = "职业扮演"; break;
-                            case "2": label = "衣着造型"; break;
-                            case "3": label = "身材特征"; break;
-                            case "4": label = "性爱玩法"; break;
-                            case "5": label = "道具调教"; break;
-                            case "6": label = "制作系列"; break;
-                            case "7": label = "AV OPEN"; break;
-                            default: label = key; break;
-                        }
-                        map.put(label, genres);
-                    }
+                    others.addAll(parseGenreArray(data.getJSONArray(key)));
                 }
             }
-            if (data.has("-1")) {
-                JSONArray arr = data.getJSONArray("-1");
-                others = new ArrayList<>();
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject g = arr.getJSONObject(i);
-                    others.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
-                }
-            }
-        } catch (JSONException e) {
-            JSONArray data = obj.getJSONArray("data");
+        } else {
+            JSONArray data = (JSONArray) raw;
             for (int i = 0; i < data.length(); i++) {
                 JSONArray group = data.getJSONArray(i);
-                if (group.length() == 0) continue;
-                JSONObject first = group.getJSONObject(0);
-                int type = first.optInt("type", -1);
-                if (type == -1) {
-                    others = new ArrayList<>();
-                    for (int j = 0; j < group.length(); j++) {
-                        JSONObject g = group.getJSONObject(j);
-                        others.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
-                    }
+                if (group.length() == 0) {
                     continue;
                 }
-                if (type == 7) {
-                    // merge into 其他 for javu/wav
-                    if (others == null) others = new ArrayList<>();
-                    for (int j = 0; j < group.length(); j++) {
-                        JSONObject g = group.getJSONObject(j);
-                        others.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
-                    }
+                int type = group.getJSONObject(0).optInt("type", GenreLabels.OTHER_INDEX);
+                List<Genre> genres = parseGenreArray(group);
+                if (genres.isEmpty()) {
                     continue;
                 }
-                String label;
-                switch (String.valueOf(type)) {
-                    case "0": label = "热门类型"; break;
-                    case "1": label = "职业扮演"; break;
-                    case "2": label = "衣着造型"; break;
-                    case "3": label = "身材特征"; break;
-                    case "4": label = "性爱玩法"; break;
-                    case "5": label = "道具调教"; break;
-                    case "6": label = "制作系列"; break;
-                    case "7": label = "AV OPEN"; break;
-                    default: label = String.valueOf(type); break;
+                if (GenreLabels.isOther(type)) {
+                    if (others == null) {
+                        others = new ArrayList<>();
+                    }
+                    others.addAll(genres);
+                } else {
+                    map.put(GenreLabels.labelAt(groupLabels, type), genres);
                 }
-                List<Genre> list = new ArrayList<>();
-                for (int j = 0; j < group.length(); j++) {
-                    JSONObject g = group.getJSONObject(j);
-                    list.add(Genre.create(g.optString("genreName", ""), g.optString("genreId", "")));
-                }
-                map.put(label, list);
             }
         }
 
         if (others != null && !others.isEmpty()) {
-            map.put("其他", others);
+            map.put(GenreLabels.labelAt(groupLabels, GenreLabels.OTHER_INDEX), others);
         }
 
         return map;
+    }
+
+    private static List<Genre> parseGenreArray(JSONArray arr) throws JSONException {
+        List<Genre> genres = new ArrayList<>();
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject g = arr.getJSONObject(i);
+            genres.add(
+                    Genre.create(
+                            JsonText.clean(g.optString("genreName", "")),
+                            g.optString("genreId", "")
+                    )
+            );
+        }
+        return genres;
     }
 }

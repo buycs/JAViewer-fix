@@ -20,6 +20,7 @@ import io.github.javiewer.adapter.ViewPagerAdapter;
 import io.github.javiewer.adapter.item.Genre;
 import io.github.javiewer.fragment.ExtendedAppBarFragment;
 import io.github.javiewer.network.provider.AVMOProvider;
+import io.github.javiewer.util.GenreLabels;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -62,6 +63,8 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
         if (genresCall != null) {
             genresCall.cancel();
         }
+        // 站点按 lang 返回类别名：骑兵 / 步兵是日文，欧美没有日文名会回退英文。
+        // 这里固定 ja，与分组标签的语言保持一致（见 groupLabels()）。
         Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("ja"));
         genresCall = call;
         call.enqueue(new Callback<ResponseBody>() {
@@ -77,7 +80,7 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
                     }
                     String body = response.body().string();
                     android.util.Log.d("GenreTabs", "Response body: " + body.substring(0, Math.min(500, body.length())));
-                    LinkedHashMap<String, List<Genre>> genres = AVMOProvider.parseGenres(body);
+                    LinkedHashMap<String, List<Genre>> genres = AVMOProvider.parseGenres(body, groupLabels());
 
                     if (genres.isEmpty()) {
                         retry(attempt);
@@ -109,6 +112,18 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
                 retry(attempt);
             }
         });
+    }
+
+    /**
+     * 分组名跟随当前数据源。骑兵与步兵站点返回日文类别名，欧美站点没有日文名会回退英文，
+     * tab 名取同一种语言，避免出现「日文类别名 + 中文 tab」的割裂。
+     */
+    private String[] groupLabels() {
+        try {
+            return GenreLabels.forApiPath(JAViewer.getDataSource().apiPath);
+        } catch (Throwable e) {
+            return GenreLabels.JA;
+        }
     }
 
     private void retry(final int attempt) {

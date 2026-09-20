@@ -24,8 +24,8 @@ android {
         applicationId "io.github.javiewer"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 23
-        versionName "2.5.2"
+        versionCode 24
+        versionName "2.5.3"
     }
     buildTypes {
         release {
@@ -72,4 +72,6 @@ dependencies {
     implementation 'jp.wasabeef:recyclerview-animators:4.0.2'
 
     testImplementation 'junit:junit:4.13.2'
+    // 单测里要真正解析 JSON，Android SDK 自带的 org.json 是只会抛异常的 stub
+    testImplementation 'org.json:json:20240303'
 }
