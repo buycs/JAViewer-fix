@@ -92,7 +92,7 @@ public class ActressDetail {
      * 资料胶囊的文案，按展示顺序返回。
      *
      * <p>命名规则：值本身就能说明是什么的（日期、星座、血型、身高）不加标签，
-     * 光看值看不出含义的（三围的 B/W/H 缩写、地名、爱好）带上短标签。
+     * 光看值看不出含义的（胸腰臀、地名、爱好）带上短标签。
      * 没有的属性不会出现在列表里，调用方直接逐条渲染即可。
      */
     public List<String> buildChips() {
@@ -105,7 +105,7 @@ public class ActressDetail {
         if (!height.isEmpty()) {
             addIfPresent(chips, height + "cm");
         }
-        addIfPresent(chips, buildMeasurementChip());
+        chips.addAll(buildMeasurementChips());
         if (!hometown.isEmpty()) {
             addIfPresent(chips, "出生地 " + hometown);
         }
@@ -115,28 +115,24 @@ public class ActressDetail {
         return chips;
     }
 
-    /** 三围摘要，如 {@code B88(D) W59 H85}；只有部分数据时只拼出已有的那几项。 */
-    public String buildMeasurement() {
-        List<String> parts = new ArrayList<>();
+    /**
+     * 三围胶囊：胸围 / 腰围 / 臀围 各占一枚，逐项标注。
+     *
+     * <p>不用「三围」一个词概括——那样后面跟着一串 B/W/H 缩写，认不出哪个是哪个。
+     * 接口没给的项不会出现在列表里。
+     */
+    public List<String> buildMeasurementChips() {
+        List<String> chips = new ArrayList<>();
         if (!bust.isEmpty()) {
-            parts.add("B" + bust + (cup.isEmpty() ? "" : "(" + cup + ")"));
+            chips.add("胸围 " + bust + (cup.isEmpty() ? "" : "(" + cup + ")"));
         }
         if (!waist.isEmpty()) {
-            parts.add("W" + waist);
+            chips.add("腰围 " + waist);
         }
         if (!hip.isEmpty()) {
-            parts.add("H" + hip);
+            chips.add("臀围 " + hip);
         }
-        return join(parts, " ");
-    }
-
-    /**
-     * 带「三围」标签的三围，给胶囊用：{@code 三围 B88(D) W59 H85}。
-     * 光看 B/W/H 缩写认不出是什么，所以这里必须把标签补上。
-     */
-    public String buildMeasurementChip() {
-        String measurement = buildMeasurement();
-        return measurement.isEmpty() ? "" : "三围 " + measurement;
+        return chips;
     }
 
     /**

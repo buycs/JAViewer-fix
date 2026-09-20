@@ -61,14 +61,16 @@ public class ActressDetailTest {
         assertEquals("最近发布 2026-09-19", detail.buildReleaseLine());
     }
 
-    /** 三围必须带标签 —— 光看 B/W/H 缩写认不出是什么，这是用户明确提的要求。 */
+    /** 胸 / 腰 / 臀 各占一枚胶囊，逐项标注 —— 不要用「三围」一个词概括。 */
     @Test
-    public void measurementChipIsLabeled() {
-        assertEquals("B88(D) W59 H85", hatano().buildMeasurement());
-        assertEquals("三围 B88(D) W59 H85", hatano().buildMeasurementChip());
+    public void measurementIsSplitIntoChestWaistHipChips() {
+        assertEquals(
+                Arrays.asList("胸围 88(D)", "腰围 59", "臀围 85"),
+                hatano().buildMeasurementChips()
+        );
     }
 
-    /** 日期 / 星座 / 血型 / 身高值本身就能说明是什么，不加标签；地名与爱好要加。 */
+    /** 日期 / 星座 / 血型 / 身高值本身就能说明是什么，不加标签；胸腰臀、地名与爱好要加。 */
     @Test
     public void chipsContainEveryFieldInOrder() {
         assertEquals(
@@ -77,7 +79,9 @@ public class ActressDetailTest {
                         "双子座",
                         "A型",
                         "163cm",
-                        "三围 B88(D) W59 H85",
+                        "胸围 88(D)",
+                        "腰围 59",
+                        "臀围 85",
                         "出生地 京都府",
                         "爱好 ゲーム"
                 ),
@@ -118,18 +122,17 @@ public class ActressDetailTest {
         ActressDetail detail = new ActressDetail();
         detail.bust = "88";
 
-        assertEquals("B88", detail.buildMeasurement());
-        assertEquals("三围 B88", detail.buildMeasurementChip());
+        assertEquals(Collections.singletonList("胸围 88"), detail.buildMeasurementChips());
     }
 
-    /** 只有腰围时也照样成立，不会留下多余空格。 */
+    /** 只有腰围和臀围时也照样成立，不会产出空的胸围胶囊。 */
     @Test
     public void measurementDropsMissingParts() {
         ActressDetail detail = new ActressDetail();
         detail.waist = "60";
         detail.hip = "89";
 
-        assertEquals("W60 H89", detail.buildMeasurement());
+        assertEquals(Arrays.asList("腰围 60", "臀围 89"), detail.buildMeasurementChips());
     }
 
     /** 血型字段本身带「型」时不要重复拼接。 */
@@ -148,8 +151,7 @@ public class ActressDetailTest {
 
         assertEquals("", detail.buildCountLine());
         assertEquals("", detail.buildReleaseLine());
-        assertEquals("", detail.buildMeasurement());
-        assertEquals("", detail.buildMeasurementChip());
+        assertEquals(Collections.emptyList(), detail.buildMeasurementChips());
         assertEquals(Collections.emptyList(), detail.buildChips());
     }
 }
