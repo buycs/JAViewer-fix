@@ -50,7 +50,8 @@ public class AVMOProvider {
                     Actress.create(
                             item.optString("starName", ""),
                             item.optString("avatarUrl", ""),
-                            item.optString("starId", "")
+                            item.optString("starId", ""),
+                            item.optInt("movieCount", 0)
                     )
             );
         }

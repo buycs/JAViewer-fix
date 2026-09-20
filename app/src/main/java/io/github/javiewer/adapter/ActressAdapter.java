@@ -64,6 +64,8 @@ public class ActressAdapter extends ItemAdapter<Actress, ActressAdapter.ViewHold
 
         public TextView mTextName;
 
+        public TextView mTextMovieCount;
+
         public ImageView mImage;
 
         public View mLayout;
@@ -72,6 +74,7 @@ public class ActressAdapter extends ItemAdapter<Actress, ActressAdapter.ViewHold
             super(view);
 
             mTextName = view.findViewById(R.id.actress_name);
+            mTextMovieCount = view.findViewById(R.id.actress_movie_count);
             mImage = view.findViewById(R.id.actress_img);
             mLayout = view.findViewById(R.id.layout_actress);
         }
@@ -79,6 +82,16 @@ public class ActressAdapter extends ItemAdapter<Actress, ActressAdapter.ViewHold
         public void parse(Actress actress) {
             mTextName.setText(actress.getName());
             mTextName.setSelected(true);
+
+            // 数量未知时不显示，避免旧收藏数据出现「0 部」
+            int count = actress.getMovieCount();
+            if (count > 0) {
+                mTextMovieCount.setText(count + " 部");
+                mTextMovieCount.setVisibility(View.VISIBLE);
+            } else {
+                mTextMovieCount.setText("");
+                mTextMovieCount.setVisibility(View.GONE);
+            }
         }
     }
 }

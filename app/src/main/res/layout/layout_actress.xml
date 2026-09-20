@@ -15,16 +15,38 @@
         android:scaleType="centerCrop"
         android:src="@drawable/ic_movie_actresses" />
 
-    <TextView
-        android:id="@+id/actress_name"
+    <!--
+        名字与作品数量放在同一个横向 LinearLayout 里：名字用 weight 占据剩余宽度，
+        数量隐藏时名字会自动撑满，不会像 RelativeLayout 的 GONE 锚点那样被压成 0 宽。
+    -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginLeft="72dp"
-        android:ellipsize="marquee"
-        android:singleLine="true"
-        android:text="这里是名称"
-        android:textSize="16sp" />
+        android:layout_marginRight="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/actress_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:text="这里是名称"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/actress_movie_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
