@@ -43,8 +43,8 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
         final TorrentGroup group = groups.get(position);
 
         holder.torrentName.setText(group.torrentName);
-        holder.torrentDate.setText(group.date != null ? group.date : "");
-        holder.torrentSize.setText(MagnetFiles.formatSize(group.totalSize));
+        bindMeta(holder.torrentDate, group.date);
+        bindMeta(holder.torrentSize, MagnetFiles.formatSize(group.totalSize));
         holder.expandIndicator.setText(group.expanded ? "▼" : "▶");
 
         holder.filesContainer.setVisibility(group.expanded ? View.VISIBLE : View.GONE);
@@ -102,6 +102,13 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
     @Override
     public int getItemCount() {
         return groups == null ? 0 : groups.size();
+    }
+
+    /** 值为空时隐藏该 TextView，避免「日期 + 大小」这一行留下多余空白。 */
+    private static void bindMeta(TextView view, String value) {
+        boolean empty = value == null || value.trim().isEmpty();
+        view.setText(empty ? "" : value);
+        view.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

@@ -61,6 +61,8 @@
                             android:id="@+id/torrent_date"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:layout_marginRight="12dp"
                             android:textSize="14sp"
                             android:textColor="?android:textColorSecondary" />
 
@@ -68,8 +70,6 @@
                             android:id="@+id/torrent_size"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_marginLeft="12dp"
                             android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>

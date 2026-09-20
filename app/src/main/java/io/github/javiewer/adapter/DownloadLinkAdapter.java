@@ -153,7 +153,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                                         String date = provider.parseDate(html);
                                         if (date != null && !date.isEmpty()) {
                                             link.setDate(date);
-                                            holder.torrentDate.setText(date);
+                                            holder.setDate(date);
                                         }
                                     }
                                 } catch (Exception ignored) {
@@ -214,7 +214,7 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
                                     String date = provider.parseDate(html);
                                     if (date != null && !date.isEmpty()) {
                                         link.setDate(date);
-                                        holder.torrentDate.setText(date);
+                                        holder.setDate(date);
                                     }
                                 }
 
@@ -330,9 +330,25 @@ public class DownloadLinkAdapter extends ItemAdapter<DownloadLink, DownloadLinkA
         }
 
         public void parse(DownloadLink link) {
-            torrentSize.setText(link.getSize());
             torrentName.setText(link.getTitle());
-            torrentDate.setText(link.getDate());
+            setDate(link.getDate());
+            setSize(link.getSize());
+        }
+
+        /** 日期为空时隐藏，否则「日期 + 大小」这一行会多出一段空白，和别的源对不齐。 */
+        public void setDate(String date) {
+            bindMeta(torrentDate, date);
+        }
+
+        /** 大小为空时同样隐藏。 */
+        public void setSize(String size) {
+            bindMeta(torrentSize, size);
+        }
+
+        private static void bindMeta(TextView view, String value) {
+            boolean empty = value == null || value.trim().isEmpty();
+            view.setText(empty ? "" : value);
+            view.setVisibility(empty ? View.GONE : View.VISIBLE);
         }
     }
 }
