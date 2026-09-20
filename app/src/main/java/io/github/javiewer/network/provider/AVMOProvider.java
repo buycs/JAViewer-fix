@@ -10,10 +10,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import io.github.javiewer.adapter.item.Actress;
+import io.github.javiewer.adapter.item.ActressDetail;
 import io.github.javiewer.adapter.item.Genre;
 import io.github.javiewer.adapter.item.Movie;
 import io.github.javiewer.adapter.item.MovieDetail;
 import io.github.javiewer.adapter.item.Screenshot;
+import io.github.javiewer.util.JsonText;
 
 public class AVMOProvider {
 
@@ -57,6 +59,51 @@ public class AVMOProvider {
         }
 
         return actresses;
+    }
+
+    /**
+     * 解析 {@code getStar} 的响应，得到单个女优的完整资料。
+     *
+     * <p>三个数据源的字段丰俭不同：骑兵有生日 / 血型 / 三围，步兵与欧美没有，
+     * 且它们的 {@code size} 是空数组而非对象（{@code optJSONObject} 会返回 null，已做保护）。
+     * 可选字段还可能是显式 null，必须走 {@link JsonText#clean}，否则界面上会出现「出生地 null」。
+     *
+     * @return 解析结果；响应里没有 data（例如 starId 不存在）时返回 null
+     */
+    public static ActressDetail parseStarDetail(String json) throws Exception {
+        JSONObject obj = new JSONObject(json);
+        JSONObject data = obj.optJSONObject("data");
+        if (data == null) {
+            return null;
+        }
+
+        ActressDetail detail = new ActressDetail();
+        detail.name = optText(data, "starName");
+        detail.avatarUrl = optText(data, "avatarUrl");
+        detail.movieCount = data.optInt("movieCount", 0);
+        detail.downloadMovieCount = data.optInt("downloadMovieCount", 0);
+        detail.birthday = optText(data, "birthday");
+        detail.constellation = data.optInt("constellation", 0);
+        detail.bloodType = optText(data, "bloodType");
+        detail.hometown = optText(data, "hometown");
+        detail.hobby = optText(data, "hobby");
+        detail.lastReleaseDate = optText(data, "lastReleaseDate");
+
+        JSONObject size = data.optJSONObject("size");
+        if (size != null) {
+            detail.height = optText(size, "T");
+            detail.bust = optText(size, "B");
+            detail.cup = optText(size, "C");
+            detail.waist = optText(size, "W");
+            detail.hip = optText(size, "H");
+        }
+
+        return detail;
+    }
+
+    /** 读文本字段，并把显式 null 归一成空串。 */
+    private static String optText(JSONObject obj, String key) {
+        return JsonText.clean(obj.optString(key, ""));
     }
 
     public static MovieDetail parseMoviesDetail(String json) throws Exception {

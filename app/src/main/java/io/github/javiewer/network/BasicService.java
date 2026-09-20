@@ -18,6 +18,13 @@ public interface BasicService {
     @POST("getStars")
     Call<ResponseBody> getStars(@Body List<Object> params);
 
+    /**
+     * 取单个女优的完整资料，参数为 {@code [starId]}。
+     * 与 {@link #getStars}（列表）不同，这个接口返回生日、三围、出生地等详情字段。
+     */
+    @POST("getStar")
+    Call<ResponseBody> getStar(@Body List<Object> params);
+
     @POST("getGenres")
     Call<ResponseBody> getGenres(@Body List<Object> params);
 

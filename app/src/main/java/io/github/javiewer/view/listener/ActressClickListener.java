@@ -30,6 +30,8 @@ public class ActressClickListener implements View.OnClickListener {
             bundle.putString("title", actress.getName() + " 的作品");
             bundle.putString("link", actress.getLink());
             bundle.putString("action", "star");
+            // 带上对象本身，「女优的作品」页顶部的信息栏就能先渲染出名称、头像与作品数，不用等接口
+            bundle.putSerializable("actress", actress);
 
             intent.putExtras(bundle);
 
