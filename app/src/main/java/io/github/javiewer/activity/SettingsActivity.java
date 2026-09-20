@@ -44,6 +44,7 @@ import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.DataSource;
 import io.github.javiewer.util.FavouriteBackup;
 import io.github.javiewer.util.IOUtils;
+import io.github.javiewer.util.MarkdownUtil;
 import io.github.javiewer.util.ThemeHelper;
 import io.github.javiewer.util.VersionUtil;
 import okhttp3.Cache;
@@ -397,9 +398,15 @@ public class SettingsActivity extends SecureActivity {
                             "已是最新版本 " + BuildConfig.VERSION_NAME, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                String message = remote.changelog.isEmpty()
-                        ? "点击「打开」前往下载页"
-                        : remote.changelog;
+                CharSequence message;
+                if (remote.changelog.isEmpty()) {
+                    message = "点击「打开」前往下载页";
+                } else {
+                    // changelog 是 Markdown，先转成 HTML 再交给 HtmlCompat 渲染，
+                    // 否则 **粗体** 会按原文显示
+                    message = HtmlCompat.fromHtml(MarkdownUtil.toHtml(remote.changelog),
+                            HtmlCompat.FROM_HTML_MODE_LEGACY);
+                }
                 new AlertDialog.Builder(requireContext())
                         .setTitle("发现新版本 " + remote.displayVersion())
                         .setMessage(message)
