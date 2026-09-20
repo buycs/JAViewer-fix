@@ -1,6 +1,6 @@
 # JAViewer-fix
 
-基于 [SplashCodes/JAViewer](https://github.com/SplashCodes/JAViewer) 二次开发的 Android 影片元数据浏览器（质感设计），修复原项目问题并适配新版 Android。当前版本 **2.5.0 (21)**。
+基于 [SplashCodes/JAViewer](https://github.com/SplashCodes/JAViewer) 二次开发的 Android 影片元数据浏览器（质感设计），修复原项目问题并适配新版 Android。
 
 只浏览公开数据源的元数据（封面、详情、演员、分类、磁力链接），**不提供应用内播放**。功能：多数据源浏览与搜索（含历史记录）、影片 / 演员收藏与导入导出、截图画廊、多磁力源复制链接、主题与最近任务隐藏设置。
 
@@ -13,6 +13,8 @@ JDK 17 + Android SDK（compileSdk 35），最低运行 Android 5.0 (API 21)。
 ```
 
 产物在 `app/build/outputs/apk/`。Release 暂用 debug 签名便于直接安装；数据源配置在 `app/src/main/assets/properties.json`。
+
+> **发版注意**：`properties.json` 有两个用途 —— 一是打包进 APK，二是「检查更新」运行时从本仓库 `master` 分支的 raw 地址读取（不走 GitHub API，避免未认证限流）。所以升版本时必须同步改它的 `latest_version`、`latest_version_code`（保持字符串）和 `changelog`，否则老版本检测不到更新。
 
 ## 免责声明
 
