@@ -2,6 +2,8 @@ package io.github.javiewer.adapter.item;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 女优详情，用于「女优的作品」列表页顶部的信息栏。
@@ -20,6 +22,8 @@ public class ActressDetail {
     /**
      * {@code constellation} 的数字编码：1 白羊座 … 12 双鱼座。
      * 0 表示未设置（用 480 条线上样本核对过：例如 1988-05-24 → 3 双子座，1988-02-21 → 12 双鱼座）。
+     *
+     * <p>有生日时**不用**这个字段，改用 {@link #zodiacOf} 推算 —— 它只在没生日时兜底。
      */
     private static final String[] CONSTELLATIONS = {
             "",
@@ -131,6 +135,80 @@ public class ActressDetail {
     }
 
     /**
+     * 星座档位：每项是「该星座起始的 月*100+日」，按月份升序，{@link #ZODIAC_NAMES} 与之同下标。
+     *
+     * <p>档位表从 1/20 起、**不含 12/22 之后的跨年处理**：1 月 1~19 日属摩羯座，
+     * 而摩羯在表里排在末尾，所以靠 {@link #zodiacOf} 里「比第一档还早就回绕到末档」
+     * 这一条特判兜住 —— 别以为漏了一档。
+     */
+    private static final int[] ZODIAC_FROM_MONTH_DAY = {
+            120,   // 水瓶座 1/20
+            219,   // 双鱼座 2/19
+            321,   // 白羊座 3/21
+            420,   // 金牛座 4/20
+            521,   // 双子座 5/21
+            622,   // 巨蟹座 6/22
+            723,   // 狮子座 7/23
+            823,   // 处女座 8/23
+            923,   // 天秤座 9/23
+            1024,  // 天蝎座 10/24
+            1123,  // 射手座 11/23
+            1222   // 摩羯座 12/22
+    };
+
+    /** 与 {@link #ZODIAC_FROM_MONTH_DAY} 同下标。 */
+    private static final String[] ZODIAC_NAMES = {
+            "水瓶座", "双鱼座", "白羊座", "金牛座", "双子座", "巨蟹座",
+            "狮子座", "处女座", "天秤座", "天蝎座", "射手座", "摩羯座"
+    };
+
+    /** 生日形如 {@code 1988-05-24}；月、日允许不补零。 */
+    private static final Pattern BIRTHDAY_PATTERN =
+            Pattern.compile("^\\s*(\\d{4})-(\\d{1,2})-(\\d{1,2})\\s*$");
+
+    /**
+     * 由生日推算星座；没有生日或格式不对时返回空串。
+     *
+     * <p>**优先用它、而不是接口的 {@code constellation} 字段**：那个字段覆盖率极低
+     * （480 条样本里只有个位数非零，且非零的全都同时有生日 —— 相对生日是零增量信息），
+     * 还出现过与自身生日矛盾的值（{@code 1987-05-25} 给 4 = 巨蟹座，应为双子座）。
+     * 由生日推则与界面上显示的生日必然自洽。
+     *
+     * <p>边界日按通行的「起始日含在内」处理：1/19 摩羯、1/20 水瓶，2/18 水瓶、2/19 双鱼，
+     * 以此类推。minSdk 21 且没开 core library desugaring，所以只做整数比较，不引 {@code java.time}。
+     */
+    public static String zodiacOf(String birthday) {
+        if (birthday == null) {
+            return "";
+        }
+        Matcher matched = BIRTHDAY_PATTERN.matcher(birthday);
+        if (!matched.matches()) {
+            return "";
+        }
+        int month;
+        int day;
+        try {
+            month = Integer.parseInt(matched.group(2));
+            day = Integer.parseInt(matched.group(3));
+        } catch (NumberFormatException e) {
+            return "";
+        }
+        if (month < 1 || month > 12 || day < 1 || day > 31) {
+            return "";
+        }
+
+        int monthDay = month * 100 + day;
+        int index = -1;
+        for (int i = 0; i < ZODIAC_FROM_MONTH_DAY.length; i++) {
+            if (monthDay >= ZODIAC_FROM_MONTH_DAY[i]) {
+                index = i;
+            }
+        }
+        // 1/1~1/19 落在第一档之前，回绕到末档摩羯座。
+        return ZODIAC_NAMES[index < 0 ? ZODIAC_NAMES.length - 1 : index];
+    }
+
+    /**
      * 作品数胶囊：{@code 作品数 | 4617 部 · 可下载 2433}。
      *
      * <p>可下载数是总数的子集，并成一项写；拆成两枚胶囊会让它们看起来是两回事。
@@ -160,7 +238,11 @@ public class ActressDetail {
     public List<Chip> buildChips() {
         List<Chip> chips = new ArrayList<>();
         addIfPresent(chips, LABEL_BIRTHDAY, birthday);
-        addIfPresent(chips, LABEL_CONSTELLATION, constellationName(constellation));
+        // 星座优先由生日推算；没有生日时才退回接口字段 ——
+        // 步兵 / 欧美两源都没有生日，那时接口字段就是唯一来源。
+        String zodiac = zodiacOf(birthday);
+        addIfPresent(chips, LABEL_CONSTELLATION,
+                zodiac.isEmpty() ? constellationName(constellation) : zodiac);
         if (!bloodType.isEmpty()) {
             addIfPresent(chips, LABEL_BLOOD_TYPE, bloodType.endsWith("型") ? bloodType : bloodType + "型");
         }

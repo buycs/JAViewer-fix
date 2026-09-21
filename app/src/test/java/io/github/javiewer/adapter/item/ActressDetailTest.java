@@ -61,6 +61,74 @@ public class ActressDetailTest {
         assertEquals("", ActressDetail.constellationName(13));
     }
 
+    /** 每个星座的起始日都算对，前一天归上一个星座（边界日含在起始侧）。 */
+    @Test
+    public void zodiacOfMapsEachBoundaryDay() {
+        assertEquals("摩羯座", ActressDetail.zodiacOf("1988-01-19"));
+        assertEquals("水瓶座", ActressDetail.zodiacOf("1988-01-20"));
+        assertEquals("水瓶座", ActressDetail.zodiacOf("1988-02-18"));
+        assertEquals("双鱼座", ActressDetail.zodiacOf("1988-02-19"));
+        assertEquals("双鱼座", ActressDetail.zodiacOf("1988-03-20"));
+        assertEquals("白羊座", ActressDetail.zodiacOf("1988-03-21"));
+        assertEquals("金牛座", ActressDetail.zodiacOf("1988-04-20"));
+        assertEquals("双子座", ActressDetail.zodiacOf("1988-05-21"));
+        assertEquals("巨蟹座", ActressDetail.zodiacOf("1988-06-22"));
+        assertEquals("狮子座", ActressDetail.zodiacOf("1988-07-23"));
+        assertEquals("处女座", ActressDetail.zodiacOf("1988-08-23"));
+        assertEquals("天秤座", ActressDetail.zodiacOf("1988-09-23"));
+        assertEquals("天蝎座", ActressDetail.zodiacOf("1988-10-24"));
+        assertEquals("射手座", ActressDetail.zodiacOf("1988-11-23"));
+        assertEquals("摩羯座", ActressDetail.zodiacOf("1988-12-22"));
+        assertEquals("摩羯座", ActressDetail.zodiacOf("1988-12-31"));
+    }
+
+    /** 1/1~1/19 落在档位表第一项之前，要回绕到末档摩羯座，别越界。 */
+    @Test
+    public void zodiacOfWrapsEarlyJanuaryToCapricorn() {
+        assertEquals("摩羯座", ActressDetail.zodiacOf("2000-01-01"));
+        assertEquals("摩羯座", ActressDetail.zodiacOf("2000-01-15"));
+    }
+
+    /** 月、日不补零也能解析 —— 接口偶尔给 {@code 1988-5-4} 这种。 */
+    @Test
+    public void zodiacOfAcceptsUnpaddedDate() {
+        assertEquals("双子座", ActressDetail.zodiacOf("1988-5-24"));
+    }
+
+    /** 没有生日、或格式认不出时返回空串，不抛异常。 */
+    @Test
+    public void zodiacOfRejectsBadInput() {
+        assertEquals("", ActressDetail.zodiacOf(null));
+        assertEquals("", ActressDetail.zodiacOf(""));
+        assertEquals("", ActressDetail.zodiacOf("1988"));
+        assertEquals("", ActressDetail.zodiacOf("1988/05/24"));
+        assertEquals("", ActressDetail.zodiacOf("1988-13-01"));
+        assertEquals("", ActressDetail.zodiacOf("1988-05-32"));
+        assertEquals("", ActressDetail.zodiacOf("abcdefghij"));
+    }
+
+    /**
+     * 有生日时以生日推算为准，**压过接口的 constellation 字段** ——
+     * 线上抓到过 {@code 1987-05-25} 配 4（巨蟹座）的自相矛盾样本，应为双子座。
+     */
+    @Test
+    public void zodiacPrefersBirthdayOverApiField() {
+        ActressDetail detail = new ActressDetail();
+        detail.birthday = "1987-05-25";
+        detail.constellation = 4;
+
+        assertTrue(detail.buildChips().contains(chip("星座", "双子座")));
+    }
+
+    /** 没有生日时才退回接口字段（步兵 / 欧美两源都没有生日）。 */
+    @Test
+    public void zodiacFallsBackToApiFieldWithoutBirthday() {
+        ActressDetail detail = new ActressDetail();
+        detail.constellation = 9;
+
+        assertEquals(Collections.singletonList(chip("星座", "射手座")), detail.buildChips());
+    }
+
     @Test
     public void buildsCountAndReleaseChips() {
         ActressDetail detail = hatano();
