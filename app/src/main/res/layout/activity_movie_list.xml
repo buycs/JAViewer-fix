@@ -5,10 +5,109 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
+    <!--
+        与影片详情页同一套收起机制：AppBarLayout 下只放一个 CollapsingToolbarLayout，
+        它带 scroll|exitUntilCollapsed 整体收缩到工具栏高度；
+        女优信息栏是 parallax 内容随列表滚出，工具栏 pin 住不动。
+        material 1.12.0 计算滚动区间时遇到无 scroll 标志的孩子就停止累加，
+        所以不能再把 Toolbar 作为 AppBarLayout 的平级孩子。
+    -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/movie_list_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:background="?attr/colorSurface">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/movie_list_toolbar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:contentScrim="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:titleEnabled="false"
+            app:toolbarId="@+id/toolbar">
+
+            <!--
+                女优信息栏：marginTop 让出顶部工具栏的位置（工具栏叠在 CTL 顶部）。
+                仅「女优的作品」页（action == "star"）显示，其余入口隐藏；
+                隐藏后 CTL 高度只剩工具栏，滚动区间为 0，列表页表现和原来一致。
+                这里不能用 include：include 标签上的 layout_* 属性会覆盖被包含根节点的属性。
+            -->
+            <LinearLayout
+                android:id="@+id/actress_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="?attr/actionBarSize"
+                android:orientation="vertical"
+                android:visibility="gone"
+                app:layout_collapseMode="parallax">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingRight="16dp">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/actress_header_avatar"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center_vertical"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_movie_actresses" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginLeft="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/actress_header_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="marquee"
+                            android:singleLine="true"
+                            android:textColor="?android:textColorPrimary"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/actress_header_count"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:textColor="?android:textColorPrimary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/actress_header_release"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:textColor="?android:textColorSecondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <com.wefika.flowlayout.FlowLayout
+                    android:id="@+id/actress_header_chips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="10dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/colorDivider" />
+            </LinearLayout>
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -16,34 +115,17 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorPrimary"
                 android:minHeight="?attr/actionBarSize"
+                android:theme="@style/AppTheme.AppBarOverlay"
+                app:layout_collapseMode="pin"
                 app:popupTheme="@style/AppTheme.PopupOverlay" />
 
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!--
-        纵向排列：顶部是女优信息栏（默认隐藏，仅「女优的作品」页显示），
-        下面才是影片列表的容器。信息栏固定不滚动，翻作品时资料一直可见。
-    -->
-    <LinearLayout
-        android:id="@+id/content_query"
+    <FrameLayout
+        android:id="@+id/content_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <include
-            android:id="@+id/actress_header"
-            layout="@layout/layout_actress_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
-
-        <FrameLayout
-            android:id="@+id/content_fragment"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-    </LinearLayout>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

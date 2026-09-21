@@ -69,8 +69,6 @@ public class MovieListActivity extends SecureActivity {
         getSupportActionBar().setTitle(bundle.getString("title"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setElevation(0);
-        View appBar = toolbar.getParent() instanceof AppBarLayout ? (View) toolbar.getParent() : toolbar;
-        appBar.setPadding(appBar.getPaddingLeft(), 0, appBar.getPaddingRight(), appBar.getPaddingBottom());
 
         mActressHeader = findViewById(R.id.actress_header);
 
@@ -152,7 +150,6 @@ public class MovieListActivity extends SecureActivity {
         if (mActressHeader == null) {
             return;
         }
-
         TextView name = mActressHeader.findViewById(R.id.actress_header_name);
         name.setText(detail.name);
         // marquee 需要 selected 才会滚动，长名字才不至于被截断
@@ -170,6 +167,18 @@ public class MovieListActivity extends SecureActivity {
                     .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .dontAnimate()
                     .into(avatar);
+        }
+
+        // 异步补到的资料会改变信息栏高度，AppBarLayout 可能停在半收起、
+        // 把 CTL 的 contentScrim 刷到信息栏上；布局完成后展开一次复位。
+        final AppBarLayout appBar = findViewById(R.id.movie_list_app_bar);
+        if (appBar != null) {
+            mActressHeader.post(new Runnable() {
+                @Override
+                public void run() {
+                    appBar.setExpanded(true, false);
+                }
+            });
         }
     }
 
