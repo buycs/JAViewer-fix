@@ -155,8 +155,8 @@ public class MovieListActivity extends SecureActivity {
         // marquee 需要 selected 才会滚动，长名字才不至于被截断
         name.setSelected(true);
 
-        bindHeaderLine(mActressHeader.findViewById(R.id.actress_header_count), detail.buildCountLine());
-        bindHeaderLine(mActressHeader.findViewById(R.id.actress_header_release), detail.buildReleaseLine());
+        bindChip(mActressHeader.findViewById(R.id.actress_header_count), detail.buildCountChip());
+        bindChip(mActressHeader.findViewById(R.id.actress_header_release), detail.buildReleaseChip());
         bindMetaChips(detail.buildChips());
 
         if (!detail.avatarUrl.isEmpty()) {
@@ -183,27 +183,34 @@ public class MovieListActivity extends SecureActivity {
     }
 
     /**
-     * 逐枚渲染属性胶囊。接口没给的字段不会出现在 labels 里，所以这里不用再做判空；
+     * 逐枚渲染资料胶囊。接口没给的字段不会出现在 chips 里，所以这里不用再做判空；
      * 一个字段都没有时整块隐藏，免得留一片空白。
      */
-    private void bindMetaChips(List<String> labels) {
-        FlowLayout chips = mActressHeader.findViewById(R.id.actress_header_chips);
-        chips.removeAllViews();
-        chips.setVisibility(labels.isEmpty() ? View.GONE : View.VISIBLE);
+    private void bindMetaChips(List<ActressDetail.Chip> chips) {
+        FlowLayout container = mActressHeader.findViewById(R.id.actress_header_chips);
+        container.removeAllViews();
+        container.setVisibility(chips.isEmpty() ? View.GONE : View.VISIBLE);
 
         LayoutInflater inflater = LayoutInflater.from(this);
-        for (String label : labels) {
-            View chip = inflater.inflate(R.layout.chip_actress_meta, chips, false);
-            ((TextView) chip.findViewById(R.id.chip_actress_meta)).setText(label);
-            chips.addView(chip);
+        for (ActressDetail.Chip chip : chips) {
+            View view = inflater.inflate(R.layout.chip_actress_meta, container, false);
+            bindChip(view, chip);
+            container.addView(view);
         }
     }
 
-    /** 内容为空时直接隐藏，免得留一条空行把信息栏撑高。 */
-    private static void bindHeaderLine(TextView view, String text) {
-        boolean empty = text == null || text.isEmpty();
-        view.setText(empty ? "" : text);
-        view.setVisibility(empty ? View.GONE : View.VISIBLE);
+    /**
+     * 把「标签 + 值」写进一枚胶囊，标签与值只是颜色不同、字号相同（见 chip_actress_meta.xml）。
+     * 值为空表示这一项没数据，整枚隐藏，免得留一枚只有标签的空胶囊。
+     */
+    private static void bindChip(View chip, ActressDetail.Chip content) {
+        boolean empty = content.isEmpty();
+        chip.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (empty) {
+            return;
+        }
+        ((TextView) chip.findViewById(R.id.chip_actress_meta_label)).setText(content.label);
+        ((TextView) chip.findViewById(R.id.chip_actress_meta_value)).setText(content.value);
     }
 
     private static String nullToEmpty(String value) {

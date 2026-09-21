@@ -1,26 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    女优资料栏里的一枚属性胶囊。
+    女优资料栏里的一枚属性胶囊，内容是「标签 + 值」。
+
     外层 LinearLayout 只负责和其它胶囊拉开间距 —— FlowLayout 排布时只看子视图自身的尺寸，
-    不会去读 layout_margin，所以间距得靠外层 padding（与既有的 chip_genre.xml 同一套做法）。
+    不会去读 layout_margin，所以间距得靠外层 padding（与既有的 card_genre.xml 同一套做法）。
+
+    标签与值**同一个字号**，区分交给颜色（标签浅、值深）。早先标签用小一号字，
+    而标签必定是中文、值多半是数字，于是每行都出现「中文比数字高一点」的错位。
+
+    这枚布局同时供三处使用：资料栏下方 FlowLayout 里逐枚 inflate 的胶囊，
+    以及头像右侧的「作品数」「最近作品」两行（用 <include> 引入，include 上的
+    android:id 会顶替根节点的 id，调用方直接 findViewById 那个 id 即可）。
+
+    间距一律只放在**上边**（paddingTop 2dp）：
+    - FlowLayout 换行时靠它拉开行距（FlowLayout 不读 layout_margin，只能这样给）；
+    - 头像右侧那两枚胶囊之间也因此有稳定的 2dp。
+    放在下边的话，每枚胶囊下方都多出 2dp，名称到第一枚的距离就和两枚胶囊之间的距离对不上，
+    行距看起来一紧一松。
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:paddingRight="6dp"
-    android:paddingBottom="6dp">
+    android:paddingTop="2dp"
+    android:paddingRight="4dp">
 
-    <TextView
+    <LinearLayout
         android:id="@+id/chip_actress_meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_actress_meta_chip"
-        android:maxLines="1"
-        android:paddingLeft="10dp"
-        android:paddingTop="3dp"
-        android:paddingRight="10dp"
-        android:paddingBottom="3dp"
-        android:textColor="?android:textColorSecondary"
-        android:textSize="12sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="8dp"
+        android:paddingTop="2dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="2dp">
+
+        <TextView
+            android:id="@+id/chip_actress_meta_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/chip_actress_meta_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_marginStart="4dp"
+            android:maxLines="1"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="12sp" />
+    </LinearLayout>
 
 </LinearLayout>

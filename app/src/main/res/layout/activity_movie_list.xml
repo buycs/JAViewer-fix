@@ -42,65 +42,81 @@
                 android:visibility="gone"
                 app:layout_collapseMode="parallax">
 
+                <!--
+                    头像右侧的三行整体与头像等高对齐（参照 JavCinema 的女优资料页表头）：
+                    名称 + 「作品数」「最近作品」两枚胶囊。
+                    胶囊自带 2dp 上间距（见 chip_actress_meta.xml），所以这里 marginTop 给 2dp
+                    —— 合成 4dp 的行距，三行之间处处一样。头像取 72dp 就是照这三行的高度定的，
+                    改字号 / 行距时要连它一起调。
+                -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:paddingLeft="16dp"
-                    android:paddingTop="14dp"
+                    android:paddingTop="16dp"
                     android:paddingRight="16dp">
 
                     <de.hdodenhof.circleimageview.CircleImageView
                         android:id="@+id/actress_header_avatar"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:layout_gravity="center_vertical"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:layout_gravity="top"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_movie_actresses" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginLeft="14dp"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginLeft="12dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
+                        <!--
+                            paddingStart 取 8dp 与胶囊内文字的左边距一致，
+                            三行的左边缘才是一条直线。
+                        -->
                         <TextView
                             android:id="@+id/actress_header_name"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ellipsize="marquee"
+                            android:paddingStart="8dp"
+                            android:paddingLeft="8dp"
                             android:singleLine="true"
                             android:textColor="?android:textColorPrimary"
-                            android:textSize="17sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <TextView
+                        <include
                             android:id="@+id/actress_header_count"
-                            android:layout_width="match_parent"
+                            layout="@layout/chip_actress_meta"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:textColor="?android:textColorPrimary"
-                            android:textSize="13sp" />
+                            android:layout_marginTop="2dp" />
 
-                        <TextView
+                        <include
                             android:id="@+id/actress_header_release"
-                            android:layout_width="match_parent"
+                            layout="@layout/chip_actress_meta"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:textColor="?android:textColorSecondary"
-                            android:textSize="12sp" />
+                            android:layout_marginTop="2dp" />
                     </LinearLayout>
                 </LinearLayout>
 
+                <!--
+                    marginTop 4dp 同样是在补胶囊自带的 2dp 上间距，视觉上距上方三行 6dp。
+                    paddingRight 比左边的 16dp 少 4dp：胶囊外层自带 4dp 右间距，
+                    补掉之后最后一枚胶囊距右边缘同样是 16dp。
+                -->
                 <com.wefika.flowlayout.FlowLayout
                     android:id="@+id/actress_header_chips"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:paddingLeft="16dp"
-                    android:paddingRight="10dp" />
+                    android:paddingRight="12dp" />
 
                 <View
                     android:layout_width="match_parent"
