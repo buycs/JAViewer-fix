@@ -14,8 +14,6 @@ JDK 17 + Android SDK（compileSdk 35），最低运行 Android 5.0 (API 21)。
 
 产物在 `app/build/outputs/apk/`。Release 暂用 debug 签名便于直接安装；数据源配置在 `app/src/main/assets/properties.json`。
 
-> **发版注意**：`properties.json` 有两个用途 —— 一是打包进 APK，二是「检查更新」运行时从本仓库 `master` 分支的 raw 地址读取（不走 GitHub API，避免未认证限流）。所以升版本时必须同步改它的 `latest_version`、`latest_version_code`（保持字符串）和 `changelog`，否则老版本检测不到更新。
-
 ## 免责声明
 
 仅供技术学习与交流，内容均来自互联网公开数据源，请遵守当地法律法规。配置与收藏仅存于应用专属目录，不申请存储权限。
