@@ -1,29 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    类别页的一枚标签卡。外层 LinearLayout 只负责和其它标签拉开间距
+    （FlowLayout 不读 layout_margin，与 chip_actress_meta.xml 同一套做法）。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/card_genre"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:clickable="true"
-    android:foreground="?android:attr/selectableItemBackground"
+    android:padding="4dp">
 
-    app:cardCornerRadius="8dp"
-    app:cardElevation="0dp"
-    app:strokeColor="@color/colorDivider"
-    app:strokeWidth="1dp">
-
-    <TextView
-        android:id="@+id/genre_name"
-        android:layout_width="match_parent"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_genre"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="这里是类别"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackground"
 
-        android:textSize="16sp" />
+        app:cardCornerRadius="6dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/colorDivider"
+        app:strokeWidth="1dp">
 
-</com.google.android.material.card.MaterialCardView>
+        <TextView
+            android:id="@+id/genre_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:paddingLeft="12dp"
+            android:paddingTop="6dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="6dp"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="13sp" />
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

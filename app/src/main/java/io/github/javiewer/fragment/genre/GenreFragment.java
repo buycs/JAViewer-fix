@@ -1,37 +1,33 @@
 package io.github.javiewer.fragment.genre;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
+import com.wefika.flowlayout.FlowLayout;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
-import java.util.Arrays;
-
 import io.github.javiewer.JAViewer;
 import io.github.javiewer.R;
-import io.github.javiewer.adapter.GenreAdapter;
+import io.github.javiewer.activity.MovieListActivity;
 import io.github.javiewer.adapter.item.Genre;
-import io.github.javiewer.view.ViewUtil;
-import io.github.javiewer.view.decoration.GridSpacingItemDecoration;
-import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 
 public class GenreFragment extends Fragment {
 
-    public RecyclerView mRecyclerView;
+    private FlowLayout mFlowLayout;
     protected List<Genre> genres = new ArrayList<>();
-    private RecyclerView.Adapter mAdapter;
-    private StaggeredGridLayoutManager mLayoutManager;
 
     public GenreFragment() {
         // Required empty public constructor
@@ -41,23 +37,42 @@ public class GenreFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_genre_list, container, false);
-        mRecyclerView = view.findViewById(R.id.genre_recycler_view);
+        mFlowLayout = view.findViewById(R.id.genre_flow_layout);
         return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        renderGenres();
+    }
 
-        mRecyclerView.setLayoutManager(mLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
-        mRecyclerView.setAdapter(this.mAdapter = new GenreAdapter(genres, this.getActivity()));
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, ViewUtil.dpToPx(8), true));
-
-        RecyclerView.ItemAnimator animator = new SlideInUpAnimator();
-        animator.setAddDuration(300);
-        mRecyclerView.setItemAnimator(animator);
-
-        this.mAdapter.notifyItemRangeInserted(0, this.mAdapter.getItemCount());
+    /**
+     * 每个标签宽度随文字，FlowLayout 自动换行，替代原来的固定两列网格。
+     */
+    private void renderGenres() {
+        mFlowLayout.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        for (final Genre genre : genres) {
+            View chip = inflater.inflate(R.layout.card_genre, mFlowLayout, false);
+            ((TextView) chip.findViewById(R.id.genre_name)).setText(genre.getName());
+            chip.findViewById(R.id.card_genre).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (genre.getLink() == null || getActivity() == null) {
+                        return;
+                    }
+                    Intent intent = new Intent(getActivity(), MovieListActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString("title", genre.getName());
+                    bundle.putString("link", genre.getLink());
+                    bundle.putString("action", "genre");
+                    intent.putExtras(bundle);
+                    getActivity().startActivity(intent);
+                }
+            });
+            mFlowLayout.addView(chip);
+        }
     }
 
     public Call<ResponseBody> getCall(int page) {
@@ -66,9 +81,5 @@ public class GenreFragment extends Fragment {
 
     public List<Genre> getGenres() {
         return genres;
-    }
-
-    public RecyclerView.Adapter getAdapter() {
-        return mAdapter;
     }
 }

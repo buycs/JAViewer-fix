@@ -2,9 +2,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/genre_recycler_view"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical">
+
+        <!--
+            类别标签按文字长度排布、自动换行，不再固定两列。
+            FlowLayout 排布时不读子 view 的 layout_margin，间距由每个卡片外层的 padding 提供。
+        -->
+        <com.wefika.flowlayout.FlowLayout
+            android:id="@+id/genre_flow_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp" />
+    </androidx.core.widget.NestedScrollView>
 </FrameLayout>
