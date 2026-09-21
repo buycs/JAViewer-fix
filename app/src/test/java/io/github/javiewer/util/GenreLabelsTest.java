@@ -6,7 +6,7 @@ import static org.junit.Assert.assertSame;
 import org.junit.Test;
 
 /**
- * 分组标签的语言选择与 type 映射。
+ * 分组标签的数据源选择与 type 映射。
  */
 public class GenreLabelsTest {
 
@@ -34,18 +34,14 @@ public class GenreLabelsTest {
 
     @Test
     public void typesZeroToSixFollowTheSiteSemantics() {
-        String[] expectedJa = {
-                "テーマ", "キャラクター", "コスチューム", "身体", "性行為", "プレイ", "ジャンル",
+        // 站点 cn 字典 genreTypes：theme/character/costume/body/sexActs/sexPlays/genre
+        String[] expected = {
+                "主题", "角色", "服装", "身体", "性行为", "玩法", "类别",
         };
-        for (int type = 0; type < expectedJa.length; type++) {
-            assertEquals(expectedJa[type], GenreLabels.JAV.at(type));
-            assertEquals(expectedJa[type], GenreLabels.JAVU.at(type));
-        }
-        String[] expectedEn = {
-                "Theme", "Character", "Costume", "Body", "Sex Acts", "Sex Plays", "Genre",
-        };
-        for (int type = 0; type < expectedEn.length; type++) {
-            assertEquals(expectedEn[type], GenreLabels.WAV.at(type));
+        for (int type = 0; type < expected.length; type++) {
+            assertEquals(expected[type], GenreLabels.JAV.at(type));
+            assertEquals(expected[type], GenreLabels.JAVU.at(type));
+            assertEquals(expected[type], GenreLabels.WAV.at(type));
         }
     }
 
@@ -57,18 +53,18 @@ public class GenreLabelsTest {
 
     @Test
     public void javMinusOneFallsBackToOther() {
-        assertEquals("その他", GenreLabels.JAV.at(-1));
-        assertEquals("その他", GenreLabels.JAV.at(8));
-        assertEquals("その他", GenreLabels.JAV.at(99));
+        assertEquals("其他", GenreLabels.JAV.at(-1));
+        assertEquals("其他", GenreLabels.JAV.at(8));
+        assertEquals("其他", GenreLabels.JAV.at(99));
     }
 
     @Test
     public void javuAndWavTypeSevenIsTheFallbackLabel() {
         // 步兵 / 欧美的 type 7 是普通类别（场所 / 节日），没有 AV OPEN 这回事
-        assertEquals("その他", GenreLabels.JAVU.at(7));
-        assertEquals("その他", GenreLabels.JAVU.at(-1));
-        assertEquals("Other", GenreLabels.WAV.at(7));
-        assertEquals("Other", GenreLabels.WAV.at(-1));
+        assertEquals("其他", GenreLabels.JAVU.at(7));
+        assertEquals("其他", GenreLabels.JAVU.at(-1));
+        assertEquals("其他", GenreLabels.WAV.at(7));
+        assertEquals("其他", GenreLabels.WAV.at(-1));
     }
 
     @Test

@@ -30,41 +30,41 @@ public class AVMOProviderGenreTest {
     private static final String JAV_DICT =
             "{\"code\":200,\"data\":{"
                     + "\"-1\":[{\"genreId\":\"oenqmon\",\"genreName\":\"パラダイスTV\",\"type\":-1},"
-                    + "{\"genreId\":\"xparax\",\"genreName\":\"X\",\"type\":-1}],"
-                    + "\"0\":[{\"genreId\":\"gznwzlk\",\"genreName\":\"企画\",\"type\":0}],"
-                    + "\"1\":[{\"genreId\":\"vjkzbkq\",\"genreName\":\"ウェイトレス\",\"type\":1}],"
-                    + "\"2\":[{\"genreId\":\"xlkbqnd\",\"genreName\":\"コスプレ\",\"type\":2}],"
+                    + "{\"genreId\":\"xparax\",\"genreName\":\"DVDトースター\",\"type\":-1}],"
+                    + "\"0\":[{\"genreId\":\"gznwzlk\",\"genreName\":\"企划\",\"type\":0}],"
+                    + "\"1\":[{\"genreId\":\"vjkzbkq\",\"genreName\":\"服务生\",\"type\":1}],"
+                    + "\"2\":[{\"genreId\":\"xlkbqnd\",\"genreName\":\"角色扮演\",\"type\":2}],"
                     + "\"3\":[{\"genreId\":\"yjkojnz\",\"genreName\":\"巨乳\",\"type\":3}],"
-                    + "\"4\":[{\"genreId\":\"rpnpmko\",\"genreName\":\"中出し\",\"type\":4}],"
-                    + "\"5\":[{\"genreId\":\"gznwlkr\",\"genreName\":\"3P・4P\",\"type\":5}],"
-                    + "\"6\":[{\"genreId\":\"vdkagkj\",\"genreName\":\"ベスト・総集編\",\"type\":6}],"
+                    + "\"4\":[{\"genreId\":\"rpnpmko\",\"genreName\":\"中出\",\"type\":4}],"
+                    + "\"5\":[{\"genreId\":\"gznwlkr\",\"genreName\":\"多P\",\"type\":5}],"
+                    + "\"6\":[{\"genreId\":\"vdkagkj\",\"genreName\":\"合集\",\"type\":6}],"
                     + "\"7\":[{\"genreId\":\"rpnpjpn\",\"genreName\":\"AV OPEN 2016 人妻・熟女部門\",\"type\":7}]"
                     + "}}";
 
     /** 步兵：list of list，下标即 type。 */
     private static final String JAVU_LIST =
             "{\"code\":200,\"data\":["
-                    + "[{\"genreId\":\"ekqjjln\",\"genreName\":\"ウェディング\",\"type\":0}],"
-                    + "[{\"genreId\":\"lkbqmwn\",\"genreName\":\"エステティシャン\",\"type\":1}],"
-                    + "[{\"genreId\":\"mndplon\",\"genreName\":\"短パン\",\"type\":2}],"
-                    + "[{\"genreId\":\"mkrqgwn\",\"genreName\":\"Cカップ\",\"type\":3}],"
-                    + "[{\"genreId\":\"znwmpbn\",\"genreName\":\"飲尿\",\"type\":4}],"
-                    + "[{\"genreId\":\"lkxdebk\",\"genreName\":\"ドッキリ\",\"type\":5}],"
-                    + "[{\"genreId\":\"mnrorzk\",\"genreName\":\"カラオケルーム\",\"type\":6}],"
-                    + "[{\"genreId\":\"mkdvejk\",\"genreName\":\"別荘\",\"type\":7}]"
+                    + "[{\"genreId\":\"ekqjjln\",\"genreName\":\"婚礼\",\"type\":0}],"
+                    + "[{\"genreId\":\"lkbqmwn\",\"genreName\":\"美容师\",\"type\":1}],"
+                    + "[{\"genreId\":\"mndplon\",\"genreName\":\"短裤\",\"type\":2}],"
+                    + "[{\"genreId\":\"mkrqgwn\",\"genreName\":\"C罩杯\",\"type\":3}],"
+                    + "[{\"genreId\":\"znwmpbn\",\"genreName\":\"喝尿\",\"type\":4}],"
+                    + "[{\"genreId\":\"lkxdebk\",\"genreName\":\"恶作剧\",\"type\":5}],"
+                    + "[{\"genreId\":\"mnrorzk\",\"genreName\":\"KTV\",\"type\":6}],"
+                    + "[{\"genreId\":\"mkdvejk\",\"genreName\":\"别墅\",\"type\":7}]"
                     + "]}";
 
-    /** 欧美：list of list，没有日文名，站点回退英文。 */
+    /** 欧美：list of list，cn 字典同样有中文名。 */
     private static final String WAV_LIST =
             "{\"code\":200,\"data\":["
-                    + "[{\"genreId\":\"yjkopan\",\"genreName\":\"Wedding\",\"type\":0}],"
-                    + "[{\"genreId\":\"xlkbvbk\",\"genreName\":\"Milk Maid\",\"type\":1}],"
-                    + "[{\"genreId\":\"qmnrwjk\",\"genreName\":\"Colored Stockings\",\"type\":2}],"
-                    + "[{\"genreId\":\"xlkbybn\",\"genreName\":\"Curvy Woman\",\"type\":3}],"
-                    + "[{\"genreId\":\"yjkojan\",\"genreName\":\"Anal Fingering\",\"type\":4}],"
-                    + "[{\"genreId\":\"pnlqeqk\",\"genreName\":\"Nipple clamps\",\"type\":5}],"
-                    + "[{\"genreId\":\"olnxqqk\",\"genreName\":\"Brazilian\",\"type\":6}],"
-                    + "[{\"genreId\":\"dpnexbk\",\"genreName\":\"Cinco De Mayo\",\"type\":7}]"
+                    + "[{\"genreId\":\"yjkopan\",\"genreName\":\"婚礼\",\"type\":0}],"
+                    + "[{\"genreId\":\"xlkbvbk\",\"genreName\":\"奶女仆\",\"type\":1}],"
+                    + "[{\"genreId\":\"qmnrwjk\",\"genreName\":\"彩色丝袜\",\"type\":2}],"
+                    + "[{\"genreId\":\"xlkbybn\",\"genreName\":\"弯曲的女人\",\"type\":3}],"
+                    + "[{\"genreId\":\"yjkojan\",\"genreName\":\"肛门指法\",\"type\":4}],"
+                    + "[{\"genreId\":\"pnlqeqk\",\"genreName\":\"乳头夹子\",\"type\":5}],"
+                    + "[{\"genreId\":\"olnxqqk\",\"genreName\":\"巴西人\",\"type\":6}],"
+                    + "[{\"genreId\":\"dpnexbk\",\"genreName\":\"五月五日\",\"type\":7}]"
                     + "]}";
 
     private static List<String> keys(LinkedHashMap<String, List<Genre>> map) {
@@ -87,13 +87,13 @@ public class AVMOProviderGenreTest {
                 AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JAV);
 
         assertEquals(
-                Arrays.asList("テーマ", "キャラクター", "コスチューム", "身体",
-                        "性行為", "プレイ", "ジャンル", "AV OPEN", "その他"),
+                Arrays.asList("主题", "角色", "服装", "身体",
+                        "性行为", "玩法", "类别", "AV OPEN", "其他"),
                 keys(map));
-        assertEquals("企画", nameOf(map, "テーマ"));
+        assertEquals("企划", nameOf(map, "主题"));
         assertEquals("巨乳", nameOf(map, "身体"));
-        assertEquals("中出し", nameOf(map, "性行為"));
-        assertEquals("ベスト・総集編", nameOf(map, "ジャンル"));
+        assertEquals("中出", nameOf(map, "性行为"));
+        assertEquals("合集", nameOf(map, "类别"));
     }
 
     @Test
@@ -112,9 +112,9 @@ public class AVMOProviderGenreTest {
                 AVMOProvider.parseGenres(JAV_DICT, GenreLabels.JAV);
 
         List<String> keys = keys(map);
-        assertEquals("その他", keys.get(keys.size() - 1));
-        assertEquals(2, sizeOf(map, "その他"));
-        assertEquals("パラダイスTV", nameOf(map, "その他"));
+        assertEquals("其他", keys.get(keys.size() - 1));
+        assertEquals(2, sizeOf(map, "其他"));
+        assertEquals("パラダイスTV", nameOf(map, "其他"));
     }
 
     @Test
@@ -123,30 +123,30 @@ public class AVMOProviderGenreTest {
                 AVMOProvider.parseGenres(JAVU_LIST, GenreLabels.JAVU);
 
         assertEquals(
-                Arrays.asList("テーマ", "キャラクター", "コスチューム", "身体",
-                        "性行為", "プレイ", "ジャンル", "その他"),
+                Arrays.asList("主题", "角色", "服装", "身体",
+                        "性行为", "玩法", "类别", "其他"),
                 keys(map));
-        assertEquals("ウェディング", nameOf(map, "テーマ"));
-        assertEquals("エステティシャン", nameOf(map, "キャラクター"));
-        assertEquals("Cカップ", nameOf(map, "身体"));
-        assertEquals("ドッキリ", nameOf(map, "プレイ"));
+        assertEquals("婚礼", nameOf(map, "主题"));
+        assertEquals("美容师", nameOf(map, "角色"));
+        assertEquals("C罩杯", nameOf(map, "身体"));
+        assertEquals("恶作剧", nameOf(map, "玩法"));
         // 步兵没有 -1 组，type 7 就是普通的「其他」
-        assertEquals("別荘", nameOf(map, "その他"));
-        assertEquals(1, sizeOf(map, "その他"));
+        assertEquals("别墅", nameOf(map, "其他"));
+        assertEquals(1, sizeOf(map, "其他"));
     }
 
     @Test
-    public void wavUsesEnglishLabels() throws Exception {
+    public void wavUsesChineseLabels() throws Exception {
         LinkedHashMap<String, List<Genre>> map =
                 AVMOProvider.parseGenres(WAV_LIST, GenreLabels.WAV);
 
         assertEquals(
-                Arrays.asList("Theme", "Character", "Costume", "Body",
-                        "Sex Acts", "Sex Plays", "Genre", "Other"),
+                Arrays.asList("主题", "角色", "服装", "身体",
+                        "性行为", "玩法", "类别", "其他"),
                 keys(map));
-        assertEquals("Wedding", nameOf(map, "Theme"));
-        assertEquals("Brazilian", nameOf(map, "Genre"));
-        assertEquals("Cinco De Mayo", nameOf(map, "Other"));
+        assertEquals("婚礼", nameOf(map, "主题"));
+        assertEquals("巴西人", nameOf(map, "类别"));
+        assertEquals("五月五日", nameOf(map, "其他"));
     }
 
     @Test
@@ -160,28 +160,28 @@ public class AVMOProviderGenreTest {
     @Test
     public void emptyGroupsAreSkipped() throws Exception {
         String json = "{\"code\":200,\"data\":{"
-                + "\"0\":[{\"genreId\":\"a\",\"genreName\":\"企画\",\"type\":0}],"
+                + "\"0\":[{\"genreId\":\"a\",\"genreName\":\"企划\",\"type\":0}],"
                 + "\"1\":[],"
-                + "\"2\":[{\"genreId\":\"b\",\"genreName\":\"コスプレ\",\"type\":2}]"
+                + "\"2\":[{\"genreId\":\"b\",\"genreName\":\"角色扮演\",\"type\":2}]"
                 + "}}";
         LinkedHashMap<String, List<Genre>> map =
                 AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
-        assertEquals(Arrays.asList("テーマ", "コスチューム"), keys(map));
-        assertFalse(map.containsKey("キャラクター"));
+        assertEquals(Arrays.asList("主题", "服装"), keys(map));
+        assertFalse(map.containsKey("角色"));
     }
 
     @Test
     public void listGroupWithoutTypeFieldIsTreatedAsOther() throws Exception {
         String json = "{\"code\":200,\"data\":["
-                + "[{\"genreId\":\"a\",\"genreName\":\"企画\",\"type\":0}],"
-                + "[{\"genreId\":\"z\",\"genreName\":\"謎\"}]"
+                + "[{\"genreId\":\"a\",\"genreName\":\"企划\",\"type\":0}],"
+                + "[{\"genreId\":\"z\",\"genreName\":\"谜\"}]"
                 + "]}";
         LinkedHashMap<String, List<Genre>> map =
                 AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
-        assertEquals(Arrays.asList("テーマ", "その他"), keys(map));
-        assertEquals("謎", nameOf(map, "その他"));
+        assertEquals(Arrays.asList("主题", "其他"), keys(map));
+        assertEquals("谜", nameOf(map, "其他"));
     }
 
     @Test
@@ -193,19 +193,19 @@ public class AVMOProviderGenreTest {
         LinkedHashMap<String, List<Genre>> map =
                 AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
-        assertEquals("", nameOf(map, "テーマ"));
+        assertEquals("", nameOf(map, "主题"));
     }
 
     @Test
     public void missingOtherGroupProducesNoOtherTab() throws Exception {
         String json = "{\"code\":200,\"data\":["
-                + "[{\"genreId\":\"a\",\"genreName\":\"企画\",\"type\":0}]"
+                + "[{\"genreId\":\"a\",\"genreName\":\"企划\",\"type\":0}]"
                 + "]}";
         LinkedHashMap<String, List<Genre>> map =
                 AVMOProvider.parseGenres(json, GenreLabels.JAV);
 
         assertEquals(1, map.size());
-        assertFalse(map.containsKey("その他"));
-        assertTrue(map.containsKey("テーマ"));
+        assertFalse(map.containsKey("其他"));
+        assertTrue(map.containsKey("主题"));
     }
 }

@@ -63,9 +63,8 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
         if (genresCall != null) {
             genresCall.cancel();
         }
-        // 站点按 lang 返回类别名：骑兵 / 步兵是日文，欧美没有日文名会回退英文。
-        // 这里固定 ja，与分组标签的语言保持一致（见 groupLabels()）。
-        Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("ja"));
+        // 站点按 lang 返回类别名，这里固定 cn，与分组标签用同一套字典（见 groupLabels()）。
+        Call<ResponseBody> call = JAViewer.SERVICE.getGenres(Arrays.asList("cn"));
         genresCall = call;
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -115,8 +114,8 @@ public class GenreTabsFragment extends ExtendedAppBarFragment {
     }
 
     /**
-     * 分组标签跟随当前数据源。骑兵与步兵站点返回日文类别名，欧美站点没有日文名会回退英文，
-     * tab 名取同一种语言，避免出现「日文类别名 + 中文 tab」的割裂。
+     * 分组标签跟随当前数据源。站点按 cn 字典给出分组名，骑兵的 type 7 是 AV OPEN 专题，
+     * 其余两源按站点语义叫「其他」。
      */
     private GenreLabels groupLabels() {
         try {
