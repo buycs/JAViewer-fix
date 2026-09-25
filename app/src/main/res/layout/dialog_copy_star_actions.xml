@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  长按菜单的自定义内容区：「复制 / 收藏」左右并排两个等宽按钮。
+
+  为什么不用 AlertDialog.setItems()：那是**竖向列表**，两项各占一行，
+  在「只有两个动作」的场景下显得又高又散。这里改成一行两个等宽按钮，
+  与磁力弹窗（dialog_magnet_actions.xml）同一套做法。
+
+  为什么按钮栏自己画：AlertDialog.Builder 的 setPositiveButton / setNegativeButton
+  只接文字与回调，不给布局控制权。这里走 setView() 自绘，三个要点：
+    · 两个 Button 各 layout_weight="1" → 无论文字多长都严格等宽
+    · style 用 AppCompat 的 ?attr/borderlessButtonStyle（**不是** ?android:attr/ 版）
+      —— framework 版在 MaterialComponents 弹窗里会把文字解析成与底色相同的白色，
+      按钮会在屏幕上"隐身"（dump 里却有节点、bounds 也正确，极具迷惑性）
+    · 显式 textColor="?attr/colorAccent"，浅色 / 深色主题下都与底色有对比
+
+  由 view/listener/ActressLongClickListener 与 MovieLongClickListener 使用。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp">
+
+    <Button
+        android:id="@+id/action_copy"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="复制"
+        android:textAllCaps="false"
+        android:textColor="?attr/colorAccent" />
+
+    <Button
+        android:id="@+id/action_star"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="收藏"
+        android:textAllCaps="false"
+        android:textColor="?attr/colorAccent" />
+
+</LinearLayout>

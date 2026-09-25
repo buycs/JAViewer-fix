@@ -1,18 +1,11 @@
 package io.github.javiewer.adapter;
 
-import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,6 +13,7 @@ import java.util.List;
 
 import io.github.javiewer.R;
 import io.github.javiewer.adapter.item.TorrentGroup;
+import io.github.javiewer.util.MagnetDialog;
 import io.github.javiewer.util.MagnetFiles;
 
 public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.ViewHolder> {
@@ -63,38 +57,7 @@ public class MagnetFileAdapter extends RecyclerView.Adapter<MagnetFileAdapter.Vi
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String magnetLink = group.getMagnetLink();
-                if (magnetLink == null || magnetLink.isEmpty()) {
-                    Toast.makeText(context, "磁力链接获取失败", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                new AlertDialog.Builder(context)
-                        .setTitle("磁力链接")
-                        .setMessage(magnetLink)
-                        .setNeutralButton("复制到剪贴板", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                ClipboardManager clip = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                                clip.setPrimaryClip(ClipData.newPlainText("magnet-link", magnetLink));
-                                Toast.makeText(context, "磁力链接已复制到剪贴板", Toast.LENGTH_SHORT).show();
-                            }
-                        })
-                        .setPositiveButton("打开", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                try {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(magnetLink));
-                                    context.startActivity(intent);
-                                } catch (Exception e) {
-                                    ClipboardManager clip = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                                    clip.setPrimaryClip(ClipData.newPlainText("magnet-link", magnetLink));
-                                    Toast.makeText(context, "未找到磁力播放器，已复制链接", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        })
-                        .setNegativeButton("取消", null)
-                        .show();
+                MagnetDialog.show(context, group.getMagnetLink());
             }
         });
     }

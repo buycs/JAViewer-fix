@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  磁力链接弹窗的自定义内容区（标题由 AlertDialog 提供，这里只放链接文本与按钮栏）。
+
+  为什么整块内容都自己画：AlertDialog 的 setPositiveButton / setNegativeButton /
+  setNeutralButton 只接按钮文字与回调，不给布局控制权 —— 系统按 space-between
+  把三个按钮摊开，文字长短不一时视觉重心就会偏。
+  这里三个 Button 各占 1 份 layout_weight，无论文字多长都严格等宽、左中右间隔一致。
+
+  由 util/MagnetDialog 使用。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/magnet_link_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:textSize="14sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textIsSelectable="true" />
+
+    <!--
+      分隔线用项目自己的 @color/colorDivider（浅色 #1E000000 / 深色 #1EFFFFFF），
+      而不是 ?android:attr/dividerHorizontal —— 后者在 MaterialComponents 弹窗里
+      常常解析不到颜色，线会直接不显示。
+    -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="@color/colorDivider" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="8dp">
+
+        <!--
+          用 AppCompat 的 borderlessButtonStyle（?attr，不是 ?android:attr）——
+          前者会从当前 AppCompat 主题取正确的文字色，后者是 framework 样式，
+          在 MaterialComponents 弹窗里会解析成与弹窗底色相同的白字，按钮就"隐身"了。
+          再显式指定 textColor 用主题色，确保浅色 / 深色两种主题下都与底色有对比。
+        -->
+        <Button
+            android:id="@+id/magnet_action_copy"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="复制"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorAccent" />
+
+        <Button
+            android:id="@+id/magnet_action_open"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="打开"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorAccent" />
+
+        <Button
+            android:id="@+id/magnet_action_cancel"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="取消"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorAccent" />
+
+    </LinearLayout>
+
+</LinearLayout>
